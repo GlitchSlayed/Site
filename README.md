@@ -1,25 +1,6 @@
-# Vansh — Aerospace & Technology
+# Aerospace & Technology Blog
 
 A complete static Astro site: dark/light themes, responsive layouts, searchable and filterable writing, project pages, Markdown/MDX, equation rendering, RSS, and optional sitemap generation. No database, account system, or paid service required.
-
-## First: upload the source to GitHub
-
-1. Extract this ZIP. Open the `vansh-site` folder.
-2. Create an empty GitHub repository, ideally named `vansh-site`.
-3. Upload the CONTENTS of this folder into the repository root. Do not upload the ZIP itself or nest everything under another folder.
-4. Make sure `.github/workflows`, `.gitignore`, and `.node-version` are included. Some file pickers hide dotfiles; use Git locally if necessary.
-5. Commit to `main`.
-
-Git alternative (run inside the extracted folder):
-
-```bash
-git init
-git add .
-git commit -m "Create aerospace and technology site"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/vansh-site.git
-git push -u origin main
-```
 
 ## Option A: Cloudflare hosting (recommended)
 
