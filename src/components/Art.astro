@@ -1,0 +1,22 @@
+---
+const { kind='wing' }=Astro.props;
+---
+<div class:list={['art',kind]} aria-hidden="true">
+<svg viewBox="0 0 600 290" fill="none">
+<defs><pattern id={`grid-${kind}`} width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" stroke="currentColor" stroke-opacity=".08"/></pattern></defs>
+<rect width="600" height="290" fill={`url(#grid-${kind})`}/>
+{kind==='wing' ? <>
+<path d="M300 35 342 110 521 215 521 228 362 192 329 205 300 187 271 205 238 192 79 228 79 215 258 110Z" stroke="currentColor" stroke-width="1.6" fill="currentColor" fill-opacity=".025"/>
+<path d="M300 35V242M79 228H521M258 110 271 205M342 110 329 205M165 164l73 28m197-28-73 28" stroke="currentColor" stroke-opacity=".28" stroke-dasharray="4 5"/>
+<path d="M300 35 320 115 300 187 280 115Z" stroke="var(--accent)" stroke-width="1.5"/>
+<path d="M79 250H521m-442-5v10m442-10v10" stroke="currentColor" stroke-opacity=".35"/><text x="268" y="271" fill="currentColor" opacity=".5" font-size="10" font-family="monospace">PLANFORM STUDY</text>
+</> : kind==='orbit' ? <>
+<circle cx="300" cy="145" r="48" stroke="currentColor" stroke-opacity=".5"/><ellipse cx="300" cy="145" rx="190" ry="77" transform="rotate(-25 300 145)" stroke="currentColor" stroke-opacity=".5" stroke-dasharray="5 5"/>
+<path d="M119 202C190 262 389 179 469 67" stroke="var(--accent)" stroke-width="2"/><circle cx="469" cy="67" r="5" fill="var(--accent)"/>
+<path d="M300 80v130m-65-65h130" stroke="currentColor" stroke-opacity=".18"/><text x="35" y="255" fill="currentColor" opacity=".5" font-size="10" font-family="monospace">TRAJECTORY / NUMERICAL INTEGRATION</text>
+</> : <>
+<path d="M70 220H535M70 220V45" stroke="currentColor" stroke-opacity=".4"/><path d="m70 210 70-16 55-28 60-46 60-17 60-29 60-9 90-15" stroke="var(--accent)" stroke-width="2"/><path d="m70 210 70-8 55-28 60-30 60-29 60-23 60-12 90-23" stroke="currentColor" stroke-opacity=".55" stroke-dasharray="5 5"/><text x="90" y="255" fill="currentColor" opacity=".5" font-size="10" font-family="monospace">MODELS / ASSUMPTIONS / ERROR</text>
+</>}
+</svg>
+<span class="art-caption">CONCEPT ILLUSTRATION · NOT SIMULATION DATA</span>
+</div>

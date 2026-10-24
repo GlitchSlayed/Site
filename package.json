@@ -1,0 +1,30 @@
+{
+  "name": "vansh-aerospace-tech",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "astro": "^5.13.0",
+    "@astrojs/mdx": "^4.3.0",
+    "@astrojs/rss": "^4.0.0",
+    "@astrojs/sitemap": "^3.5.0",
+    "remark-math": "^6.0.0",
+    "rehype-katex": "^7.0.0",
+    "katex": "^0.16.22"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,0 +1,5 @@
+---
+import {url,dateLabel} from '../config';
+const {posts}=Astro.props;
+---
+<div class="post-list">{posts.map((post:any)=><a class="post-row" href={url(`writing/${post.id}/`)}><div><div class="post-meta"><span>{post.data.tags[0]}</span><span>{dateLabel(post.data.date)}</span>{post.data.sample && <span class="sample-label">Sample</span>}</div><h3>{post.data.title}</h3><p>{post.data.description}</p></div><span class="row-arrow" aria-hidden="true">↗</span></a>)}</div>

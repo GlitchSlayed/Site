@@ -1,0 +1,6 @@
+1. Extract this ZIP.
+2. Upload everything INSIDE vansh-site to your GitHub repository root. Include the .github folder and other dotfiles.
+3. Read README.md for Cloudflare, GitHub Pages, and Vercel setup.
+4. Review your About page, add contact links in src/config.ts, and replace the labeled sample articles.
+
+No site has been deployed. The environment blocked npm downloads, so the Astro build and browser rendering could not be verified here. The included GitHub Actions check runs npm install, Astro check, and the production build after upload.
