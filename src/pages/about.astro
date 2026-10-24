@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import ArrowIcon from '../components/ArrowIcon.astro';
 import { site } from '../config';
 ---
 
@@ -123,7 +124,7 @@ import { site } from '../config';
         {
           site.email && (
             <p>
-              <a href={`mailto:${site.email}`}>Send me an email ↗</a>
+              <a href={`mailto:${site.email}`}>Send me an email <ArrowIcon/></a>
             </p>
           )
         }
@@ -131,7 +132,7 @@ import { site } from '../config';
         {
           site.github && (
             <p>
-              <a href={site.github}>GitHub ↗</a>
+              <a href={site.github}>GitHub <ArrowIcon/></a>
             </p>
           )
         }
@@ -139,7 +140,7 @@ import { site } from '../config';
         {
           site.linkedin && (
             <p>
-              <a href={site.linkedin}>LinkedIn ↗</a>
+              <a href={site.linkedin}>LinkedIn <ArrowIcon/></a>
             </p>
           )
         }

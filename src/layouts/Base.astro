@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import 'katex/dist/katex.min.css';
 import Rocket from '../components/Rocket.astro';
+import ArrowIcon from '../components/ArrowIcon.astro';
 import {site,url} from '../config';
 const {title=site.title,description=site.description}=Astro.props;
 const pathname=Astro.url.pathname;
@@ -13,7 +14,7 @@ const configured=canonical?.hostname!=='example.com';
 </head><body><a class="skip" href="#main">Skip to content</a>
 <header class="header"><div class="shell header-inner"><a class="brand" href={url()} aria-label="Vansh's Technical Blog home"><span class="brand-icon"><Rocket/></span><span>Vansh's Technical Blog</span></a><nav aria-label="Main navigation">{[['writing/','Writing'],['projects/','Projects'],['about/','About']].map(([href,label])=><a href={url(href)} aria-current={pathname.startsWith(url(href))?'page':undefined}>{label}</a>)}<button class="theme-button" id="theme-toggle" aria-label="Switch to light theme" title="Toggle color theme"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button></nav></div></header>
 <main id="main"><slot/></main>
-<footer class="shell footer"><a class="footer-brand" href={url()}><Rocket/> <span>{site.name}<small>Aerospace, engineering & technology.</small></span></a><div class="footer-links"><a href={url('rss.xml')}>RSS ↗</a>{site.github && <a href={site.github}>GitHub ↗</a>}{site.linkedin && <a href={site.linkedin}>LinkedIn ↗</a>}{site.email && <a href={`mailto:${site.email}`}>Email ↗</a>}<span>© {new Date().getFullYear()} {site.name}</span></div></footer>
+<footer class="shell footer"><a class="footer-brand" href={url()}><Rocket/> <span>{site.name}<small>Aerospace, engineering & technology.</small></span></a><div class="footer-links"><a href={url('rss.xml')}>RSS <ArrowIcon/></a>{site.github && <a href={site.github}>GitHub <ArrowIcon/></a>}{site.linkedin && <a href={site.linkedin}>LinkedIn <ArrowIcon/></a>}{site.email && <a href={`mailto:${site.email}`}>Email <ArrowIcon/></a>}<span>© {new Date().getFullYear()} Vansh Datta</span></div></footer>
 <script>
 const button=document.querySelector<HTMLButtonElement>('#theme-toggle');
 function syncLabel(){button?.setAttribute('aria-label',`Switch to ${document.documentElement.dataset.theme==='dark'?'light':'dark'} theme`);}
