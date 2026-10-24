@@ -4,4 +4,53 @@ import {url,dateLabel} from '../config';
 const {entry,headings=[],type='writing'}=Astro.props;
 const {data}=entry;
 ---
-<Base title={`${data.title} — Vansh`} description={data.description}><div class="shell article-shell"><a class="back-link" href={url(`${type}/`)}>← Back to {type}</a><header class="article-header"><div class="post-meta"><span>{data.tags.join(' / ')}</span><span>{dateLabel(data.date)}</span>{data.status&&<span>{data.status}</span>}</div><h1>{data.title}</h1><p>{data.description}</p>{data.sample&&<div class="notice">Sample article included with this site. Illustrative content, not a report of completed work.</div>}</header><div class="article-grid"><article class="prose"><slot/></article>{headings.length>0&&<aside class="toc"><div class="eyebrow">ON THIS PAGE</div><nav aria-label="Article contents">{headings.filter((h:any)=>h.depth===2).map((h:any)=><a href={`#${h.slug}`}>{h.text}</a>)}</nav></aside>}</div><div class="article-end"><span class="accent">✳</span> Keep asking better questions.<a href={url(`${type}/`)}>More {type} →</a></div></div></Base>
+<Base title={`${data.title} — Vansh`} description={data.description} ogType="article"><div class="shell article-shell"><a class="back-link" href={url(`${type}/`)}>← Back to {type}</a><header class="article-header"><div class="post-meta"><span>{data.tags.join(' / ')}</span><span>{dateLabel(data.date)}</span>{data.status&&<span>{data.status}</span>}</div><h1>{data.title}</h1><p>{data.description}</p>{data.sample&&<div class="notice">Sample article included with this site. Illustrative content, not a report of completed work.</div>}</header><div class="article-grid"><article class="prose"><slot/></article>{headings.filter((h:any)=>h.depth===2).length>0&&<aside class="toc"><div class="eyebrow">ON THIS PAGE</div><nav class="toc-nav" aria-label="Article contents"><span class="toc-indicator" aria-hidden="true"></span>{headings.filter((h:any)=>h.depth===2).map((h:any)=><a href={`#${h.slug}`}>{h.text}</a>)}</nav></aside>}</div><div class="article-end"><span class="accent">✳</span> Keep asking better questions.<a href={url(`${type}/`)}>More {type} →</a></div></div></Base>
+
+<script>
+  const toc = document.querySelector<HTMLElement>('.toc-nav');
+  const article = document.querySelector<HTMLElement>('.prose');
+
+  if (toc && article) {
+    const links = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
+    const indicator = toc.querySelector<HTMLElement>('.toc-indicator');
+    const headings = links
+      .map((link) => article.querySelector<HTMLElement>(`#${CSS.escape(decodeURIComponent(link.hash.slice(1)))}`))
+      .filter((heading): heading is HTMLElement => heading !== null);
+    let activeIndex = -1;
+    let frame = 0;
+
+    const setActive = (index: number) => {
+      if (index === activeIndex || !links[index] || !indicator) return;
+      activeIndex = index;
+      links.forEach((link, linkIndex) => {
+        if (linkIndex === index) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+      const link = links[index];
+      indicator.style.transform = `translateY(${link.offsetTop}px)`;
+      indicator.style.height = `${link.offsetHeight}px`;
+    };
+
+    const syncActiveSection = () => {
+      frame = 0;
+      const activationLine = Math.min(window.innerHeight * 0.28, 220);
+      let current = 0;
+      headings.forEach((heading, index) => {
+        if (heading.getBoundingClientRect().top <= activationLine) current = index;
+      });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+        current = headings.length - 1;
+      }
+      setActive(current);
+    };
+
+    const requestSync = () => {
+      if (!frame) frame = requestAnimationFrame(syncActiveSection);
+    };
+
+    window.addEventListener('scroll', requestSync, { passive: true });
+    window.addEventListener('resize', requestSync);
+    window.addEventListener('hashchange', requestSync);
+    requestSync();
+  }
+</script>
