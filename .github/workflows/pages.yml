@@ -1,39 +1,67 @@
-name: Deploy to GitHub Pages (optional)
+name: Deploy website
+
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "!src/content/**/*.md"
+      - "START_HERE.txt"
   workflow_dispatch:
+
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - uses: actions/configure-pages@v5
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Configure Pages
         id: pages
-      - run: npm install
-      - run: npm run build
+        uses: actions/configure-pages@v5
+
+      - name: Check site
+        run: npm run check
+
+      - name: Build site
+        run: npm run build
         env:
           SITE_URL: ${{ steps.pages.outputs.origin }}
           BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-      - uses: actions/upload-pages-artifact@v3
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
-      - uses: actions/deploy-pages@v4
+      - name: Deploy website
         id: deployment
+        uses: actions/deploy-pages@v4
