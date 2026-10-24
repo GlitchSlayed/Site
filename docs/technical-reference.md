@@ -45,6 +45,7 @@ The site is a static Astro application. Source content is converted to HTML duri
 | Validation | Zod schemas in `src/content.config.ts` | Frontmatter must match the collection |
 | Styling | Plain CSS | Tailwind utility classes are not automatically available |
 | Interactive visuals | React 19 and `@paper-design/shaders-react`, loaded by Astro islands | Used for decorative project and hero shader effects |
+| Social previews | Build-generated 1200 × 630 PNGs rendered with Sharp | Each page gets an absolute `og:image` and Twitter card URL |
 | Equations | remark-math + rehype-katex + KaTeX | LaTeX-style math can be rendered at build time |
 | Markdown pipeline | `unified()` from `@astrojs/markdown-remark` | Remark/rehype plugins are configured inside its options |
 | Syntax highlighting | Shiki | Use fenced code blocks with a language |
@@ -72,6 +73,7 @@ React is installed for the shader visuals. Tailwind, shadcn, a charting library,
 | `src/pages/projects/[...id].astro` | Generated project routes |
 | `src/pages/rss.xml.ts` | RSS output |
 | `src/pages/404.astro` | Custom error page |
+| `src/pages/og/[...slug].png.ts` | Generates gradient social cards for site pages and published content |
 | `src/layouts/Base.astro` | Shared metadata, navigation, footer, theme toggle |
 | `src/layouts/Article.astro` | Article title, metadata, body, and contents navigation |
 | `src/components/ProjectCard.astro` | Card metadata and art selection |
@@ -146,6 +148,12 @@ For image variants, store site-local images in `public/images/` and set `visualI
 Shaders are decorative and marked hidden from assistive technology; project title and label remain HTML text when the layout includes them. Shaders are loaded only when visible, run only when the element is visible and the document is active, and respect `prefers-reduced-motion`. Animation is opt-in through `visualAnimate`. Reduced-motion users receive static rendering. Keep contrast and text legibility in mind when choosing an accent.
 
 The home-page hero also uses a static `mesh` shader atmosphere with a CSS gradient fallback. It is an ambient effect, not project evidence or an interactive control.
+
+### Social preview cards
+
+The static build generates branded 1200 × 630 PNG cards at `/og/`. The home card shows only “Vansh's Technical Blog” over a soft orange and blue gradient. Writing and project cards use the entry's title on the same background. The About, Writing, Projects, and 404 pages have their own labels and card images. `Base.astro` points Open Graph and Twitter metadata to these generated images and includes the configured Pages base path in each absolute URL.
+
+Add content entries through the normal collections; published entries receive a card automatically during build, while drafts are omitted. The generator lives in `src/pages/og/[...slug].png.ts` and uses Sharp, which must remain a direct project dependency for reliable builds.
 
 Important validation rules:
 
