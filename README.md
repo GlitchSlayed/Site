@@ -6,11 +6,12 @@ Built with a minimal layout, light and dark themes, and subtle red-orange accent
 
 ## Stack
 
-- **Astro 5** — static site generation
+- **Astro 7** — static site generation
 - **TypeScript** — typed configuration and application code
 - **Markdown / MDX** — articles and project pages
 - **KaTeX** — mathematical equations
 - **Plain CSS** — styling and responsive layouts
+- **React + Paper Design shaders** — decorative project and homepage visuals
 - **GitHub Pages + Actions** — hosting and deployment
 
 ## Development
@@ -37,11 +38,13 @@ npm run dev
 | `src/content/projects/` | Project pages |
 | `src/pages/` | Routes and main pages |
 | `src/components/` | Reusable components and illustrations |
+| `src/components/visuals/` | Project-card shader, pattern, image, and screenshot treatments |
 | `src/layouts/` | Shared page layouts |
 | `src/styles/global.css` | Site styling and theme colors |
 | `src/config.ts` | Public identity and contact links |
 | `public/` | Static assets |
 | `.github/workflows/` | Build and deployment workflows |
+| `docs/` | Writing playbook and technical reference |
 
 ## Writing Content
 
@@ -67,6 +70,8 @@ Write the article below the metadata. The filename determines its URL.
 - Dates control ordering; future dates do not schedule publication.
 
 Project entries also require `status` and `art`. Set `featured: true` to make a project eligible for the homepage. Available artwork values are `wing`, `orbit`, and `code`.
+
+For the full writing workflow, editorial templates, content schema, and project visual options, see [`docs/technical-reference.md`](docs/technical-reference.md) and [`docs/writing-playbook.md`](docs/writing-playbook.md).
 
 ## Configuration
 
