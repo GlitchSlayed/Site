@@ -1,5 +1,168 @@
 ---
 import Base from '../layouts/Base.astro';
-import {site,url} from '../config';
+import { site } from '../config';
 ---
-<Base title="About — Vansh"><section class="shell page-section about-page"><div class="eyebrow">BEHIND THE NOTEBOOK</div><h1 class="page-title">Hi, I’m Vansh<span class="accent">.</span></h1><p class="about-lead">A mechanical engineering student with an aerospace concentration, a fascination with flight, and a habit of asking how things work.</p><div class="about-columns"><div class="prose"><h2>Engineering, with curiosity.</h2><p>I’m studying at Hofstra University and serve as co-president of our AIAA chapter. I’m interested in aircraft design, rocketry, simulation, and the practical work of turning an idea into something you can test.</p><p>This site is a place to document what I’m learning and building: technical projects, explanations, experiments, and the occasional exploration of new technology.</p><h2>What you’ll find here</h2><p>Work on aerospace questions, computational tools, and open technology. I want to make the reasoning visible, including assumptions, limitations, and the places where a model stops being useful.</p><h2>Let’s connect</h2><p>{site.email ? <a href={`mailto:${site.email}`}>Send me an email ↗</a> : 'Contact links will appear here once I add them.'}</p>{site.github&&<p><a href={site.github}>GitHub ↗</a></p>}{site.linkedin&&<p><a href={site.linkedin}>LinkedIn ↗</a></p>}</div><aside class="profile-panel"><div class="eyebrow">CURRENT INTERESTS</div><ul><li>Blended-wing-body aircraft</li><li>Flight mechanics & performance</li><li>Rocket trajectory simulation</li><li>Scientific computing</li><li>Linux & open-source tools</li></ul><div class="profile-bottom"><span class="status-dot"></span> Learning. Building. Iterating.</div></aside></div></section></Base>
+
+<Base title="About — Vansh">
+  <section class="shell page-section about-page">
+    <div class="eyebrow">BEHIND THE NOTEBOOK</div>
+
+    <h1 class="page-title">
+      Hi, I’m Vansh<span class="accent">.</span>
+    </h1>
+
+    <p class="about-lead">
+      A mechanical engineering student, aerospace enthusiast, and Linux user
+      who enjoys understanding how things work, building things, and finding
+      ways to make them better.
+    </p>
+
+    <div class="about-columns">
+      <div class="prose">
+        <h2>Engineering, with curiosity.</h2>
+
+        <p>
+          I’m a mechanical engineering student at Hofstra University,
+          concentrating in aerospace and graduating in 2027. I also serve
+          as co-president of our AIAA chapter, helping create opportunities
+          for students to explore aerospace through projects, workshops,
+          and connections beyond the classroom.
+        </p>
+
+        <p>
+          Aircraft design, rocketry, and simulation are particular interests
+          of mine. I’m drawn to the process of taking a question, working
+          through the physics, and developing something that can be modeled,
+          built, or tested.
+        </p>
+
+        <h2>From drawings to the shop floor.</h2>
+
+        <p>
+          I spent six months as an Aerospace Manufacturing Engineer Co-op
+          at Arkwin Industries, working with aerospace hydraulic actuators
+          and the tooling and processes used to manufacture them.
+          My work included inspection fixtures, CNC workholding, custom
+          cutting tools, engineering drawings, and manufacturing documentation.
+        </p>
+
+        <p>
+          That experience gave me a better appreciation for the details
+          connecting a design to a working part: tolerances, inspection,
+          manufacturability, and clear instructions. A model on a screen
+          becomes much more interesting when you have to figure out how
+          someone will actually make and measure it.
+        </p>
+
+        <p>
+          I also worked as a research intern in Hofstra’s ideaHUb makerspace,
+          supporting prototyping, mechanical testing, troubleshooting,
+          and equipment guides. Other projects have included a low-cost
+          below-knee prosthetic leg and modifications that make children’s
+          toys more accessible to users with limited mobility.
+        </p>
+
+        <h2>Linux, hardware, and open technology.</h2>
+
+        <p>
+          My interest in technology extends well beyond engineering software.
+          I use Fedora Linux on my personal computer and enjoy exploring
+          the desktop ecosystem, open-source applications, and the details
+          that make a system feel good to use.
+        </p>
+
+        <p>
+          That often turns into experimenting with software, troubleshooting
+          hardware, comparing alternatives, or trying to understand why
+          something behaves the way it does. I’m interested in performance,
+          usability, repairability, and how much control a tool gives
+          the person using it.
+        </p>
+
+        <h2>Learning to build with code and AI.</h2>
+
+        <p>
+          I use Python and MATLAB as engineering tools, and I’m also
+          dabbling in AI-assisted programming to explore ideas, modify
+          software, and build small tools. I’m still developing those
+          skills, and part of the appeal is learning how the pieces
+          fit together as I go.
+        </p>
+
+        <p>
+          I’m interested in where AI can be useful in engineering and
+          software development, including its limitations. Getting code
+          to run is a starting point; understanding its assumptions,
+          checking its behavior, and deciding whether the result is
+          useful are part of the work too.
+        </p>
+
+        <h2>What you’ll find here.</h2>
+
+        <p>
+          This site is my technical notebook: a place for aerospace
+          studies, project write-ups, simulation experiments, Linux
+          explorations, and analysis of hardware and software.
+        </p>
+
+        <p>
+          Some posts will work through an engineering question in detail.
+          Others will examine a new tool, compare approaches, or document
+          something I tried. I want to show the reasoning behind the
+          outcome, including what worked, what didn’t, and what I still
+          need to understand.
+        </p>
+
+        <h2>Let’s connect.</h2>
+
+        <p>
+          If you’re working on something interesting in aerospace,
+          engineering, or open technology, I’d be happy to hear about it.
+        </p>
+
+        {
+          site.email && (
+            <p>
+              <a href={`mailto:${site.email}`}>Send me an email ↗</a>
+            </p>
+          )
+        }
+
+        {
+          site.github && (
+            <p>
+              <a href={site.github}>GitHub ↗</a>
+            </p>
+          )
+        }
+
+        {
+          site.linkedin && (
+            <p>
+              <a href={site.linkedin}>LinkedIn ↗</a>
+            </p>
+          )
+        }
+      </div>
+
+      <aside class="profile-panel">
+        <div class="eyebrow">CURRENT INTERESTS</div>
+
+        <ul>
+          <li>Aircraft design & blended-wing bodies</li>
+          <li>Rocketry & flight simulation</li>
+          <li>Manufacturing & practical design</li>
+          <li>Python & scientific computing</li>
+          <li>Fedora Linux & open-source tools</li>
+          <li>AI-assisted programming</li>
+          <li>Computer hardware & tech analysis</li>
+        </ul>
+
+        <div class="profile-bottom">
+          <span class="status-dot"></span>
+          Learning. Building. Iterating.
+        </div>
+      </aside>
+    </div>
+  </section>
+</Base>
