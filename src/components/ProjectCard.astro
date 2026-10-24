@@ -1,7 +1,20 @@
 ---
 import Art from './Art.astro';
+import ProjectVisual from './visuals/ProjectVisual.astro';
 import ArrowIcon from './ArrowIcon.astro';
 import {url} from '../config';
 const {project}=Astro.props;
 ---
-<a class="project-card" href={url(`projects/${project.id}/`)}><Art kind={project.data.art}/><div class="card-body"><div class="post-meta"><span>{project.data.tags[0]}</span><span>{project.data.status}</span></div><h3>{project.data.title}<span class="card-arrow"><ArrowIcon/></span></h3><p>{project.data.description}</p><div class="tag-list">{project.data.tags.slice(1).map((tag:string)=><span>{tag}</span>)}</div></div></a>
+<a class="project-card" href={url(`projects/${project.id}/`)}>{project.data.visual ? (
+  <ProjectVisual
+    variant={project.data.visual}
+    title={project.data.visual === 'screenshot' ? '' : project.data.title}
+    label={project.data.visualLabel || project.data.tags[0]}
+    accent={project.data.visualAccent || '#ff603b'}
+    image={project.data.visualImage}
+    imageAlt={project.data.visualImageAlt || ''}
+    animate={project.data.visualAnimate}
+  />
+) : (
+  <Art kind={project.data.art} />
+)}<div class="card-body"><div class="post-meta"><span>{project.data.tags[0]}</span><span>{project.data.status}</span></div><h3>{project.data.title}<span class="card-arrow"><ArrowIcon/></span></h3><p>{project.data.description}</p><div class="tag-list">{project.data.tags.slice(1).map((tag:string)=><span>{tag}</span>)}</div></div></a>

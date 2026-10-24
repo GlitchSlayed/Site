@@ -1,0 +1,40 @@
+---
+import PaperVisual from './PaperVisual';
+import './visuals.css';
+export type VisualKind = 'dither' | 'grain' | 'mesh' | 'grid' | 'dots' | 'asset' | 'screenshot';
+interface Props {
+  variant?: VisualKind;
+  title?: string;
+  label?: string;
+  accent?: string;
+  image?: string;
+  imageAlt?: string;
+  animate?: boolean;
+}
+const {
+  variant = 'grid', title = '', label = '', accent = '#ff603b',
+  image, imageAlt = '', animate = false,
+} = Astro.props;
+// For repository-hosted Pages, image paths are relative to public/, e.g. images/gofr.webp.
+// External http(s) URLs are allowed, but local assets are preferred.
+const imageURL = image
+  ? (/^https?:\/\//i.test(image) ? image : `${import.meta.env.BASE_URL}${image.replace(/^\/+/, '')}`)
+  : undefined;
+const shader = variant === 'dither' || variant === 'grain' || variant === 'mesh';
+---
+<div class:list={['pv', `pv-${variant}`]} style={`--pv-accent:${accent}`}>
+  <div class="pv-background" aria-hidden="true"></div>
+  {shader && <div class="pv-shader"><PaperVisual variant={variant} accent={accent} animate={animate} client:visible /></div>}
+  {variant === 'asset' && imageURL && <img class="pv-asset" src={imageURL} alt={imageAlt} width="1200" height="640" loading="lazy" decoding="async" />}
+  {variant === 'screenshot' && <div class="pv-window">
+    <div class="pv-window-bar" aria-hidden="true"><span></span><span></span><span></span><i>{label || 'Project preview'}</i></div>
+    {imageURL
+      ? <img src={imageURL} alt={imageAlt} width="1200" height="750" loading="lazy" decoding="async" />
+      : <div class="pv-placeholder">Add your own screenshot<br/><small>public/images/your-project.webp</small></div>}
+  </div>}
+  {variant !== 'screenshot' && (title || label) && <div class="pv-copy">
+    {label && <span class="pv-label">{label}</span>}
+    {title && <span class="pv-title">{title}</span>}
+  </div>}
+  {variant === 'asset' && !imageURL && <span class="pv-asset-note">Add a Haikei / fffuel / Ray.so export</span>}
+</div>

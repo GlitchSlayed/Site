@@ -1,0 +1,22 @@
+/* Original framing/pattern CSS. Paper renders the three shader presets. */
+.pv{position:relative;isolation:isolate;overflow:hidden;aspect-ratio:15/8;width:100%;background:#090b10;color:#f4f4f5;border-bottom:1px solid var(--border,#262626);--pv-accent:#ff603b}
+.pv-background,.pv-shader,img.pv-asset{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.pv-background{z-index:0;background:radial-gradient(ellipse at 80% 15%,color-mix(in srgb,var(--pv-accent) 25%,transparent),transparent 65%),#090b10}
+.pv-shader{z-index:1;opacity:.72;pointer-events:none}
+.pv-copy{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:clamp(22px,5.5%,46px);gap:12px;background:linear-gradient(0deg,rgba(5,7,11,.8),rgba(5,7,11,.14) 62%,transparent);pointer-events:none}
+.pv-label{font:500 clamp(8px,1.4vw,10px)/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.15em;color:#b6bdc9}
+.pv-title{font:550 clamp(26px,4vw,54px)/1.05 var(--sans,system-ui,sans-serif);letter-spacing:-.045em;max-width:95%;overflow-wrap:anywhere;color:#f4f4f5;text-shadow:0 2px 25px #0008}
+.pv-grid .pv-background{background-image:linear-gradient(#a5b0c414 1px,transparent 1px),linear-gradient(90deg,#a5b0c414 1px,transparent 1px),radial-gradient(ellipse at 75% 30%,color-mix(in srgb,var(--pv-accent) 27%,transparent),transparent 65%);background-size:32px 32px,32px 32px,100% 100%;background-color:#090b10}
+.pv-dots .pv-background{background-image:radial-gradient(circle,#aebcd648 1px,transparent 1.3px),radial-gradient(ellipse at 75% 25%,color-mix(in srgb,var(--pv-accent) 32%,transparent),transparent 65%);background-size:17px 17px,100% 100%;background-color:#090b10}
+img.pv-asset{z-index:1;object-fit:cover;object-position:center}
+.pv-asset-note{position:absolute;right:20px;top:18px;z-index:2;font:9px/1.5 ui-monospace,monospace;color:#a1adbf;max-width:60%;text-align:right}
+.pv-window{position:absolute;left:11%;right:11%;top:13%;bottom:10%;z-index:2;overflow:hidden;border:1px solid #ffffff35;border-radius:9px;background:#10131a;box-shadow:0 15px 50px #0007;display:flex;flex-direction:column}
+.pv-window-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid #ffffff18;background:#191e28;position:relative;min-height:30px;flex-shrink:0}
+.pv-window-bar>span{width:5px;height:5px;flex-shrink:0;border-radius:50%;background:#576477}
+.pv-window-bar>span:first-child{background:var(--pv-accent)}
+.pv-window-bar>i{font:normal 8px/1.4 ui-monospace,monospace;color:#9ca7b9;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;margin-left:8px}
+.pv-window>img{display:block;width:100%;min-height:0;flex:1;object-fit:contain;background:#0e1118}
+.pv-placeholder{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#a8b2c5;font:12px/1.8 system-ui,sans-serif;padding:10px}
+.pv-placeholder small{font:8px/1.8 ui-monospace,monospace;color:#738098}
+/* Canvases are decorative: meaningful text stays as accessible HTML above. */
+@media(prefers-reduced-motion:reduce){.pv *{animation:none!important;transition:none!important}}

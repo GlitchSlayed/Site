@@ -7,6 +7,10 @@ date: "2026-10-24"
 art: code
 featured: true
 draft: false
+visual: dither
+visualAccent: "#739cda"
+visualLabel: "Fedora remix · Concept"
+visualAnimate: false
 ---
 
 # GOFR — Glitchy's Opinionated Fedora Remix
