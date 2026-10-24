@@ -4,7 +4,9 @@ description: "A Fedora-based Linux remix exploring modern boot infrastructure, p
 status: "Concept / Planning"
 tags: ["Linux", "Fedora", "Operating Systems", "Open Source", "Systemd", "Rust"]
 date: "2026-10-24"
-art: orbit
+art: code
+featured: true
+draft: false
 ---
 
 # GOFR — Glitchy's Opinionated Fedora Remix
