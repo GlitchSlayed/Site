@@ -291,8 +291,9 @@ export function EngineeringPlot({
       showLegend,
       sigFigs,
       theme: readTheme(),
+      interactionMode,
     });
-  }, [config.xAxis, config.yAxis, config.series, yScaleType, showLegend, sigFigs]);
+  }, [config.xAxis, config.yAxis, config.series, yScaleType, showLegend, sigFigs, interactionMode]);
 
   const buildSeries = useCallback((): any[] => {
     const series: any[] = [{}];
@@ -397,8 +398,10 @@ export function EngineeringPlot({
         }
       }
 
+      // uPlot caches series Path2D objects; width/points changes require a
+      // path rebuild to become visible.
       if (needsRedraw && inst.redraw) {
-        inst.redraw();
+        inst.redraw(true);
       }
     } catch (e) {
       console.warn('[EngineeringPlot] applySettings partial failure:', e);
@@ -451,11 +454,12 @@ export function EngineeringPlot({
       series: buildSeries(),
       axes: buildAxes(),
       scales: {
-        x: { time: false, min: xMin ?? xRange[0], max: xMax ?? xRange[1] },
+        // Autoscale to data by default. Manual limits (from settings) override.
+        x: { time: false, ...(xMin != null ? { min: xMin } : {}), ...(xMax != null ? { max: xMax } : {}) },
         y: {
           distr: yScaleType === 'log' ? DISTR_LOGARITHMIC : DISTR_LINEAR,
-          min: yMin ?? yRange[0],
-          max: yMax ?? yRange[1],
+          ...(yMin != null ? { min: yMin } : {}),
+          ...(yMax != null ? { max: yMax } : {}),
         },
       },
       cursor: {
@@ -532,12 +536,11 @@ export function EngineeringPlot({
     };
 
     if (config.xAxis.range) {
-      opts.scales.x.min = xMin ?? config.xAxis.range[0];
-      opts.scales.x.max = xMax ?? config.xAxis.range[1];
+      // config.range documents the author-intended span but autoscale wins by
+      // default. Manual limits set via settings take precedence.
     }
     if (config.yAxis.range) {
-      opts.scales.y.min = yMin ?? config.yAxis.range[0];
-      opts.scales.y.max = yMax ?? config.yAxis.range[1];
+      // same as above
     }
 
     try {
@@ -846,24 +849,24 @@ export function EngineeringPlot({
 
   const handleResetView = useCallback(() => {
     const inst = chartInstanceRef.current;
-    if (!inst || !inst.setScale) return;
+    if (!inst) return;
     try {
-      if (config.xAxis.range) {
-        inst.setScale('x', { min: config.xAxis.range[0], max: config.xAxis.range[1] });
-      }
-      if (config.yAxis.range) {
-        inst.setScale('y', { min: config.yAxis.range[0], max: config.yAxis.range[1] });
-      }
+      // Clear manual limits so the graph autoscales to fit the data.
       setXMin(null);
       setXMax(null);
       setYMin(null);
       setYMax(null);
+      const validation = validateData(config.series);
+      if (validation.valid && inst.setData) {
+        // resetScales=true forces uPlot to autoscale both axes to the data.
+        inst.setData(validation.data as unknown as uPlot.AlignedData, true);
+      }
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to reset view');
       console.error('[EngineeringPlot] Reset view failed:', err);
       setInitError(err);
     }
-  }, [config.xAxis, config.yAxis]);
+  }, [validateData, config.series]);
 
   const handleAutoscale = useCallback(() => {
     const inst = chartInstanceRef.current;

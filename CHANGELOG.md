@@ -11,6 +11,9 @@ All notable changes to the MDX visualization system.
 - **Log-scale axis bug**: uPlot scales previously set a bogus `type` property; they now use uPlot's `distr: Logarithmic` correctly.
 - **Chart teardown**: the uPlot instance is destroyed on unmount and on structural change, preventing duplicate canvases and leaked ResizeObservers/event listeners.
 - **Stale closures / refs**: config, series visibility, and axis bounds are read from refs so effects never depend on inline prop object identity.
+- **Zoom mode**: switching to Zoom now recreates the chart so uPlot's drag-to-zoom `select` is enabled; Inspect/Pan/Zoom modes all function.
+- **Graph settings**: options (grid, markers, line width, series visibility, axis bounds) now visibly apply — uPlot path cache is rebuilt on width/marker changes so the rendering updates.
+- **Autoscale by default**: graphs autoscale to fit data on initial load and on Reset View; manual axis bounds from settings override autoscale.
 
 ### Changed
 

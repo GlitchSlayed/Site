@@ -344,12 +344,12 @@ describe('EngineeringPlot controls', () => {
     expect(onPointSelect.mock.calls[0][3]).toBe('comparison');
   });
 
-  it('reset view applies configured axis limits', async () => {
+  it('reset view clears manual limits and autoscales to data', async () => {
     const { container } = renderPlot();
     await flush();
     await waitForChart();
     const instance = createdInstances[0];
-    const setScaleSpy = vi.spyOn(instance, 'setScale');
+    const setDataSpy = vi.spyOn(instance, 'setData');
 
     act(() => {
       const button = Array.from(container.querySelectorAll('.eng-plot-mode-group button')).find(
@@ -359,8 +359,8 @@ describe('EngineeringPlot controls', () => {
     });
     await flush();
 
-    expect(setScaleSpy).toHaveBeenCalled();
-    setScaleSpy.mockRestore();
+    expect(setDataSpy).toHaveBeenLastCalledWith(expect.anything(), true);
+    setDataSpy.mockRestore();
   });
 
   it('autoscale fits axes to data and clears manual limits', async () => {
