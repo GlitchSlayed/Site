@@ -101,6 +101,9 @@ export interface ComparisonRow {
   unit?: string;
   values: (string | number)[];
   highlight?: boolean;
+  // Optional explicit percentage annotations per column index.
+  // Format: "(+15.1%)", "(-8.4%)", "(±2.0%)". Not auto-calculated.
+  annotations?: Record<number, string>;
 }
 
 export interface EngineeringComparisonConfig {

@@ -3,10 +3,9 @@
 // All calculations remain in the model layer; this component only renders.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
-import {
-  clamp,
-  isFiniteNumber,
-} from '../../../lib/engineering/validation';
+import { isFiniteNumber, significantFigures } from '../../../lib/engineering/validation';
+import { formatEngineering } from '../../../lib/engineering/validation';
+import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
 
 function isDark(): boolean {
   return typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
@@ -28,17 +27,78 @@ interface EngineeringPlotProps {
   config: EngineeringPlotConfig;
   className?: string;
   height?: number;
+  onPointSelect?: (x: number, y: number, seriesIndex: number) => void;
+  inspectable?: boolean;
+  inspectorSeriesIndex?: number;
 }
 
-export function EngineeringPlot({ config, className, height = 400 }: EngineeringPlotProps) {
-  // Separate the library constructor from the instantiated chart.
+const ENGINEERING_PREFIXES: Record<number, string> = {
+  '-12': 'p',
+  '-9': 'n',
+  '-6': 'µ',
+  '-3': 'm',
+  '0': '',
+  '3': 'k',
+  '6': 'M',
+  '9': 'G',
+  '12': 'T',
+};
+
+/** Format a tick label with SI prefixes and appropriate precision. */
+function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
+  if (!Number.isFinite(val)) return '';
+  if (val === 0) return '0';
+
+  const abs = Math.abs(val);
+  let formatted: string;
+
+  // For very small or very large values, use engineering notation.
+  if (abs < 0.01 || abs >= 1000) {
+    const exponent = Math.floor(Math.log10(abs) / 3) * 3;
+    const scaled = val / Math.pow(10, exponent);
+    const prefix = ENGINEERING_PREFIXES[exponent] ?? `×10^${exponent}`;
+    const sig = significantFigures(scaled, 3);
+    formatted = `${sig}${prefix}`;
+  } else {
+    // Use up to 4 significant figures, dropping trailing zeros.
+    const sig = significantFigures(val, 4);
+    formatted = sig.toString();
+    // Ensure at least one decimal place for non-integers.
+    if (!Number.isInteger(sig) && !formatted.includes('.')) {
+      formatted = sig.toFixed(1);
+    }
+  }
+
+  return formatted;
+}
+
+export function EngineeringPlot({
+  config,
+  className,
+  height = 400,
+  onPointSelect,
+  inspectable = false,
+  inspectorSeriesIndex = 0,
+}: EngineeringPlotProps) {
   const uPlotConstructorRef = useRef<any>(null);
   const chartInstanceRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartStructureRef = useRef<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [initError, setInitError] = useState<Error | null>(null);
   const mountedRef = useRef(false);
+  const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number; seriesIndex: number; seriesLabel: string } | null>(null);
+
+  const handlePointSelect = useCallback(
+    (x: number, y: number, seriesIndex: number) => {
+      const series = config.series;
+      const s = series[seriesIndex];
+      setSelectedPoint({ x, y, seriesIndex, seriesLabel: s?.label ?? 'Series' });
+      onPointSelect?.(x, y, seriesIndex);
+    },
+    [config.series, onPointSelect],
+  );
 
   const load = useCallback(async () => {
     if (uPlotConstructorRef.current) {
@@ -46,7 +106,6 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       return;
     }
     try {
-      // String-literal dynamic import so Vite code-splits uPlot into its own chunk.
       const mod = await import('uplot');
       const uPlot = (mod.default ?? mod) as any;
       uPlotConstructorRef.current = uPlot;
@@ -62,7 +121,6 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     }
   }, []);
 
-  // Validate and sanitize plot data before passing to uPlot.
   const validateData = useCallback(
     (series: PlotSeries[]): { valid: boolean; data: number[][]; error: string | null } => {
       if (!series.length) {
@@ -74,35 +132,52 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
         return { valid: false, data: [], error: 'No X data points.' };
       }
 
-      // Ensure X is sorted ascending.
-      const xSorted = [...x].sort((a, b) => a - b);
-      const isSorted = x.every((v, i) => i === 0 || v >= x[i - 1]);
+      const referenceX = x;
+      for (const s of series) {
+        if (!s.x || s.x.length !== referenceX.length) {
+          console.error(
+            `[EngineeringPlot] Series "${s.label}" X length (${s.x?.length ?? 0}) ` +
+              `does not match reference X length (${referenceX.length}).`,
+          );
+          return {
+            valid: false,
+            data: [],
+            error: `X coordinate mismatch for series "${s.label}".`,
+          };
+        }
+        for (let i = 0; i < referenceX.length; i++) {
+          if (s.x[i] !== referenceX[i]) {
+            console.error(
+              `[EngineeringPlot] Series "${s.label}" X values diverge from reference at index ${i}.`,
+            );
+            return {
+              valid: false,
+              data: [],
+              error: `X coordinate mismatch for series "${s.label}".`,
+            };
+          }
+        }
+      }
+
+      const pairs = referenceX.map((xi, i) => ({ x: xi, i }));
+      pairs.sort((a, b) => a.x - b.x);
+      const xSorted = pairs.map((p) => p.x);
+      const sortedIndices = pairs.map((p) => p.i);
+      const isSorted = sortedIndices.every((idx, i) => idx === i);
       if (!isSorted) {
-        console.warn('[EngineeringPlot] X values were not sorted; sorted for uPlot.');
+        console.warn('[EngineeringPlot] X/Y pairs were not sorted; sorted together for uPlot.');
       }
 
       const data: number[][] = [xSorted];
 
       for (const s of series) {
-        if (!s.y || s.y.length !== xSorted.length) {
-          console.error(
-            `[EngineeringPlot] Series "${s.label}" Y length (${s.y?.length ?? 0}) ` +
-              `does not match X length (${xSorted.length}).`,
-          );
-          return {
-            valid: false,
-            data: [],
-            error: `Data length mismatch for series "${s.label}".`,
-          };
-        }
-
         const ySanitized: number[] = [];
-        for (let i = 0; i < xSorted.length; i++) {
-          const y = s.y[i];
+        for (const idx of sortedIndices) {
+          const y = s.y[idx];
           if (!isFiniteNumber(y)) {
-            ySanitized.push(0);
+            ySanitized.push(NaN);
             console.warn(
-              `[EngineeringPlot] Series "${s.label}" has nonfinite Y at index ${i}; replaced with 0.`,
+              `[EngineeringPlot] Series "${s.label}" has nonfinite Y at index ${idx}; using NaN gap.`,
             );
           } else {
             ySanitized.push(y);
@@ -115,6 +190,19 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     },
     [],
   );
+
+  const getStructureKey = useCallback((cfg: EngineeringPlotConfig): string => {
+    return JSON.stringify({
+      xAxis: cfg.xAxis,
+      yAxis: cfg.yAxis,
+      series: cfg.series.map((s) => ({ label: s.label, mode: s.mode, color: s.color })),
+      scales: {
+        x: cfg.xAxis.range,
+        y: cfg.yAxis.range,
+        type: cfg.yAxis.type,
+      },
+    });
+  }, []);
 
   const buildSeries = (): any[] => {
     const series: any[] = [{}];
@@ -138,8 +226,22 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     const xTitle = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
     const yTitle = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
     return [
-      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 18, label: { text: xTitle, rotate: 0 } }, // bottom x axis
-      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 36, label: { text: yTitle, rotate: 0 } }, // left y axis
+      {
+        show: true,
+        stroke: textColor(),
+        grid: { stroke: gridColor() },
+        size: 22,
+        label: xTitle,
+        tick: (self: any, val: number) => formatTick(val, config.xAxis.type),
+      },
+      {
+        show: true,
+        stroke: textColor(),
+        grid: { stroke: gridColor() },
+        size: 44,
+        label: yTitle,
+        tick: (self: any, val: number) => formatTick(val, config.yAxis.type),
+      },
     ];
   };
 
@@ -148,17 +250,8 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     const container = containerRef.current;
     if (!uPlot || !container) return;
 
-    // Abort if container has no width yet; will retry on resize.
     const width = container.clientWidth;
-    if (width <= 0) {
-      return;
-    }
-
-    // Destroy any previous instance.
-    if (chartInstanceRef.current && chartInstanceRef.current.destroy) {
-      chartInstanceRef.current.destroy();
-      chartInstanceRef.current = null;
-    }
+    if (width <= 0) return;
 
     const validation = validateData(config.series);
     if (!validation.valid) {
@@ -166,6 +259,24 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       return;
     }
     setInitError(null);
+
+    const inst = chartInstanceRef.current;
+    const structureKey = getStructureKey(config);
+
+    // If chart exists and structure is unchanged, just update data.
+    if (inst && inst.setData && chartStructureRef.current === structureKey) {
+      try {
+        inst.setData(validation.data, false);
+        return;
+      } catch {
+        // Fall through to full reinitialization.
+      }
+    }
+
+    // Destroy previous instance.
+    if (inst && inst.destroy) {
+      inst.destroy();
+    }
 
     const opts: any = {
       width,
@@ -187,7 +298,6 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       legend: { show: config.legend !== false, width: 240, live: true },
     };
 
-    // Apply axis ranges if configured.
     if (config.xAxis.range) {
       opts.scales.x.min = config.xAxis.range[0];
       opts.scales.x.max = config.xAxis.range[1];
@@ -198,16 +308,17 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     }
 
     try {
-      const inst = new uPlot(opts, validation.data, container);
-      chartInstanceRef.current = inst;
+      const newInst = new uPlot(opts, validation.data, container);
+      chartInstanceRef.current = newInst;
+      chartStructureRef.current = structureKey;
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to initialize plot');
       console.error('[EngineeringPlot] uPlot construction failed:', err);
       setInitError(err);
     }
-  }, [config, height, validateData]);
+  }, [config, height, validateData, getStructureKey]);
 
-  // Theme change redraw.
+  // Theme change: update colors without destroying the chart.
   useEffect(() => {
     if (!mountedRef.current || !chartInstanceRef.current) return;
     const observer = new MutationObserver(() => {
@@ -227,6 +338,7 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       }
       chartInstanceRef.current = null;
       uPlotConstructorRef.current = null;
+      chartStructureRef.current = null;
     };
   }, [load]);
 
@@ -245,11 +357,62 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     });
     resizeObserver.observe(containerRef.current);
     window.addEventListener('resize', onResize);
+
+    let inspectContainer: HTMLDivElement | null = null;
+
+    // Click-to-inspect: find nearest data point on canvas click.
+    if (inspectable) {
+      inspectContainer = containerRef.current;
+      const handleCanvasClick = (event: MouseEvent) => {
+        const inst = chartInstanceRef.current;
+        const container = inspectContainer;
+        if (!inst || !container) return;
+        const series = config.series;
+        if (!series.length) return;
+
+        const xData = series[0].x;
+        const rect = container.getBoundingClientRect();
+        const plotLeft = 44; // y-axis width from buildAxes
+        const plotWidth = rect.width - plotLeft - 20;
+
+        const clickX = event.clientX - rect.left;
+        const scaleX = inst.scale.x;
+        const xRange = scaleX.range;
+        const dataX =
+          xRange.min +
+          Math.max(0, clickX - plotLeft) / plotWidth * (xRange.max - xRange.min);
+
+        // Find nearest X index in sorted data.
+        let nearestIdx = 0;
+        let minDist = Infinity;
+        for (let i = 0; i < xData.length; i++) {
+          const dist = Math.abs(xData[i] - dataX);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestIdx = i;
+          }
+        }
+
+        const primarySeriesIndex = inspectorSeriesIndex ?? 0;
+        const primary = series[primarySeriesIndex];
+        if (primary) {
+          handlePointSelect(xData[nearestIdx], primary.y[nearestIdx], primarySeriesIndex);
+        }
+      };
+
+      inspectContainer.addEventListener('click', handleCanvasClick);
+      return () => {
+        inspectContainer?.removeEventListener('click', handleCanvasClick);
+        resizeObserver.disconnect();
+        window.removeEventListener('resize', onResize);
+      };
+    }
+
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
     };
-  }, [loaded, initChart, height]);
+  }, [loaded, initChart, height, inspectable, inspectorSeriesIndex, config.series, onPointSelect]);
 
   const onResize = () => {
     const inst = chartInstanceRef.current;
@@ -371,6 +534,14 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
           Export CSV
         </button>
       </div>
+      {inspectable && selectedPoint && (
+        <EngineeringPointInspector
+          selected={selectedPoint}
+          metrics={[]}
+          metricValues={{}}
+          onClear={() => setSelectedPoint(null)}
+        />
+      )}
     </section>
   );
 }

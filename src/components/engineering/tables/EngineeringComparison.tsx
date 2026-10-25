@@ -1,7 +1,10 @@
-// Engineering comparison table: multiple configurations, units, percentage
-// change vs a reference, sorting, expandable notes, CSV export.
+// Engineering comparison table: multiple configurations, units, explicit
+// percentage annotations, sorting, expandable notes, CSV export.
+//
+// Percentage differences are NOT auto-calculated. They must be provided
+// explicitly via row.annotations[columnIndex] (e.g. "(+15.1%)").
 import { useMemo, useState } from 'react';
-import type { EngineeringComparisonConfig } from '../../../lib/engineering/types';
+import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { significantFigures } from '../../../lib/engineering/validation';
 
 interface EngineeringComparisonProps {
@@ -53,19 +56,22 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
     return rows;
   }, [config.rows, sortBy, sortDirection]);
 
-  const percentageChange = (value: number | string, ref: number | string): string | null => {
-    const v = Number(value);
-    const r = Number(ref);
-    if (!Number.isFinite(v) || !Number.isFinite(r)) return null;
-    if (Math.abs(r) < 1e-9) return null; // zero reference: percentage undefined
-    return `${((v - r) / r) * 100 >= 0 ? '+' : ''}${significantFigures(((v - r) / r) * 100, 3)}%`;
-  };
-
   const formatCell = (value: string | number): string => {
     if (typeof value === 'number' && Number.isFinite(value)) {
       return significantFigures(value, 4).toString();
     }
     return String(value);
+  };
+
+  // Extract explicit percentage annotation for a cell, if provided.
+  const getAnnotation = (row: ComparisonRow, colIndex: number): string | null => {
+    const ann = row.annotations?.[colIndex];
+    if (!ann) return null;
+    // Validate the annotation looks like a percentage: (+15.1%), (-8.4%), (±2.0%)
+    if (/^\([+-]?\d+(\.\d+)?%\)$/.test(ann) || /^\(±\d+(\.\d+)?%\)$/.test(ann)) {
+      return ann;
+    }
+    return null;
   };
 
   return (
@@ -96,28 +102,31 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
             </tr>
           </thead>
           <tbody>
-            {sortedRows.map((row) => {
+            {sortedRows.map((row, rowIdx) => {
+              const isAlt = rowIdx % 2 === 1;
               const highlightDiff = row.highlight && referenceIndex >= 0;
               return (
-                <tr key={row.id} className="eng-comparison-row">
+                <tr
+                  key={row.id}
+                  className={`eng-comparison-row ${isAlt ? 'eng-row-alt' : ''}`}
+                >
                   <td className="eng-property-cell">{row.label}</td>
                   <td className="eng-unit-cell">{row.unit || '-'}</td>
                   {config.configurations.map((cfg, ci) => {
                     const isReference = cfg.id === referenceId;
-                    let cell = formatCell(row.values[ci]);
-                    let change: string | null = null;
-                    if (!isReference && config.showPercentageChange && referenceIndex >= 0) {
-                      change = percentageChange(row.values[ci], row.values[referenceIndex]);
-                    }
+                    const cell = formatCell(row.values[ci]);
+                    const annotation = getAnnotation(row, ci);
                     return (
                       <td
                         key={cfg.id}
                         className={`eng-value-cell ${isReference ? 'eng-reference-cell' : ''} ${
-                          highlightDiff && change ? 'eng-highlight' : ''
+                          highlightDiff ? 'eng-highlight' : ''
                         }`}
                       >
-                        {cell}
-                        {change && <span className="eng-percent-change"> ({change})</span>}
+                        <span className="eng-value-main">{cell}</span>
+                        {annotation && (
+                          <span className="eng-percent-annotation"> {annotation}</span>
+                        )}
                       </td>
                     );
                   })}
@@ -127,12 +136,6 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
           </tbody>
         </table>
       </div>
-
-      {config.showPercentageChange && referenceId && (
-        <p className="eng-comparison-note">
-          Percentage changes are relative to the <strong>{config.configurations.find((c) => c.id === referenceId)?.label}</strong> reference. Zero-valued references are excluded.
-        </p>
-      )}
 
       {config.notes && config.notes.length > 0 && (
         <div className="eng-comparison-notes">

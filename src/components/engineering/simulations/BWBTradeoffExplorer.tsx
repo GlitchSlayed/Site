@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
+import { formatPercentageChange } from '../../../lib/engineering/format';
 import { ParameterSet } from '../shared/ParameterSet';
 import { PresetSelector } from '../shared/PresetSelector';
 import { EquationExplorer } from '../equations/EquationExplorer';
@@ -61,13 +62,70 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
   const adjustable = model.compute(liveInputs);
 
   const rows: ComparisonRow[] = [
-    { id: 'totalMass', label: 'Total mass', unit: 'kg', values: [conventional.totalMass.value, adjustable.totalMass.value] },
-    { id: 'weight', label: 'Weight', unit: 'N', values: [conventional.weight.value, adjustable.weight.value] },
-    { id: 'cl', label: 'Lift coefficient C_L', unit: '-', values: [conventional.cl.value, adjustable.cl.value] },
-    { id: 'cd', label: 'Drag coefficient C_D', unit: '-', values: [conventional.cd.value, adjustable.cd.value] },
-    { id: 'ld', label: 'Lift-to-drag ratio L/D', unit: '-', values: [conventional.ld.value, adjustable.ld.value], highlight: true },
-    { id: 'drag', label: 'Drag', unit: 'N', values: [conventional.drag.value, adjustable.drag.value] },
-    { id: 'thrust', label: 'Thrust required', unit: 'N', values: [conventional.thrust.value, adjustable.thrust.value] },
+    {
+      id: 'totalMass',
+      label: 'Total mass',
+      unit: 'kg',
+      values: [conventional.totalMass.value, adjustable.totalMass.value],
+      ...(formatPercentageChange(adjustable.totalMass.value, conventional.totalMass.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.totalMass.value, conventional.totalMass.value)! } }
+        : {}),
+    },
+    {
+      id: 'weight',
+      label: 'Weight',
+      unit: 'N',
+      values: [conventional.weight.value, adjustable.weight.value],
+      ...(formatPercentageChange(adjustable.weight.value, conventional.weight.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.weight.value, conventional.weight.value)! } }
+        : {}),
+    },
+    {
+      id: 'cl',
+      label: 'Lift coefficient C_L',
+      unit: '-',
+      values: [conventional.cl.value, adjustable.cl.value],
+      ...(formatPercentageChange(adjustable.cl.value, conventional.cl.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.cl.value, conventional.cl.value)! } }
+        : {}),
+    },
+    {
+      id: 'cd',
+      label: 'Drag coefficient C_D',
+      unit: '-',
+      values: [conventional.cd.value, adjustable.cd.value],
+      ...(formatPercentageChange(adjustable.cd.value, conventional.cd.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.cd.value, conventional.cd.value)! } }
+        : {}),
+    },
+    {
+      id: 'ld',
+      label: 'Lift-to-drag ratio L/D',
+      unit: '-',
+      values: [conventional.ld.value, adjustable.ld.value],
+      highlight: true,
+      ...(formatPercentageChange(adjustable.ld.value, conventional.ld.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.ld.value, conventional.ld.value)! } }
+        : {}),
+    },
+    {
+      id: 'drag',
+      label: 'Drag',
+      unit: 'N',
+      values: [conventional.drag.value, adjustable.drag.value],
+      ...(formatPercentageChange(adjustable.drag.value, conventional.drag.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.drag.value, conventional.drag.value)! } }
+        : {}),
+    },
+    {
+      id: 'thrust',
+      label: 'Thrust required',
+      unit: 'N',
+      values: [conventional.thrust.value, adjustable.thrust.value],
+      ...(formatPercentageChange(adjustable.thrust.value, conventional.thrust.value)
+        ? { annotations: { 1: formatPercentageChange(adjustable.thrust.value, conventional.thrust.value)! } }
+        : {}),
+    },
   ];
 
   const comparisonConfig: EngineeringComparisonConfig = {
@@ -78,7 +136,6 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     ],
     rows,
     referenceConfigId: 'conventional',
-    showPercentageChange: true,
     sortable: true,
     notes: [
       {

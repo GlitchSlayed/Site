@@ -29,10 +29,14 @@ const yAxisForce: PlotAxis = {
   type: 'linear',
 };
 
-// Drag polar: sweep C_L, plot C_D
+// Drag polar: sweep C_L, plot C_D.
+// Uses the dedicated dragPolarModel which correctly takes C_L as input
+// and computes C_D = C_D,0 + k·C_L². Using aircraftPerformanceModel here
+// would be incorrect because that model recomputes C_L internally from
+// weight/velocity/area, ignoring any swept C_L value.
 registerPlotDefinition({
   id: 'aircraft.dragPolar',
-  modelId: aircraftPerformanceModel.id,
+  modelId: dragPolarModel.id,
   title: 'Drag Polar Comparison',
   description: 'C_D = C_D,0 + k·C_L² across lift coefficient.',
   sweepParam: 'cl',

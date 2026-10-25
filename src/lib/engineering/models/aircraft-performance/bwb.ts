@@ -155,10 +155,10 @@ export const aircraftPerformanceModel: EngineeringModel = {
       mass: 70000, structuralPenalty: 0, area: 300, span: 45, ar: 6.75, e: 0.8, cd0: 0.02, inducedCorrection: 1, rho: 1.225, velocity: 80,
     },
     bwbOptimistic: {
-      mass: 70000, structuralPenalty: 0.05, area: 450, span: 55, ar: 7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
+      mass: 70000, structuralPenalty: 0.05, area: 450, span: 55, ar: 6.7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
     },
     bwbPenalized: {
-      mass: 70000, structuralPenalty: 0.15, area: 450, span: 55, ar: 7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
+      mass: 70000, structuralPenalty: 0.15, area: 450, span: 55, ar: 6.7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
     },
   },
   compute(inputs: Record<string, number>) {
@@ -166,7 +166,7 @@ export const aircraftPerformanceModel: EngineeringModel = {
       mass = 70000,
       structuralPenalty = 0,
       area = 300,
-      ar = 9,
+      ar = 6.75,
       e = 0.8,
       cd0 = 0.02,
       inducedCorrection = 1,

@@ -86,6 +86,55 @@ describe('drag polar model', () => {
     const neg = dragPolarModel.compute({ cd0: 0.02, e: 0.8, ar: 10, cl: -0.8 }).cd.value;
     expect(pos).toBeCloseTo(neg, 6);
   });
+
+  it('drag polar: C_D = C_D,0 when C_L = 0', () => {
+    const out = dragPolarModel.compute({ cd0: 0.02, e: 0.8, ar: 10, cl: 0 });
+    expect(out.cd.value).toBeCloseTo(0.02, 6);
+  });
+
+  it('drag polar: C_D varies quadratically with C_L', () => {
+    const cd0 = 0.02;
+    const e = 0.8;
+    const ar = 10;
+    const k = 1 / (Math.PI * e * ar);
+
+    const cl1 = 0.5;
+    const cl2 = 1.0;
+    const cd1 = dragPolarModel.compute({ cd0, e, ar, cl: cl1 }).cd.value!;
+    const cd2 = dragPolarModel.compute({ cd0, e, ar, cl: cl2 }).cd.value!;
+
+    // C_D = C_D,0 + k * C_L^2
+    expect(cd1).toBeCloseTo(cd0 + k * cl1 * cl1, 6);
+    expect(cd2).toBeCloseTo(cd0 + k * cl2 * cl2, 6);
+
+    // Quadratic: doubling C_L should quadruple the k*C_L^2 term
+    const induced1 = cd1 - cd0;
+    const induced2 = cd2 - cd0;
+    expect(induced2).toBeCloseTo(induced1 * 4, 6);
+  });
+
+  it('drag polar: changing e, AR, or C_D,0 changes C_D', () => {
+    const base = { cd0: 0.02, e: 0.8, ar: 10, cl: 0.5 };
+    const baseCd = dragPolarModel.compute(base).cd.value!;
+
+    // Different e
+    const cdDiffE = dragPolarModel.compute({ ...base, e: 0.9 }).cd.value!;
+    expect(cdDiffE).not.toBeCloseTo(baseCd, 6);
+
+    // Different AR
+    const cdDiffAr = dragPolarModel.compute({ ...base, ar: 12 }).cd.value!;
+    expect(cdDiffAr).not.toBeCloseTo(baseCd, 6);
+
+    // Different C_D,0
+    const cdDiffCd0 = dragPolarModel.compute({ ...base, cd0: 0.03 }).cd.value!;
+    expect(cdDiffCd0).not.toBeCloseTo(baseCd, 6);
+  });
+
+  it('drag polar: higher e reduces induced drag', () => {
+    const cdLowE = dragPolarModel.compute({ cd0: 0.02, e: 0.6, ar: 10, cl: 0.8 }).cd.value!;
+    const cdHighE = dragPolarModel.compute({ cd0: 0.02, e: 0.9, ar: 10, cl: 0.8 }).cd.value!;
+    expect(cdHighE).toBeLessThan(cdLowE);
+  });
 });
 
 describe('aircraft performance model', () => {
@@ -154,6 +203,14 @@ describe('aircraft performance model', () => {
     expect(expectedAR).toBeCloseTo(6.75, 4);
     // The induced-drag factor uses the provided AR
     const k = 1 / (Math.PI * 0.8 * expectedAR);
+    expect(out.k.value).toBeCloseTo(k, 6);
+  });
+
+  it('default AR fallback matches parameter default (6.75)', () => {
+    // compute() destructures ar with default 6.75 (matching parameter default)
+    const { ar: _, ...withoutAr } = base;
+    const out = aircraftPerformanceModel.compute(withoutAr);
+    const k = 1 / (Math.PI * 0.8 * 6.75);
     expect(out.k.value).toBeCloseTo(k, 6);
   });
 
