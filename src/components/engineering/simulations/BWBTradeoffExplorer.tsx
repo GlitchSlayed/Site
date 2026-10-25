@@ -6,6 +6,7 @@ import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/en
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { formatPercentageChange } from '../../../lib/engineering/format';
+import { ErrorBoundary } from '../shared/ErrorBoundary';
 import { ParameterSet } from '../shared/ParameterSet';
 import { PresetSelector } from '../shared/PresetSelector';
 import { EquationExplorer } from '../equations/EquationExplorer';
@@ -165,88 +166,104 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
       <div className="eng-demo-controls">
         <div className="eng-demo-preset">
           <div className="eng-demo-preset-selector">
-            <PresetSelector model={model} scopeId={SCOPE_ID} label="Configuration" />
+            <ErrorBoundary fallback={<div>Configuration failed to load</div>}>
+              <PresetSelector model={model} scopeId={SCOPE_ID} label="Configuration" />
+            </ErrorBoundary>
           </div>
         </div>
         <div className="eng-demo-parameters-section">
           <h3 className="eng-parameters-label">Aircraft parameters</h3>
           <div className="eng-parameter-grid">
-            <ParameterSet model={model} scopeId={SCOPE_ID} />
+            <ErrorBoundary fallback={<div>Parameters failed to load</div>}>
+              <ParameterSet model={model} scopeId={SCOPE_ID} />
+            </ErrorBoundary>
           </div>
         </div>
       </div>
 
       <div className="eng-demo-equations">
-        <EquationExplorer
-          modelId={MODEL_ID}
-          equation={LIFT_EQUATION}
-          scopeId={SCOPE_ID}
-          resultOutputId="lift"
-          resultLabel="Lift (steady level flight)"
-          significantFigures={4}
-          showParameters={false}
-        />
+        <ErrorBoundary fallback={<div>Equation explorer failed to load</div>}>
+          <EquationExplorer
+            modelId={MODEL_ID}
+            equation={LIFT_EQUATION}
+            scopeId={SCOPE_ID}
+            resultOutputId="lift"
+            resultLabel="Lift (steady level flight)"
+            significantFigures={4}
+            showParameters={false}
+          />
+        </ErrorBoundary>
       </div>
 
       <div className="eng-demo-visualizations">
-        <ModelEngineeringPlot
-          modelId={MODEL_ID}
-          plotPresetId="aircraft.dragPolar"
-          scopeId={SCOPE_ID}
-          height={360}
-          inspectable
-          inspectorMetrics={[
-            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-            { id: 'k', label: 'Induced factor k', unit: '-', significantFigures: 4 },
-          ]}
-        />
-        <ModelEngineeringPlot
-          modelId={MODEL_ID}
-          plotPresetId="aircraft.ldVsSpeed"
-          scopeId={SCOPE_ID}
-          height={360}
-          inspectable
-          inspectorMetrics={[
-            { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
-            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-            { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-            { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
-          ]}
-        />
-        <ModelEngineeringPlot
-          modelId={MODEL_ID}
-          plotPresetId="aircraft.thrustVsSpeed"
-          scopeId={SCOPE_ID}
-          height={360}
-          inspectable
-          inspectorMetrics={[
-            { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
-            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-            { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-            { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
-          ]}
-        />
-        <ModelEngineeringPlot
-          modelId={MODEL_ID}
-          plotPresetId="aircraft.ldVsMassPenalty"
-          scopeId={SCOPE_ID}
-          height={360}
-          inspectable
-          inspectorMetrics={[
-            { id: 'structuralPenalty', label: 'Structural penalty Δm/m', unit: '-', significantFigures: 3 },
-            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-            { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-            { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
-          ]}
-        />
+        <ErrorBoundary fallback={<div>Drag polar plot failed to load</div>}>
+          <ModelEngineeringPlot
+            modelId={MODEL_ID}
+            plotPresetId="aircraft.dragPolar"
+            scopeId={SCOPE_ID}
+            height={360}
+            inspectable
+            inspectorMetrics={[
+              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+              { id: 'k', label: 'Induced factor k', unit: '-', significantFigures: 4 },
+            ]}
+          />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div>L/D vs airspeed plot failed to load</div>}>
+          <ModelEngineeringPlot
+            modelId={MODEL_ID}
+            plotPresetId="aircraft.ldVsSpeed"
+            scopeId={SCOPE_ID}
+            height={360}
+            inspectable
+            inspectorMetrics={[
+              { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
+              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+              { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+              { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+            ]}
+          />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div>Thrust vs airspeed plot failed to load</div>}>
+          <ModelEngineeringPlot
+            modelId={MODEL_ID}
+            plotPresetId="aircraft.thrustVsSpeed"
+            scopeId={SCOPE_ID}
+            height={360}
+            inspectable
+            inspectorMetrics={[
+              { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
+              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+              { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+              { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+            ]}
+          />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div>L/D vs mass penalty plot failed to load</div>}>
+          <ModelEngineeringPlot
+            modelId={MODEL_ID}
+            plotPresetId="aircraft.ldVsMassPenalty"
+            scopeId={SCOPE_ID}
+            height={360}
+            inspectable
+            inspectorMetrics={[
+              { id: 'structuralPenalty', label: 'Structural penalty Δm/m', unit: '-', significantFigures: 3 },
+              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+              { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+              { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+            ]}
+          />
+        </ErrorBoundary>
       </div>
 
       <div className="eng-demo-comparison">
-        <EngineeringComparison config={comparisonConfig} />
+        <ErrorBoundary fallback={<div>Comparison table failed to load</div>}>
+          <EngineeringComparison config={comparisonConfig} />
+        </ErrorBoundary>
       </div>
 
       <div className="eng-demo-assumptions">
