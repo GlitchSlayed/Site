@@ -3,6 +3,10 @@
 // All calculations remain in the model layer; this component only renders.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
+import {
+  clamp,
+  isFiniteNumber,
+} from '../../../lib/engineering/validation';
 
 function isDark(): boolean {
   return typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
@@ -33,6 +37,7 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
   const containerRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
+  const [initError, setInitError] = useState<Error | null>(null);
   const mountedRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -51,12 +56,67 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
         initChart();
       }
     } catch (error) {
-      setLoadError(error instanceof Error ? error : new Error('Failed to load plot library'));
+      const err = error instanceof Error ? error : new Error('Failed to load plot library');
+      console.error('[EngineeringPlot] uPlot import failed:', err);
+      setLoadError(err);
     }
   }, []);
 
+  // Validate and sanitize plot data before passing to uPlot.
+  const validateData = useCallback(
+    (series: PlotSeries[]): { valid: boolean; data: number[][]; error: string | null } => {
+      if (!series.length) {
+        return { valid: false, data: [], error: 'No data series configured.' };
+      }
+
+      const x = series[0].x;
+      if (!x.length) {
+        return { valid: false, data: [], error: 'No X data points.' };
+      }
+
+      // Ensure X is sorted ascending.
+      const xSorted = [...x].sort((a, b) => a - b);
+      const isSorted = x.every((v, i) => i === 0 || v >= x[i - 1]);
+      if (!isSorted) {
+        console.warn('[EngineeringPlot] X values were not sorted; sorted for uPlot.');
+      }
+
+      const data: number[][] = [xSorted];
+
+      for (const s of series) {
+        if (!s.y || s.y.length !== xSorted.length) {
+          console.error(
+            `[EngineeringPlot] Series "${s.label}" Y length (${s.y?.length ?? 0}) ` +
+              `does not match X length (${xSorted.length}).`,
+          );
+          return {
+            valid: false,
+            data: [],
+            error: `Data length mismatch for series "${s.label}".`,
+          };
+        }
+
+        const ySanitized: number[] = [];
+        for (let i = 0; i < xSorted.length; i++) {
+          const y = s.y[i];
+          if (!isFiniteNumber(y)) {
+            ySanitized.push(0);
+            console.warn(
+              `[EngineeringPlot] Series "${s.label}" has nonfinite Y at index ${i}; replaced with 0.`,
+            );
+          } else {
+            ySanitized.push(y);
+          }
+        }
+        data.push(ySanitized);
+      }
+
+      return { valid: true, data, error: null };
+    },
+    [],
+  );
+
   const buildSeries = (): any[] => {
-    // uPlot: series[0] is the shared x series (no label -> hidden from legend).
     const series: any[] = [{}];
     for (const s of config.series) {
       series.push({
@@ -78,8 +138,8 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     const xTitle = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
     const yTitle = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
     return [
-      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 16, label: { text: xTitle } }, // bottom x axis
-      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 34, label: { text: yTitle } }, // left y axis
+      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 18, label: { text: xTitle, rotate: 0 } }, // bottom x axis
+      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 36, label: { text: yTitle, rotate: 0 } }, // left y axis
     ];
   };
 
@@ -88,19 +148,25 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     const container = containerRef.current;
     if (!uPlot || !container) return;
 
+    // Abort if container has no width yet; will retry on resize.
+    const width = container.clientWidth;
+    if (width <= 0) {
+      return;
+    }
+
     // Destroy any previous instance.
     if (chartInstanceRef.current && chartInstanceRef.current.destroy) {
       chartInstanceRef.current.destroy();
       chartInstanceRef.current = null;
     }
 
-    const data: number[][] = [];
-    if (config.series.length) {
-      data.push([...config.series[0].x]);
-      for (const s of config.series) data.push([...s.y]);
+    const validation = validateData(config.series);
+    if (!validation.valid) {
+      setInitError(new Error(validation.error ?? 'Unknown plot error.'));
+      return;
     }
+    setInitError(null);
 
-    const width = container.clientWidth || 600;
     const opts: any = {
       width,
       height,
@@ -132,36 +198,19 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     }
 
     try {
-      const inst = new uPlot(opts, data, container);
+      const inst = new uPlot(opts, validation.data, container);
       chartInstanceRef.current = inst;
     } catch (error) {
-      setLoadError(error instanceof Error ? error : new Error('Failed to initialize plot'));
+      const err = error instanceof Error ? error : new Error('Failed to initialize plot');
+      console.error('[EngineeringPlot] uPlot construction failed:', err);
+      setInitError(err);
     }
-  }, [config, height]);
-
-  const updateChartData = useCallback(() => {
-    const inst = chartInstanceRef.current;
-    if (!inst || !inst.setData) return;
-
-    const data: number[][] = [];
-    if (config.series.length) {
-      data.push([...config.series[0].x]);
-      for (const s of config.series) data.push([...s.y]);
-    }
-
-    try {
-      inst.setData(data, false);
-    } catch {
-      // If setData fails, reinitialize.
-      initChart();
-    }
-  }, [config, initChart]);
+  }, [config, height, validateData]);
 
   // Theme change redraw.
   useEffect(() => {
     if (!mountedRef.current || !chartInstanceRef.current) return;
     const observer = new MutationObserver(() => {
-      // Rebuild axes/stroke colors reflect theme.
       initChart();
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -189,7 +238,7 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       const box = containerRef.current;
       if (!inst || !box) return;
       if (inst.setSize) {
-        inst.setSize(box.clientWidth || 600, height);
+        inst.setSize({ width: box.clientWidth || 600, height });
       } else {
         initChart();
       }
@@ -207,7 +256,7 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     const box = containerRef.current;
     if (!inst || !box) return;
     if (inst.setSize) {
-      inst.setSize(box.clientWidth || 600, height);
+      inst.setSize({ width: box.clientWidth || 600, height });
     } else {
       initChart();
     }
@@ -223,21 +272,17 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       if (config.yAxis.range) {
         inst.setScale('y', { min: config.yAxis.range[0], max: config.yAxis.range[1] });
       }
-    } catch {
-      // reset not supported; no-op
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to reset view');
+      console.error('[EngineeringPlot] Reset view failed:', err);
+      setInitError(err);
     }
-  };
-
-  const handleExportSvg = () => {
-    // uPlot does not provide toSVG(). SVG export is intentionally unavailable.
-    // Use PNG export instead.
   };
 
   const handleExportPng = () => {
     const inst = chartInstanceRef.current;
     if (!inst) return;
     try {
-      // uPlot renders to canvas; extract the canvas from the container.
       const canvas = containerRef.current?.querySelector('canvas');
       if (!canvas) return;
       const url = canvas.toDataURL('image/png');
@@ -247,8 +292,9 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch {
-      // PNG export not supported in this build.
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('PNG export failed');
+      console.error('[EngineeringPlot] PNG export failed:', err);
     }
   };
 
@@ -277,6 +323,7 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     return (
       <div className={`eng-plot eng-plot-error ${className || ''}`} role="alert" aria-live="polite">
         <p>Unable to load the interactive plot.</p>
+        <p className="eng-plot-error-detail">{loadError.message}</p>
         <button type="button" onClick={load} aria-label="Retry loading plot">
           Retry
         </button>
@@ -292,8 +339,17 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     );
   }
 
-  const xLabel = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
-  const yLabel = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
+  if (initError) {
+    return (
+      <div className={`eng-plot eng-plot-error ${className || ''}`} role="alert" aria-live="polite">
+        <p>Unable to render the interactive plot.</p>
+        <p className="eng-plot-error-detail">{initError.message}</p>
+        <button type="button" onClick={initChart} aria-label="Retry rendering plot">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
@@ -304,19 +360,12 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
         style={{ width: '100%', height, position: 'relative' }}
         aria-hidden="true"
       />
-      <div className="eng-plot-axes">
-        <span className="eng-plot-axislabel eng-plot-yaxislabel">{yLabel}</span>
-        <span className="eng-plot-axislabel eng-plot-xaxislabel">{xLabel}</span>
-      </div>
       <div className="eng-plot-actions">
         <button type="button" onClick={handleResetView} aria-label="Reset zoom and pan">
           Reset view
         </button>
         <button type="button" onClick={handleExportPng} aria-label="Export plot as PNG">
           Export PNG
-        </button>
-        <button type="button" onClick={handleExportSvg} aria-label="Export plot as SVG" disabled>
-          Export SVG (not supported)
         </button>
         <button type="button" onClick={handleExportCsv} aria-label="Export data as CSV">
           Export CSV

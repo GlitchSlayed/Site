@@ -2,12 +2,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import katex from 'katex';
 import type { EngineeringOutputValue } from '../../../lib/engineering/types';
-import { formatEngineering, significantFigures } from '../../../lib/engineering/validation';
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { ParameterSet } from '../shared/ParameterSet';
 import { EngineeringPlot } from '../plots/EngineeringPlot';
 import type { EngineeringPlotConfig } from '../../../lib/engineering/types';
+import { formatResult } from '../../../lib/engineering/format';
 
 interface EquationExplorerProps {
   modelId: string;
@@ -89,16 +89,13 @@ export function EquationExplorer({
 
   const result = outputs[resultOutputId];
 
-  const formatResult = (value: number | undefined): string => {
-    if (value === undefined || !Number.isFinite(value)) return '—';
-    const out = outputs[resultOutputId];
-    const figs = out?.significantFigures ?? sigFigs;
-    if (out?.engineeringNotation) return formatEngineering(value, figs);
-    return significantFigures(value, figs).toString();
-  };
-
-  const unit = result?.unit;
-  const symbol = result?.symbol;
+  const formatted = formatResult({
+    value: result?.value,
+    unit: result?.unit,
+    label: result?.label,
+    significantFigures: result?.significantFigures ?? sigFigs,
+    engineeringNotation: result?.engineeringNotation,
+  });
 
   return (
     <section className={`eng-equation-explorer ${className || ''}`} aria-label="Equation explorer">
@@ -121,9 +118,8 @@ export function EquationExplorer({
         <div className="eng-equation-result">
           <h4>Result</h4>
           <div className="eng-result-value">
-            <span className="eng-result-number">{formatResult(result?.value)}</span>
-            {symbol && <span className="eng-result-symbol">{symbol}</span>}
-            {unit && <span className="eng-result-unit">[{unit}]</span>}
+            <span className="eng-result-number">{formatted.value}</span>
+            {formatted.unit && <span className="eng-result-unit">[{formatted.unit}]</span>}
           </div>
           {result?.label && <p className="eng-result-label">{result.label}</p>}
           {!result && !model ? <p className="eng-result-empty">No result available.</p> : null}

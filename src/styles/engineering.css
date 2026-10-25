@@ -379,13 +379,6 @@
   color: var(--foreground);
 }
 
-.eng-plot-axes {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: var(--mono);
-  margin: 6px 0 0 0;
-}
-
 /* Comparison table */
 
 .eng-comparison-wrapper {

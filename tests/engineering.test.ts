@@ -238,7 +238,6 @@ describe('unit conversions', () => {
 
 describe('model registry', () => {
   it('lists all registered models', () => {
-    const models = [liftModel.id, dragPolarModel.id, aircraftPerformanceModel.id];
     expect(getModel(liftModel.id)).toBeDefined();
     expect(getModel(dragPolarModel.id)).toBeDefined();
     expect(getModel(aircraftPerformanceModel.id)).toBeDefined();
