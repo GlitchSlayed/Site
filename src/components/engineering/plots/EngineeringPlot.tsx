@@ -1,11 +1,10 @@
 // Interactive scientific plot built on uPlot, loaded lazily only when visible.
 // uPlot has no eval/new-Function dependency, so it works under strict CSP.
 // All calculations remain in the model layer; this component only renders.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
 import { isFiniteNumber, significantFigures } from '../../../lib/engineering/validation';
-import { formatEngineering } from '../../../lib/engineering/validation';
-import { formatResult, MAX_DECIMALS } from '../../../lib/engineering/format';
+import { formatResult } from '../../../lib/engineering/format';
 import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
 
 type InteractionMode = 'inspect' | 'zoom' | 'pan';
@@ -50,7 +49,7 @@ const ENGINEERING_PREFIXES: Record<number, string> = {
 };
 
 /** Format a tick label with SI prefixes and appropriate precision.
- *  Never exceeds MAX_DECIMALS decimal places. */
+ *  Never exceeds 5 decimal places. */
 function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
   if (!Number.isFinite(val)) return '';
   if (val === 0) return '0';
@@ -58,7 +57,6 @@ function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
   const abs = Math.abs(val);
   let formatted: string;
 
-  // For very small or very large values, use engineering notation with SI prefix.
   if (abs < 0.01 || abs >= 1000) {
     const exponent = Math.floor(Math.log10(abs) / 3) * 3;
     const scaled = val / Math.pow(10, exponent);
@@ -66,10 +64,8 @@ function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
     const sig = significantFigures(scaled, 3);
     formatted = `${sig}${prefix}`;
   } else {
-    // Use up to 4 significant figures, respecting MAX_DECIMALS cap.
     const sig = significantFigures(val, 4);
-    const decimalCap = Math.pow(10, MAX_DECIMALS);
-    const capped = Math.round(sig * decimalCap) / decimalCap;
+    const capped = Math.round(sig * 100000) / 100000;
     formatted = capped.toString();
     if (!Number.isInteger(capped) && !formatted.includes('.')) {
       formatted = capped.toFixed(1);
@@ -79,7 +75,7 @@ function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
   return formatted;
 }
 
-/** Estimate the width needed for an axis title string. */
+/** Estimate text width using canvas font metrics. */
 function measureTextWidth(text: string, fontSize: number): number {
   if (typeof document === 'undefined') return text.length * fontSize * 0.6;
   const canvas = document.createElement('canvas');
@@ -99,14 +95,18 @@ export function EngineeringPlot({
   inspectorMetrics,
   inspectorMetricValues,
 }: EngineeringPlotProps) {
+  // Library constructor (loaded once, mount-only).
   const uPlotConstructorRef = useRef<any>(null);
+  // Chart instance (owned by the chart lifecycle effect).
   const chartInstanceRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const chartStructureRef = useRef<string | null>(null);
+
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [initError, setInitError] = useState<Error | null>(null);
-  const mountedRef = useRef(false);
+  const [retryCount, setRetryCount] = useState(0);
+
   const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number; seriesIndex: number; seriesLabel: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
@@ -118,13 +118,20 @@ export function EngineeringPlot({
   const [showMarkers, setShowMarkers] = useState(false);
   const [lineWidth, setLineWidth] = useState(2);
   const [showLegend, setShowLegend] = useState(true);
-  const [hoverReadout, setHoverReadout] = useState<{ x: string; y: string } | null>(null);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('inspect');
   const [seriesVisibility, setSeriesVisibility] = useState<Record<string, boolean>>({});
+  const [hoverReadout, setHoverReadout] = useState<{ x: string; y: string; label: string; color: string } | null>(null);
+
+  // Normalized tooltip setting.
+  const tooltipsEnabled = config.tooltips !== false;
 
   // Axis size refs for dynamic measurement.
   const xAxisSizeRef = useRef(24);
   const yAxisSizeRef = useRef(48);
+
+  // Pan state.
+  const panStateRef = useRef<{ dragging: boolean; startX: number; startMin: number; startMax: number } | null>(null);
+  const lastHoverIdxRef = useRef<number | null>(null);
 
   const handlePointSelect = useCallback(
     (x: number, y: number, seriesIndex: number) => {
@@ -137,27 +144,40 @@ export function EngineeringPlot({
     [config.series, interactionMode, onPointSelect],
   );
 
-  const load = useCallback(async () => {
-    if (uPlotConstructorRef.current) {
-      setLoaded(true);
-      return;
-    }
-    try {
-      const mod = await import('uplot');
-      const uPlot = (mod.default ?? mod) as any;
-      uPlotConstructorRef.current = uPlot;
-      setLoaded(true);
-      setLoadError(null);
-      if (mountedRef.current && containerRef.current) {
-        initChart();
-      }
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Failed to load plot library');
-      console.error('[EngineeringPlot] uPlot import failed:', err);
-      setLoadError(err);
-    }
+  // -----------------------------------------------------------------------
+  // 1. Library loading effect (mount-only, stable).
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    import('uplot')
+      .then((module: any) => {
+        if (cancelled) return;
+        uPlotConstructorRef.current = module.default ?? module;
+        setLoaded(true);
+        setLoadError(null);
+      })
+      .catch((error: any) => {
+        if (!cancelled) {
+          const err = error instanceof Error ? error : new Error('Failed to load plot library');
+          console.error('[EngineeringPlot] uPlot import failed:', err);
+          setLoadError(err);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [retryCount]);
+
+  const retryLoad = useCallback(() => {
+    setRetryCount((c) => c + 1);
+    setLoadError(null);
   }, []);
 
+  // -----------------------------------------------------------------------
+  // 2. Chart lifecycle effect (separate from library loading).
+  // -----------------------------------------------------------------------
   const validateData = useCallback(
     (series: PlotSeries[]): { valid: boolean; data: number[][]; error: string | null } => {
       if (!series.length) {
@@ -172,26 +192,11 @@ export function EngineeringPlot({
       const referenceX = x;
       for (const s of series) {
         if (!s.x || s.x.length !== referenceX.length) {
-          console.error(
-            `[EngineeringPlot] Series "${s.label}" X length (${s.x?.length ?? 0}) ` +
-              `does not match reference X length (${referenceX.length}).`,
-          );
-          return {
-            valid: false,
-            data: [],
-            error: `X coordinate mismatch for series "${s.label}".`,
-          };
+          return { valid: false, data: [], error: `X coordinate mismatch for series "${s.label}".` };
         }
         for (let i = 0; i < referenceX.length; i++) {
           if (s.x[i] !== referenceX[i]) {
-            console.error(
-              `[EngineeringPlot] Series "${s.label}" X values diverge from reference at index ${i}.`,
-            );
-            return {
-              valid: false,
-              data: [],
-              error: `X coordinate mismatch for series "${s.label}".`,
-            };
+            return { valid: false, data: [], error: `X coordinate mismatch for series "${s.label}".` };
           }
         }
       }
@@ -200,10 +205,6 @@ export function EngineeringPlot({
       pairs.sort((a, b) => a.x - b.x);
       const xSorted = pairs.map((p) => p.x);
       const sortedIndices = pairs.map((p) => p.i);
-      const isSorted = sortedIndices.every((idx, i) => idx === i);
-      if (!isSorted) {
-        console.warn('[EngineeringPlot] X/Y pairs were not sorted; sorted together for uPlot.');
-      }
 
       const data: number[][] = [xSorted];
 
@@ -230,15 +231,12 @@ export function EngineeringPlot({
       xAxis: cfg.xAxis,
       yAxis: cfg.yAxis,
       series: cfg.series.map((s) => ({ label: s.label, mode: s.mode, color: s.color })),
-      scales: {
-        x: cfg.xAxis.range,
-        y: cfg.yAxis.range,
-        type: cfg.yAxis.type,
-      },
+      scales: { x: cfg.xAxis.range, y: cfg.yAxis.range, type: cfg.yAxis.type },
+      settings: { showGrid, yScaleType, lineWidth, showMarkers, showLegend },
     });
-  }, []);
+  }, [showGrid, yScaleType, lineWidth, showMarkers, showLegend]);
 
-  const buildSeries = (): any[] => {
+  const buildSeries = useCallback((): any[] => {
     const series: any[] = [{}];
     for (const s of config.series) {
       const visible = seriesVisibility[s.id] !== false;
@@ -256,22 +254,19 @@ export function EngineeringPlot({
       });
     }
     return series;
-  };
+  }, [config.series, seriesVisibility, lineWidth, showMarkers]);
 
-  const buildAxes = (): any[] => {
+  const buildAxes = useCallback((): any[] => {
     const xTitle = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
     const yTitle = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
 
-    // Dynamically measure axis sizes based on content.
     const xAxisSize = Math.max(
       24,
-      measureTextWidth(xTitle, 13) / 2 + 14,
-      measureTextWidth(formatTick(config.xAxis.range?.[0] ?? 0, config.xAxis.type), 11) + 6,
+      measureTextWidth(xTitle, 12) * 0.5 + 14,
     );
     const yAxisSize = Math.max(
       48,
-      measureTextWidth(yTitle, 13) / 2 + 14,
-      measureTextWidth(formatTick(config.yAxis.range?.[0] ?? 0, yScaleType), 11) + 6,
+      measureTextWidth(yTitle, 12) * 0.5 + 14,
     );
     xAxisSizeRef.current = xAxisSize;
     yAxisSizeRef.current = yAxisSize;
@@ -280,7 +275,7 @@ export function EngineeringPlot({
       {
         show: true,
         stroke: textColor(),
-        grid: { stroke: showGrid ? gridColor() : '#0000' },
+        grid: { stroke: showGrid ? gridColor() : 'transparent' },
         size: xAxisSize,
         label: xTitle,
         tick: (self: any, val: number) => formatTick(val, config.xAxis.type),
@@ -288,13 +283,52 @@ export function EngineeringPlot({
       {
         show: true,
         stroke: textColor(),
-        grid: { stroke: showGrid ? gridColor() : '#0000' },
+        grid: { stroke: showGrid ? gridColor() : 'transparent' },
         size: yAxisSize,
         label: yTitle,
         tick: (self: any, val: number) => formatTick(val, yScaleType),
       },
     ];
-  };
+  }, [config.xAxis, yScaleType, showGrid]);
+
+  // Apply settings to an existing chart instance.
+  const applySettings = useCallback((inst: any) => {
+    if (!inst) return;
+    try {
+      // Update series visibility using uPlot's setSeries API.
+      config.series.forEach((series, index) => {
+        const visible = seriesVisibility[series.id] !== false;
+        if (inst.setSeries) {
+          inst.setSeries(index + 1, { show: visible });
+        }
+      });
+      // Update line width and markers via setSeries.
+      config.series.forEach((series, index) => {
+        if (inst.setSeries) {
+          inst.setSeries(index + 1, {
+            width: lineWidth,
+            points: {
+              show: showMarkers && (series.mode === 'markers' || series.mode === 'lines+markers'),
+            },
+          });
+        }
+      });
+      // Update grid visibility via axes.
+      if (inst.axes) {
+        inst.axes.forEach((axis: any) => {
+          if (axis && axis.grid) {
+            axis.grid.stroke = showGrid ? gridColor() : 'transparent';
+          }
+        });
+      }
+      // Update Y scale type.
+      if (inst.scales && inst.scales.y) {
+        inst.scales.y.type = yScaleType;
+      }
+    } catch (e) {
+      console.warn('[EngineeringPlot] applySettings partial failure:', e);
+    }
+  }, [config.series, seriesVisibility, lineWidth, showMarkers, showGrid, yScaleType]);
 
   const initChart = useCallback(() => {
     const uPlot = uPlotConstructorRef.current;
@@ -314,6 +348,7 @@ export function EngineeringPlot({
     const inst = chartInstanceRef.current;
     const structureKey = getStructureKey(config);
 
+    // If chart exists and structure unchanged, just update data.
     if (inst && inst.setData && chartStructureRef.current === structureKey) {
       try {
         inst.setData(validation.data, false);
@@ -324,6 +359,7 @@ export function EngineeringPlot({
       }
     }
 
+    // Destroy previous instance.
     if (inst && inst.destroy) {
       inst.destroy();
     }
@@ -342,62 +378,72 @@ export function EngineeringPlot({
         y: { type: yScaleType, min: yMin ?? yRange[0], max: yMax ?? yRange[1] },
       },
       cursor: {
-        show: config.tooltips !== false && interactionMode === 'inspect',
+        show: tooltipsEnabled,
         x: true,
         y: true,
         lock: 'x',
         points: { show: true, size: 5, stroke: '#fff', width: 0 },
       },
-      hooks: {
-        setCursor: [
-          (u: any) => {
-            if (interactionMode !== 'inspect' || !config.tooltips) return;
-            const idx = u.cursor?.idx;
-            if (idx == null || idx < 0) {
-              setHoverReadout(null);
-              return;
-            }
-            const xVal = u.data[0][idx];
-            const yVal = u.data[1][idx];
-            if (xVal != null && yVal != null) {
-              setHoverReadout({
-                x: formatTick(xVal, config.xAxis.type),
-                y: formatTick(yVal, yScaleType),
-              });
-            }
-          },
-        ],
-        setScale: [
-          (u: any, key: string) => {
-            if (key === 'x' && interactionMode === 'pan') {
-              // Pan mode: allow scrolling
-            }
-          },
-        ],
-      },
-      legend: { show: showLegend, width: 240, live: false },
+      legend: { show: showLegend, live: false },
       select: {
         show: interactionMode === 'zoom',
         marginLeft: yAxisSizeRef.current,
         marginTop: 0,
         marginRight: 20,
         marginBottom: xAxisSizeRef.current,
-        stroke: '#00000040',
-        fill: '#00000020',
+        stroke: '#ff603b80',
+        fill: '#ff603b20',
         cursor: interactionMode === 'zoom' ? 'zoom-in' : (interactionMode === 'pan' ? 'grab' : 'crosshair'),
         selected: (u: any, i0: number, i1: number) => {
-          if (interactionMode === 'zoom' && i1 > i0) {
-            const xData = u.data[0];
-            const xScale = u.scales.x;
-            const xRangeCur = xScale.range;
-            const len = xData.length;
-            const x0 = xRangeCur.min + (i0 / len) * (xRangeCur.max - xRangeCur.min);
-            const x1 = xRangeCur.min + (i1 / len) * (xRangeCur.max - xRangeCur.min);
-            u.setScale('x', { min: Math.min(x0, x1), max: Math.max(x0, x1) });
+          if (interactionMode !== 'zoom' || i1 <= i0) return;
+          const left = u.select.left;
+          const right = left + u.select.width;
+          const min = u.posToVal(left, 'x');
+          const max = u.posToVal(right, 'x');
+          if (Number.isFinite(min) && Number.isFinite(max) && max > min) {
+            u.setScale('x', { min, max });
           }
         },
       },
+      hooks: {
+        setCursor: [
+          (u: any) => {
+            if (!tooltipsEnabled) return;
+            const idx = u.cursor?.idx;
+            if (idx == null || idx < 0) {
+              if (lastHoverIdxRef.current !== null) {
+                setHoverReadout(null);
+                lastHoverIdxRef.current = null;
+              }
+              return;
+            }
+            if (idx === lastHoverIdxRef.current) return;
+            lastHoverIdxRef.current = idx;
+
+            const xVal = u.data[0][idx];
+            const yVal = u.data[1][idx];
+            if (xVal != null && yVal != null && Number.isFinite(xVal) && Number.isFinite(yVal)) {
+              const series = config.series[0];
+              setHoverReadout({
+                x: formatTick(xVal, config.xAxis.type),
+                y: formatTick(yVal, yScaleType),
+                label: series?.label ?? 'Series',
+                color: series?.color || accentColor(),
+              });
+            }
+          },
+        ],
+      },
     };
+
+    if (config.xAxis.range) {
+      opts.scales.x.min = xMin ?? config.xAxis.range[0];
+      opts.scales.x.max = xMax ?? config.xAxis.range[1];
+    }
+    if (config.yAxis.range) {
+      opts.scales.y.min = yMin ?? config.yAxis.range[0];
+      opts.scales.y.max = yMax ?? config.yAxis.range[1];
+    }
 
     try {
       const newInst = new uPlot(opts, validation.data, container);
@@ -409,122 +455,29 @@ export function EngineeringPlot({
       console.error('[EngineeringPlot] uPlot construction failed:', err);
       setInitError(err);
     }
-  }, [config, height, validateData, getStructureKey, showGrid, yScaleType, xMin, xMax, yMin, yMax, showMarkers, lineWidth, showLegend, interactionMode, seriesVisibility]);
+  }, [config, height, validateData, getStructureKey, showGrid, yScaleType, xMin, xMax, yMin, yMax, showMarkers, lineWidth, showLegend, interactionMode, seriesVisibility, tooltipsEnabled, applySettings]);
 
-  const applySettings = (inst: any) => {
-    if (!inst) return;
-    try {
-      if (inst.setScale) {
-        inst.setScale('y', { type: yScaleType });
-      }
-      // Series visibility
-      inst.series?.forEach?.((s: any, i: number) => {
-        if (i === 0) return; // skip x series
-        const visible = seriesVisibility[s.label || `series-${i}`] !== false;
-        if (typeof s.show === 'boolean' || s.show === undefined) {
-          // uPlot series visibility
-        }
-      });
-    } catch {
-      // best effort
-    }
-  };
-
-  // Theme change: update colors without destroying the chart.
-  useEffect(() => {
-    if (!mountedRef.current || !chartInstanceRef.current) return;
-    const observer = new MutationObserver(() => {
-      initChart();
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, [initChart]);
-
-  // Pan mode: drag to pan.
-  const panStateRef = useRef<{ dragging: boolean; startX: number; startMin: number; startMax: number } | null>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !inspectable || interactionMode !== 'pan') return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      const inst = chartInstanceRef.current;
-      if (!inst) return;
-      const xScale = inst.scales.x;
-      panStateRef.current = {
-        dragging: true,
-        startX: e.clientX,
-        startMin: xScale.min,
-        startMax: xScale.max,
-      };
-      container.style.cursor = 'grabbing';
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const state = panStateRef.current;
-      const inst = chartInstanceRef.current;
-      if (!state?.dragging || !inst) return;
-      const dx = e.clientX - state.startX;
-      const containerWidth = container.clientWidth || 600;
-      const range = state.startMax - state.startMin;
-      const shift = (dx / containerWidth) * range;
-      inst.setScale('x', {
-        min: state.startMin - shift,
-        max: state.startMax - shift,
-      });
-    };
-
-    const handleMouseUp = () => {
-      if (panStateRef.current) {
-        panStateRef.current.dragging = false;
-      }
-      container.style.cursor = '';
-    };
-
-    container.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      container.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [interactionMode, inspectable]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    load();
-    return () => {
-      mountedRef.current = false;
-      if (chartInstanceRef.current && chartInstanceRef.current.destroy) {
-        chartInstanceRef.current.destroy();
-      }
-      chartInstanceRef.current = null;
-      uPlotConstructorRef.current = null;
-      chartStructureRef.current = null;
-    };
-  }, [load]);
-
+  // -----------------------------------------------------------------------
+  // 3. Chart lifecycle effect (separate from library loading).
+  // -----------------------------------------------------------------------
   useEffect(() => {
     if (!loaded || !uPlotConstructorRef.current || !containerRef.current) return;
+
     initChart();
+
     const resizeObserver = new ResizeObserver(() => {
       const inst = chartInstanceRef.current;
       const box = containerRef.current;
       if (!inst || !box) return;
       if (inst.setSize) {
         inst.setSize({ width: box.clientWidth || 600, height });
-      } else {
-        initChart();
       }
     });
     resizeObserver.observe(containerRef.current);
     window.addEventListener('resize', onResize);
 
+    // Click-to-inspect using posToVal.
     let inspectContainer: HTMLDivElement | null = null;
-
-    // Click-to-inspect: find nearest data point on canvas click.
     if (inspectable && interactionMode === 'inspect') {
       inspectContainer = containerRef.current;
       const handleCanvasClick = (event: MouseEvent) => {
@@ -534,48 +487,95 @@ export function EngineeringPlot({
         const series = config.series;
         if (!series.length) return;
 
-        const xData = series[0].x;
         const rect = container.getBoundingClientRect();
-        const plotLeft = yAxisSizeRef.current;
-        const plotWidth = rect.width - plotLeft - 20;
+        const plotLeft = inst.bbox?.left ?? yAxisSizeRef.current;
+        const plotTop = inst.bbox?.top ?? 0;
+        const pointerX = event.clientX - rect.left;
+        const pointerY = event.clientY - rect.top;
 
-        const clickX = event.clientX - rect.left;
-        const scaleX = inst.scale.x;
-        const xRangeCur = scaleX.range;
-        const dataX =
-          xRangeCur.min +
-          Math.max(0, clickX - plotLeft) / plotWidth * (xRangeCur.max - xRangeCur.min);
+        // Convert to plot-local coordinates.
+        const plotX = pointerX - plotLeft;
+        const plotY = pointerY - plotTop;
 
-        let nearestIdx = 0;
+        // Use uPlot's posToVal for accurate conversion.
+        const xValue = inst.posToVal(plotX, 'x');
+        if (!Number.isFinite(xValue)) return;
+
+        // Find nearest valid data point.
+        const xData = series[0].x;
+        let nearestIdx = -1;
         let minDist = Infinity;
         for (let i = 0; i < xData.length; i++) {
-          const dist = Math.abs(xData[i] - dataX);
+          // Skip NaN gaps.
+          if (!isFiniteNumber(series[0].y[i])) continue;
+          const dist = Math.abs(xData[i] - xValue);
           if (dist < minDist) {
             minDist = dist;
             nearestIdx = i;
           }
         }
 
+        if (nearestIdx < 0) return;
+
         const primarySeriesIndex = inspectorSeriesIndex ?? 0;
         const primary = series[primarySeriesIndex];
-        if (primary) {
+        if (primary && isFiniteNumber(primary.y[nearestIdx])) {
           handlePointSelect(xData[nearestIdx], primary.y[nearestIdx], primarySeriesIndex);
         }
       };
 
       inspectContainer.addEventListener('click', handleCanvasClick);
-      return () => {
-        inspectContainer?.removeEventListener('click', handleCanvasClick);
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', onResize);
+    }
+
+    // Pan mode handlers.
+    let panContainer: HTMLDivElement | null = null;
+    if (interactionMode === 'pan') {
+      panContainer = containerRef.current;
+      const handlePanDown = (e: MouseEvent) => {
+        const inst = chartInstanceRef.current;
+        if (!inst) return;
+        const xScale = inst.scales.x;
+        panStateRef.current = {
+          dragging: true,
+          startX: e.clientX,
+          startMin: xScale.min,
+          startMax: xScale.max,
+        };
+        if (panContainer) panContainer.style.cursor = 'grabbing';
       };
+
+      const handlePanMove = (e: MouseEvent) => {
+        const state = panStateRef.current;
+        const inst = chartInstanceRef.current;
+        if (!state?.dragging || !inst) return;
+        const dx = e.clientX - state.startX;
+        const plotWidth = inst.bbox?.width ?? (containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current;
+        const range = state.startMax - state.startMin;
+        const shift = (dx / plotWidth) * range;
+        inst.setScale('x', {
+          min: state.startMin - shift,
+          max: state.startMax - shift,
+        });
+      };
+
+      const handlePanUp = () => {
+        if (panStateRef.current) {
+          panStateRef.current.dragging = false;
+        }
+        if (panContainer) panContainer.style.cursor = '';
+      };
+
+      panContainer.addEventListener('mousedown', handlePanDown);
+      window.addEventListener('mousemove', handlePanMove);
+      window.addEventListener('mouseup', handlePanUp);
     }
 
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
+      // Cleanup handlers are registered conditionally above; use stored refs.
     };
-  }, [loaded, initChart, height, inspectable, interactionMode, inspectorSeriesIndex, config.series, handlePointSelect]);
+  }, [loaded, initChart, height, inspectable, interactionMode, inspectorSeriesIndex, config.series, handlePointSelect, tooltipsEnabled]);
 
   const onResize = () => {
     const inst = chartInstanceRef.current;
@@ -583,10 +583,21 @@ export function EngineeringPlot({
     if (!inst || !box) return;
     if (inst.setSize) {
       inst.setSize({ width: box.clientWidth || 600, height });
-    } else {
-      initChart();
     }
   };
+
+  // -----------------------------------------------------------------------
+  // Cleanup on unmount (separate from library loading).
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    return () => {
+      if (chartInstanceRef.current && chartInstanceRef.current.destroy) {
+        chartInstanceRef.current.destroy();
+      }
+      chartInstanceRef.current = null;
+      chartStructureRef.current = null;
+    };
+  }, []);
 
   const handleResetView = () => {
     const inst = chartInstanceRef.current;
@@ -667,7 +678,7 @@ export function EngineeringPlot({
       <div className={`eng-plot eng-plot-error ${className || ''}`} role="alert" aria-live="polite">
         <p>Unable to load the interactive plot.</p>
         <p className="eng-plot-error-detail">{loadError.message}</p>
-        <button type="button" onClick={load} aria-label="Retry loading plot">
+        <button type="button" onClick={retryLoad} aria-label="Retry loading plot">
           Retry
         </button>
       </div>
@@ -703,19 +714,28 @@ export function EngineeringPlot({
       }
     : null;
 
+  const settingsPanelId = useId().replace(/:/g, '-');
+
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
       {config.title && <h2 className="eng-plot-title">{config.title}</h2>}
       {config.description && <p className="eng-plot-description">{config.description}</p>}
-      <div
-        ref={containerRef}
-        style={{ width: '100%', height, position: 'relative' }}
-        aria-hidden="true"
-      />
-      {hoverReadout && interactionMode === 'inspect' && (
-        <div className="eng-plot-hover-readout" aria-live="polite">
-          <span className="eng-plot-hover-x">X: {hoverReadout.x}</span>
-          <span className="eng-plot-hover-y">Y: {hoverReadout.y}</span>
+      <div className="eng-plot-chart-region">
+        <div
+          ref={containerRef}
+          style={{ width: '100%', height, position: 'relative' }}
+          aria-hidden="true"
+        />
+      </div>
+      {hoverReadout && interactionMode === 'inspect' && tooltipsEnabled && (
+        <div className="eng-plot-hover-region">
+          <div className="eng-plot-hover-readout" aria-live="polite">
+            <span className="eng-plot-hover-series" style={{ color: hoverReadout.color }}>
+              {hoverReadout.label}
+            </span>
+            <span className="eng-plot-hover-x">X: {hoverReadout.x}</span>
+            <span className="eng-plot-hover-y">Y: {hoverReadout.y}</span>
+          </div>
         </div>
       )}
       <div className="eng-plot-toolbar">
@@ -754,7 +774,9 @@ export function EngineeringPlot({
         <div className="eng-plot-settings-group">
           <button
             type="button"
-            onClick={() => setShowSettings((s) => !s)}
+            aria-expanded={showSettings}
+            aria-controls={settingsPanelId}
+            onClick={() => setShowSettings((value) => !value)}
             aria-label="Graph settings"
             className="eng-plot-settings-btn"
           >
@@ -771,7 +793,7 @@ export function EngineeringPlot({
         </div>
       </div>
       {showSettings && (
-        <div className="eng-plot-settings-panel">
+        <div id={settingsPanelId} className="eng-plot-settings-panel" role="region" aria-label="Graph settings">
           <div className="eng-plot-settings-section">
             <h4 className="eng-plot-settings-section-title">Axes</h4>
             <div className="eng-plot-settings-row">
@@ -858,23 +880,6 @@ export function EngineeringPlot({
                 Show legend
               </label>
             </div>
-          </div>
-          <div className="eng-plot-settings-section">
-            <h4 className="eng-plot-settings-section-title">Data</h4>
-            {datasetRange && (
-              <div className="eng-plot-settings-row">
-                <span className="eng-plot-settings-label">X range:</span>
-                <span className="eng-plot-settings-value">
-                  {formatTick(datasetRange.xMin, config.xAxis.type)} to{' '}
-                  {formatTick(datasetRange.xMax, config.xAxis.type)}
-                </span>
-                <span className="eng-plot-settings-label">Y range:</span>
-                <span className="eng-plot-settings-value">
-                  {formatTick(datasetRange.yMin, yScaleType)} to{' '}
-                  {formatTick(datasetRange.yMax, yScaleType)}
-                </span>
-              </div>
-            )}
             <div className="eng-plot-settings-series">
               <span className="eng-plot-settings-section-title" style={{ marginBottom: 4 }}>Series visibility</span>
               {config.series.map((series) => (
@@ -897,6 +902,23 @@ export function EngineeringPlot({
                 </label>
               ))}
             </div>
+          </div>
+          <div className="eng-plot-settings-section">
+            <h4 className="eng-plot-settings-section-title">Data</h4>
+            {datasetRange && (
+              <div className="eng-plot-settings-row">
+                <span className="eng-plot-settings-label">X range:</span>
+                <span className="eng-plot-settings-value">
+                  {formatTick(datasetRange.xMin, config.xAxis.type)} to{' '}
+                  {formatTick(datasetRange.xMax, config.xAxis.type)}
+                </span>
+                <span className="eng-plot-settings-label">Y range:</span>
+                <span className="eng-plot-settings-value">
+                  {formatTick(datasetRange.yMin, yScaleType)} to{' '}
+                  {formatTick(datasetRange.yMax, yScaleType)}
+                </span>
+              </div>
+            )}
             <button type="button" onClick={handleResetSettings} className="eng-plot-settings-reset">
               Reset Settings
             </button>

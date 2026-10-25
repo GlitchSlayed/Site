@@ -1,7 +1,7 @@
 // Blended-Wing-Body Aircraft: Aerodynamic Efficiency vs. Structural Mass
 // Interactive demonstration built on the shared engineering visualization framework.
 // All calculations live in the pure model layer (src/lib/engineering/models).
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
@@ -16,7 +16,6 @@ const SCOPE_ID = 'bwb-tradeoff-explorer';
 const MODEL_ID = 'aircraft.performance';
 
 const LIFT_EQUATION = 'L=\\frac{1}{2}\\rho V^2 S C_L';
-const THRUST_EQUATION = 'D=\\frac{1}{2}\\rho V^2 S C_D';
 
 interface BWBTradeoffExplorerProps {
   className?: string;
@@ -35,7 +34,7 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
 
   // Version state that increments whenever any scoped parameter changes,
   // forcing re-render of live calculations and the comparison table.
-  const [version, setVersion] = useState(0);
+  const [, setVersion] = useState(0);
 
   useEffect(() => {
     const unsubscribes = model.parameters.map((param) =>
