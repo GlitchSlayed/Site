@@ -21,6 +21,8 @@ The goal isn't to reinvent Fedora or build an entirely new operating system. Ins
 
 The project is currently in its **conceptual and early planning phase**. The specifications below represent design goals rather than completed or validated features.
 
+As a heads-up I often go by the name **Glitchy** or **GlitchSlayed** digitally, so that is where the name stems from.
+
 ## Project Goals
 
 GOFR is guided by several principles:
