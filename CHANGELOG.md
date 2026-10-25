@@ -2,20 +2,41 @@
 
 All notable changes to the MDX visualization system.
 
-## [Unreleased] — MDX Visualization System Overhaul
+## [Unreleased] — MDX Visualization System Repair
+
+### Root causes fixed
+
+- **Graph curves invisible / X axis missing**: uPlot's constructor calls `setData(data, false)` (no rescale) and only autoscales the X axis (`autoScaleX()`), never Y. The previous rewrite removed the forced axis ranges, leaving the Y scale unset, which collapsed the plot vertically so curves were not drawn while the Y axis still rendered. Fixed by computing true data extents for both X and Y (`computeDataExtent`) and applying them as scale limits — a genuine autoscale for both axes. `Reset View` and `Autoscale` now explicitly set both scales via `applyAutoscale` instead of relying on `setData(..., true)`, which only autoscales X.
+- **Floating-point display artifacts** (`0.027330000000000004`, `14.950000000000001`, `2.2800000000000002%`): `significantFigures()` computed `Math.round(value / factor) * factor`, which reintroduces binary float representation errors. Added a centralized `formatNumber()` utility that rounds via `toFixed` (string-based, artifact-free), trims trailing zeros, supports significant figures / decimal places, thousands separators, SI-prefix / scientific notation, negatives, zero, NaN, and infinity. It is now used by `formatResult`, axis ticks, cursor readouts, and the comparison table. Internal precision is preserved; only presentation is rounded.
+- **Zoom mode did nothing**: `interactionMode` was not part of the chart structure key, so switching to Zoom never recreated the chart with uPlot's drag-to-zoom `select` enabled. Modes now trigger recreation.
+- **Settings options did not visibly apply**: line-width and marker changes mutated uPlot series descriptors but `redraw()` was called without rebuilding cached Path2D objects, so changes were invisible. Now uses `redraw(true)` to force a path rebuild.
+- **Toolbar readout**: cursor readout sits below the chart (never overlaps controls); click-to-inspect and Shift+click comparison point work.
 
 ### Fixed
 
-- **React #310 hook-order crash**: `EngineeringPlot` called `useId()` after conditional error/loading returns. All hooks now run unconditionally at the top of the component, before any early return. Components mount, update, unmount, and remount reliably.
-- **Event-listener leaks**: every DOM listener (click, mousedown, mousemove, mouseup, touchstart, touchmove, touchend, resize) is tracked and removed in effect cleanup; no listeners persist across unmounts.
-- **Log-scale axis bug**: uPlot scales previously set a bogus `type` property; they now use uPlot's `distr: Logarithmic` correctly.
-- **Chart teardown**: the uPlot instance is destroyed on unmount and on structural change, preventing duplicate canvases and leaked ResizeObservers/event listeners.
-- **Stale closures / refs**: config, series visibility, and axis bounds are read from refs so effects never depend on inline prop object identity.
-- **Zoom mode**: switching to Zoom now recreates the chart so uPlot's drag-to-zoom `select` is enabled; Inspect/Pan/Zoom modes all function.
-- **Graph settings**: options (grid, markers, line width, series visibility, axis bounds) now visibly apply — uPlot path cache is rebuilt on width/marker changes so the rendering updates.
-- **Autoscale by default**: graphs autoscale to fit data on initial load and on Reset View; manual axis bounds from settings override autoscale.
+- **React #310 hook-order crash**: `useId()` now runs unconditionally before any early return.
+- **Event-listener leaks**: every DOM listener is tracked and removed in cleanup.
+- **Log-scale axis bug**: uses uPlot's `distr: Logarithmic` instead of a bogus `type`.
+- **Chart teardown**: instance destroyed on unmount and structural change.
+- **Stale closures / refs**: config and settings read from refs.
 
 ### Changed
+
+- Rebuilt `EngineeringPlot` on uPlot with multi-series cursor readout, two-point operating-point inspection, live settings panel, PNG/CSV export, and header/toolbar/viewport/inspector/footer layout.
+- Compact collapsible settings panel (closed by default) organized into Axes, Appearance, Series, Data.
+- Added `formatNumber` to `src/lib/engineering/format.ts`; `EngineeringComparison` now formats through it.
+- Added `tests/engineering-plot.test.tsx` covering lifecycle, settings, click-to-inspect, reset, autoscale, readout, CSV export, and series generation.
+
+### Added
+
+- `CHANGELOG.md`, `tests/engineering-plot.test.tsx`, formatting artifact tests.
+
+### Known limitations
+
+- `.md` articles do not support interactive MDX components; use `.mdx`.
+- uPlot does not provide SVG export; PNG export is via canvas.
+- Two charts mounted in one vitest `it` block must be awaited sequentially (dynamic-import mock registered lazily).
+- Models are low-order approximations, not certified data.
 
 - **Rebuilt `EngineeringPlot`** on uPlot (kept as the rendering engine — best fit for bundle size, interactivity, and CSP safety).
   - Multi-series cursor readout positioned below the chart (never overlaps toolbar controls).

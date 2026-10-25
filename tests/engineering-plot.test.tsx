@@ -349,7 +349,7 @@ describe('EngineeringPlot controls', () => {
     await flush();
     await waitForChart();
     const instance = createdInstances[0];
-    const setDataSpy = vi.spyOn(instance, 'setData');
+    const setScaleSpy = vi.spyOn(instance, 'setScale');
 
     act(() => {
       const button = Array.from(container.querySelectorAll('.eng-plot-mode-group button')).find(
@@ -359,8 +359,10 @@ describe('EngineeringPlot controls', () => {
     });
     await flush();
 
-    expect(setDataSpy).toHaveBeenLastCalledWith(expect.anything(), true);
-    setDataSpy.mockRestore();
+    const keys = setScaleSpy.mock.calls.map((c) => c[0]);
+    expect(keys).toContain('x');
+    expect(keys).toContain('y');
+    setScaleSpy.mockRestore();
   });
 
   it('autoscale fits axes to data and clears manual limits', async () => {
@@ -368,7 +370,7 @@ describe('EngineeringPlot controls', () => {
     await flush();
     await waitForChart();
     const instance = createdInstances[0];
-    const setDataSpy = vi.spyOn(instance, 'setData');
+    const setScaleSpy = vi.spyOn(instance, 'setScale');
 
     act(() => {
       const buttons = container.querySelectorAll('.eng-plot-mode-group button');
@@ -377,8 +379,10 @@ describe('EngineeringPlot controls', () => {
     });
     await flush();
 
-    expect(setDataSpy).toHaveBeenLastCalledWith(expect.anything(), true);
-    setDataSpy.mockRestore();
+    const keys = setScaleSpy.mock.calls.map((c) => c[0]);
+    expect(keys).toContain('x');
+    expect(keys).toContain('y');
+    setScaleSpy.mockRestore();
   });
 
   it('cursor readout updates through the uPlot setCursor hook', async () => {

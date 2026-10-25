@@ -113,6 +113,34 @@ function measureTextWidth(text: string, fontSize: number): number {
   return ctx.measureText(text).width;
 }
 
+/** Compute the [min, max] extent of X and all finite Y values across series.
+ *  Used as the autoscale target so both axes fit the data (uPlot only
+ *  autoscales X on construction). */
+function computeDataExtent(series: PlotSeries[]): { x: [number, number]; y: [number, number] } {
+  const xs = series[0]?.x ?? [];
+  const xFinite = xs.filter(isFiniteNumber);
+  const xExtent: [number, number] = xFinite.length
+    ? [Math.min(...xFinite), Math.max(...xFinite)]
+    : [0, 1];
+
+  const allY = series.flatMap((s) => s.y.filter(isFiniteNumber));
+  const yExtent: [number, number] = allY.length
+    ? [Math.min(...allY), Math.max(...allY)]
+    : [0, 1];
+
+  return { x: xExtent, y: yExtent };
+}
+
+/** Set both X and Y scales to the data extent (true autoscale).
+ *  uPlot only autoscales X on construction / setData, so Y must be set
+ *  explicitly here. */
+function applyAutoscale(inst: PlotInstance, series: PlotSeries[]): void {
+  if (!inst || !inst.setScale) return;
+  const { x: dataX, y: dataY } = computeDataExtent(series);
+  inst.setScale('x', { min: dataX[0], max: dataX[1] });
+  inst.setScale('y', { min: dataY[0], max: dataY[1] });
+}
+
 export function EngineeringPlot({
   config,
   className,
@@ -399,9 +427,11 @@ export function EngineeringPlot({
       inst.destroy();
     }
 
-    const xRange = config.xAxis.range ?? [0, 1];
-    const yRange = config.yAxis.range ?? [0, 1];
     const theme = themeRef.current;
+
+    // Autoscale both axes to the data by default (uPlot only autoscales X on
+    // construction). Manual axis bounds from settings override autoscale.
+    const { x: dataX, y: dataY } = computeDataExtent(config.series);
 
     const opts: any = {
       width,
@@ -410,12 +440,15 @@ export function EngineeringPlot({
       series: buildSeries(),
       axes: buildAxes(),
       scales: {
-        // Autoscale to data by default. Manual limits (from settings) override.
-        x: { time: false, ...(xMin != null ? { min: xMin } : {}), ...(xMax != null ? { max: xMax } : {}) },
+        x: {
+          time: false,
+          min: xMin ?? dataX[0],
+          max: xMax ?? dataX[1],
+        },
         y: {
           distr: yScaleType === 'log' ? DISTR_LOGARITHMIC : DISTR_LINEAR,
-          ...(yMin != null ? { min: yMin } : {}),
-          ...(yMax != null ? { max: yMax } : {}),
+          min: yMin ?? dataY[0],
+          max: yMax ?? dataY[1],
         },
       },
       cursor: {
@@ -812,11 +845,7 @@ export function EngineeringPlot({
       setXMax(null);
       setYMin(null);
       setYMax(null);
-      const validation = validateData(config.series);
-      if (validation.valid && inst.setData) {
-        // resetScales=true forces uPlot to autoscale both axes to the data.
-        inst.setData(validation.data as unknown as uPlot.AlignedData, true);
-      }
+      applyAutoscale(inst, config.series);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to reset view');
       console.error('[EngineeringPlot] Reset view failed:', err);
@@ -826,15 +855,15 @@ export function EngineeringPlot({
 
   const handleAutoscale = useCallback(() => {
     const inst = chartInstanceRef.current;
-    if (!inst || !inst.setData) return;
+    if (!inst || !inst.setScale) return;
     const validation = validateData(config.series);
     if (!validation.valid) return;
     try {
-      inst.setData(validation.data as unknown as uPlot.AlignedData, true);
       setXMin(null);
       setXMax(null);
       setYMin(null);
       setYMax(null);
+      applyAutoscale(inst, config.series);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to autoscale');
       console.error('[EngineeringPlot] Autoscale failed:', err);
