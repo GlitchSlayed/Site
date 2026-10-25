@@ -22,6 +22,16 @@ const configured=canonical?.hostname!=='example.com';
 <script>
 const button=document.querySelector<HTMLButtonElement>('#theme-toggle');
 function syncLabel(){button?.setAttribute('aria-label',`Switch to ${document.documentElement.dataset.theme==='dark'?'light':'dark'} theme`);}
-syncLabel();button?.addEventListener('click',()=>{const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('theme',theme)}catch{}syncLabel()});
+syncLabel();button?.addEventListener('click',()=>{
+  const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=theme;
+  try{localStorage.setItem('theme',theme)}catch{}
+  syncLabel();
+  const iframe=document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+  if(iframe?.contentWindow){
+    const giscusTheme=theme==='dark'?'https://glitchslayed.github.io/Site/giscus-dark.css':'https://glitchslayed.github.io/Site/giscus-light.css';
+    iframe.contentWindow.postMessage({giscus:{setConfig:{theme:giscusTheme}}},'https://giscus.app');
+  }
+});
 </script>
 </body></html>

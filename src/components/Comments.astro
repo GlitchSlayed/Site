@@ -1,0 +1,47 @@
+---
+---
+<section class="comments-section" aria-label="Comments">
+  <div class="comments-header">
+    <div class="eyebrow">DISCUSSION</div>
+  </div>
+  <div class="giscus"></div>
+  <script
+    src="https://giscus.app/client.js"
+    data-repo="GlitchSlayed/Site"
+    data-repo-id="R_kgDOVWOW8Q"
+    data-category="General"
+    data-category-id="DIC_kwDOVWOW8c4DJjhG"
+    data-mapping="title"
+    data-strict="0"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="top"
+    data-theme="https://glitchslayed.github.io/Site/giscus-dark.css"
+    data-lang="en"
+    crossorigin="anonymous"
+    async
+  ></script>
+  <script is:inline>
+    // Ensure initial theme matches current mode before iframe initializes
+    try {
+      const currentTheme = document.documentElement.dataset.theme || localStorage.getItem('theme') || 'dark';
+      const script = document.querySelector('script[src="https://giscus.app/client.js"]');
+      if (script && currentTheme === 'light') {
+        script.setAttribute('data-theme', 'https://glitchslayed.github.io/Site/giscus-light.css');
+      }
+    } catch {}
+  </script>
+</section>
+
+<style>
+  .comments-section {
+    max-width: 740px;
+    margin-top: 48px;
+    padding-top: 36px;
+    border-top: 1px solid var(--border);
+  }
+
+  .comments-header {
+    margin-bottom: 24px;
+  }
+</style>
