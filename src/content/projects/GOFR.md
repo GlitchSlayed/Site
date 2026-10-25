@@ -1,16 +1,21 @@
 ---
 title: "GOFR: Glitchy's Opinionated Fedora Remix"
-description: "A Fedora-based Linux remix exploring modern boot infrastructure, performance-oriented defaults, and a refreshed command-line experience."
-category: "Operating Systems"
-status: "Concept"
-tags: ["Fedora", "Systemd", "Rust", "Open Source"]
-date: "2026-10-24"
+description: A Fedora-based Linux remix exploring modern boot infrastructure,
+  performance-oriented defaults, and a refreshed command-line experience.
+category: Operating Systems
+status: Prototype
+tags:
+  - Fedora
+  - Systemd
+  - Rust
+  - Open Source
+date: 2026-10-24
 art: code
 featured: true
 draft: false
 visual: dither
 visualAccent: "#739cda"
-visualLabel: "Fedora remix · Concept"
+visualLabel: Fedora remix · Concept
 visualAnimate: false
 ---
 # GOFR: Glitchy's Opinionated Fedora Remix
