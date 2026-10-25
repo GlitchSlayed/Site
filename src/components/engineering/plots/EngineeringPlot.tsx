@@ -118,6 +118,7 @@ export function EngineeringPlot({
   const [showMarkers, setShowMarkers] = useState(false);
   const [lineWidth, setLineWidth] = useState(2);
   const [showLegend, setShowLegend] = useState(true);
+  const [hoverReadout, setHoverReadout] = useState<{ x: string; y: string } | null>(null);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('inspect');
   const [seriesVisibility, setSeriesVisibility] = useState<Record<string, boolean>>({});
 
@@ -347,7 +348,34 @@ export function EngineeringPlot({
         lock: 'x',
         points: { show: true, size: 5, stroke: '#fff', width: 0 },
       },
-      legend: { show: showLegend, width: 240, live: true },
+      hooks: {
+        setCursor: [
+          (u: any) => {
+            if (interactionMode !== 'inspect' || !config.tooltips) return;
+            const idx = u.cursor?.idx;
+            if (idx == null || idx < 0) {
+              setHoverReadout(null);
+              return;
+            }
+            const xVal = u.data[0][idx];
+            const yVal = u.data[1][idx];
+            if (xVal != null && yVal != null) {
+              setHoverReadout({
+                x: formatTick(xVal, config.xAxis.type),
+                y: formatTick(yVal, yScaleType),
+              });
+            }
+          },
+        ],
+        setScale: [
+          (u: any, key: string) => {
+            if (key === 'x' && interactionMode === 'pan') {
+              // Pan mode: allow scrolling
+            }
+          },
+        ],
+      },
+      legend: { show: showLegend, width: 240, live: false },
       select: {
         show: interactionMode === 'zoom',
         marginLeft: yAxisSizeRef.current,
@@ -356,16 +384,17 @@ export function EngineeringPlot({
         marginBottom: xAxisSizeRef.current,
         stroke: '#00000040',
         fill: '#00000020',
-        cursor: 'zoom-in',
+        cursor: interactionMode === 'zoom' ? 'zoom-in' : (interactionMode === 'pan' ? 'grab' : 'crosshair'),
         selected: (u: any, i0: number, i1: number) => {
-          if (i1 <= i0) return;
-          const xData = u.data[0];
-          const xScale = u.scales.x;
-          const xRangeCur = xScale.range;
-          const len = xData.length;
-          const x0 = xRangeCur.min + (i0 / len) * (xRangeCur.max - xRangeCur.min);
-          const x1 = xRangeCur.min + (i1 / len) * (xRangeCur.max - xRangeCur.min);
-          u.setScale('x', { min: Math.min(x0, x1), max: Math.max(x0, x1) });
+          if (interactionMode === 'zoom' && i1 > i0) {
+            const xData = u.data[0];
+            const xScale = u.scales.x;
+            const xRangeCur = xScale.range;
+            const len = xData.length;
+            const x0 = xRangeCur.min + (i0 / len) * (xRangeCur.max - xRangeCur.min);
+            const x1 = xRangeCur.min + (i1 / len) * (xRangeCur.max - xRangeCur.min);
+            u.setScale('x', { min: Math.min(x0, x1), max: Math.max(x0, x1) });
+          }
         },
       },
     };
@@ -410,6 +439,58 @@ export function EngineeringPlot({
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     return () => observer.disconnect();
   }, [initChart]);
+
+  // Pan mode: drag to pan.
+  const panStateRef = useRef<{ dragging: boolean; startX: number; startMin: number; startMax: number } | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !inspectable || interactionMode !== 'pan') return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const inst = chartInstanceRef.current;
+      if (!inst) return;
+      const xScale = inst.scales.x;
+      panStateRef.current = {
+        dragging: true,
+        startX: e.clientX,
+        startMin: xScale.min,
+        startMax: xScale.max,
+      };
+      container.style.cursor = 'grabbing';
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const state = panStateRef.current;
+      const inst = chartInstanceRef.current;
+      if (!state?.dragging || !inst) return;
+      const dx = e.clientX - state.startX;
+      const containerWidth = container.clientWidth || 600;
+      const range = state.startMax - state.startMin;
+      const shift = (dx / containerWidth) * range;
+      inst.setScale('x', {
+        min: state.startMin - shift,
+        max: state.startMax - shift,
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (panStateRef.current) {
+        panStateRef.current.dragging = false;
+      }
+      container.style.cursor = '';
+    };
+
+    container.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      container.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [interactionMode, inspectable]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -631,6 +712,12 @@ export function EngineeringPlot({
         style={{ width: '100%', height, position: 'relative' }}
         aria-hidden="true"
       />
+      {hoverReadout && interactionMode === 'inspect' && (
+        <div className="eng-plot-hover-readout" aria-live="polite">
+          <span className="eng-plot-hover-x">X: {hoverReadout.x}</span>
+          <span className="eng-plot-hover-y">Y: {hoverReadout.y}</span>
+        </div>
+      )}
       <div className="eng-plot-toolbar">
         <div className="eng-plot-mode-group">
           <button
@@ -788,6 +875,28 @@ export function EngineeringPlot({
                 </span>
               </div>
             )}
+            <div className="eng-plot-settings-series">
+              <span className="eng-plot-settings-section-title" style={{ marginBottom: 4 }}>Series visibility</span>
+              {config.series.map((series) => (
+                <label key={series.id} className="eng-plot-settings-series-label">
+                  <input
+                    type="checkbox"
+                    checked={seriesVisibility[series.id] !== false}
+                    onChange={(e) =>
+                      setSeriesVisibility((prev) => ({
+                        ...prev,
+                        [series.id]: e.target.checked,
+                      }))
+                    }
+                  />
+                  <span
+                    className="eng-plot-settings-series-color"
+                    style={{ background: series.color || accentColor() }}
+                  />
+                  {series.label}
+                </label>
+              ))}
+            </div>
             <button type="button" onClick={handleResetSettings} className="eng-plot-settings-reset">
               Reset Settings
             </button>

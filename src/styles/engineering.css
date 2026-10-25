@@ -997,3 +997,47 @@ html[data-theme="light"] .eng-plot-settings {
   accent-color: var(--accent);
 }
 
+
+/* Plot hover readout - positioned below chart, never overlaps toolbar */
+.eng-plot-hover-readout {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--foreground);
+  width: fit-content;
+}
+
+.eng-plot-hover-x,
+.eng-plot-hover-y {
+  white-space: nowrap;
+}
+
+/* Series visibility toggles in settings */
+.eng-plot-settings-series {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.eng-plot-settings-series-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.eng-plot-settings-series-color {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
