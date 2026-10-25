@@ -1,16 +1,21 @@
 ---
-title: "RustyUKI"
-description: "I’m building a Fedora-focused tool for creating and installing Unified Kernel Images, inspired by the time modern systems spend booting before Linux starts."
-date: "2026-10-24"
-tags: [Linux, Fedora, Open source]
-status: "In Development"
+title: RustyUKI
+description: I’m building a Fedora-focused tool for creating and installing
+  Unified Kernel Images, inspired by the time modern systems spend booting
+  before Linux starts.
+date: 2026-10-24
+tags:
+  - Linux
+  - Fedora
+  - Open source
+status: Prototype
 art: code
 featured: false
 draft: false
 sample: false
 visual: dither
 visualAccent: "#e58a58"
-visualLabel: "Fedora · UEFI · UKI"
+visualLabel: Fedora · UEFI · UKI
 visualAnimate: false
 ---
 

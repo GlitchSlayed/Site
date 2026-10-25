@@ -3,7 +3,7 @@ title: "GOFR: Glitchy's Opinionated Fedora Remix"
 description: A Fedora-based Linux remix exploring modern boot infrastructure,
   performance-oriented defaults, and a refreshed command-line experience.
 category: Operating Systems
-status: Prototype
+status: Concept
 tags:
   - Fedora
   - Systemd
