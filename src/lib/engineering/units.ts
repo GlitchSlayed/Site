@@ -39,6 +39,8 @@ export const UNITS: Record<string, UnitDefinition> = {
   N: { id: 'N', label: 'newton', symbol: 'N', dimension: 'force', toSI: (v) => v, fromSI: (v) => v },
   kN: { id: 'kN', label: 'kilonewton', symbol: 'kN', dimension: 'force', toSI: (v) => v * 1000, fromSI: (v) => v / 1000 },
   mN: { id: 'mN', label: 'millinewton', symbol: 'mN', dimension: 'force', toSI: (v) => v * 0.001, fromSI: (v) => v / 0.001 },
+  µN: { id: 'µN', label: 'micronewton', symbol: 'µN', dimension: 'force', toSI: (v) => v * 1e-6, fromSI: (v) => v / 1e-6 },
+  MN: { id: 'MN', label: 'meganewton', symbol: 'MN', dimension: 'force', toSI: (v) => v * 1e6, fromSI: (v) => v / 1e6 },
 };
 
 export function convert(value: number, fromUnitId: string, toUnitId: string): number {

@@ -1,5 +1,8 @@
 // Unit-aware result formatting for engineering visualization outputs.
 // Uses declared model output metadata as the authoritative source for units.
+//
+// Precision standard: maximum 5 decimal places, default 4.
+// Trailing zeros are removed. Thousands separators used for large values.
 import { convert, UNITS } from './units';
 import { formatEngineering, isFiniteNumber, significantFigures } from './validation';
 
@@ -13,6 +16,7 @@ export interface FormatResultOptions {
   displayUnit?: string; // override the declared unit for display
   showUnit?: boolean;
   showLabel?: boolean;
+  maxDecimals?: number; // hard cap on decimal places (default 5)
 }
 
 export interface FormattedResult {
@@ -29,25 +33,30 @@ function groupThousands(value: number): string {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+/** Hard cap on decimal places across the framework. */
+const MAX_DECIMALS = 5;
+
+/** Default significant figures for ordinary engineering results. */
+const DEFAULT_SIG_FIGS = 4;
+
 /**
  * Format a numerical engineering result with units, SI prefixes, and
  * configurable significant figures.
  *
  * The unit is taken from the declared output metadata unless overridden by
  * `displayUnit`. Dimensionless quantities are shown without unit brackets.
- * Percentages are supported for fractional quantities (e.g. structural mass
- * penalty of 0.05 → +5.0%).
  */
 export function formatResult({
   value,
   unit,
   symbol = '',
   label = '',
-  significantFigures: sigFigs = 4,
+  significantFigures: sigFigs = DEFAULT_SIG_FIGS,
   engineeringNotation = false,
   displayUnit,
   showUnit = true,
   showLabel = true,
+  maxDecimals = MAX_DECIMALS,
 }: FormatResultOptions): FormattedResult {
   if (!isFiniteNumber(value)) {
     const displayText = showLabel ? `${label}: —` : '—';
@@ -107,17 +116,26 @@ export function formatResult({
     finalSymbol = resolveUnitSymbol(unit);
   }
 
-  // Format the number.
+  // Format the number with precision limits.
   let formatted: string;
   if (engineeringNotation) {
     formatted = formatEngineering(displayValue, sigFigs);
   } else {
     const rounded = significantFigures(displayValue, sigFigs);
+    // Cap decimal places at maxDecimals.
+    const decimalCap = Math.pow(10, maxDecimals);
+    const capped = Math.round(rounded * decimalCap) / decimalCap;
     // Use grouping for large numbers, plain for small.
-    if (Math.abs(rounded) >= 1000) {
-      formatted = groupThousands(rounded);
+    if (Math.abs(capped) >= 1000) {
+      formatted = groupThousands(capped);
     } else {
-      formatted = rounded.toString();
+      // Remove trailing zeros but keep at least one decimal for non-integers.
+      const str = capped.toString();
+      if (str.includes('.')) {
+        formatted = str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.$/, '');
+      } else {
+        formatted = str;
+      }
     }
   }
 
@@ -156,3 +174,6 @@ export function formatPercentageChange(
   const sign = change >= 0 ? '+' : '-';
   return `(${sign}${significantFigures(Math.abs(change), sigFigs)}%)`;
 }
+
+/** Maximum decimal places enforced by the framework. */
+export { MAX_DECIMALS };

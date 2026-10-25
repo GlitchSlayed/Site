@@ -356,16 +356,50 @@
   background: var(--hover);
 }
 
-.eng-plot-actions {
+/* Plot toolbar */
+
+.eng-plot-toolbar {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
   flex-wrap: wrap;
 }
 
-.eng-plot-actions button {
+.eng-plot-mode-group {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+  background: var(--background);
+}
+
+.eng-plot-mode-btn {
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.eng-plot-mode-btn:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+.eng-plot-mode-btn.eng-plot-mode-active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.eng-plot-toolbar button {
+  font: inherit;
+  font-size: 11px;
   padding: 5px 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -374,9 +408,141 @@
   cursor: pointer;
 }
 
-.eng-plot-actions button:hover {
+.eng-plot-toolbar button:hover {
   background: var(--hover);
   color: var(--foreground);
+}
+
+.eng-plot-settings-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.eng-plot-settings-btn {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.eng-plot-settings-btn:hover {
+  background: var(--hover);
+}
+
+.eng-plot-export-group {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.eng-plot-export-group button {
+  font: inherit;
+  font-size: 11px;
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.eng-plot-export-group button:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+/* Plot settings panel */
+
+.eng-plot-settings-panel {
+  margin-top: 8px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.eng-plot-settings-section {
+  margin-bottom: 12px;
+}
+
+.eng-plot-settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.eng-plot-settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+  padding-left: 2px;
+}
+
+.eng-plot-settings-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.eng-plot-settings-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.eng-plot-settings-input {
+  font: inherit;
+  font-size: 11px;
+  width: 70px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  color: var(--foreground);
+}
+
+.eng-plot-settings-range {
+  width: 100px;
+}
+
+.eng-plot-settings-value {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--mono);
+  min-width: 28px;
+}
+
+.eng-plot-settings-reset {
+  font: inherit;
+  font-size: 11px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--muted);
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.eng-plot-settings-reset:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+/* Keep old actions class as alias for backwards compatibility */
+.eng-plot-actions {
+  display: contents;
 }
 
 /* Comparison table */

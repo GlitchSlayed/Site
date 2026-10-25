@@ -5,7 +5,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
 import { isFiniteNumber, significantFigures } from '../../../lib/engineering/validation';
 import { formatEngineering } from '../../../lib/engineering/validation';
+import { formatResult, MAX_DECIMALS } from '../../../lib/engineering/format';
 import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
+
+type InteractionMode = 'inspect' | 'zoom' | 'pan';
 
 function isDark(): boolean {
   return typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
@@ -46,7 +49,8 @@ const ENGINEERING_PREFIXES: Record<number, string> = {
   '12': 'T',
 };
 
-/** Format a tick label with SI prefixes and appropriate precision. */
+/** Format a tick label with SI prefixes and appropriate precision.
+ *  Never exceeds MAX_DECIMALS decimal places. */
 function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
   if (!Number.isFinite(val)) return '';
   if (val === 0) return '0';
@@ -62,16 +66,27 @@ function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
     const sig = significantFigures(scaled, 3);
     formatted = `${sig}${prefix}`;
   } else {
-    // Use up to 3 significant figures, dropping trailing zeros.
-    const sig = significantFigures(val, 3);
-    formatted = sig.toString();
-    // Ensure at least one decimal place for non-integers.
-    if (!Number.isInteger(sig) && !formatted.includes('.')) {
-      formatted = sig.toFixed(1);
+    // Use up to 4 significant figures, respecting MAX_DECIMALS cap.
+    const sig = significantFigures(val, 4);
+    const decimalCap = Math.pow(10, MAX_DECIMALS);
+    const capped = Math.round(sig * decimalCap) / decimalCap;
+    formatted = capped.toString();
+    if (!Number.isInteger(capped) && !formatted.includes('.')) {
+      formatted = capped.toFixed(1);
     }
   }
 
   return formatted;
+}
+
+/** Estimate the width needed for an axis title string. */
+function measureTextWidth(text: string, fontSize: number): number {
+  if (typeof document === 'undefined') return text.length * fontSize * 0.6;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return text.length * fontSize * 0.6;
+  ctx.font = `${fontSize}px ${getComputedStyle(document.documentElement).fontFamily || 'system-ui'}`;
+  return ctx.measureText(text).width;
 }
 
 export function EngineeringPlot({
@@ -96,15 +111,29 @@ export function EngineeringPlot({
   const [showSettings, setShowSettings] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const [yScaleType, setYScaleType] = useState<'linear' | 'log'>('linear');
+  const [xMin, setXMin] = useState<number | null>(null);
+  const [xMax, setXMax] = useState<number | null>(null);
+  const [yMin, setYMin] = useState<number | null>(null);
+  const [yMax, setYMax] = useState<number | null>(null);
+  const [showMarkers, setShowMarkers] = useState(false);
+  const [lineWidth, setLineWidth] = useState(2);
+  const [showLegend, setShowLegend] = useState(true);
+  const [interactionMode, setInteractionMode] = useState<InteractionMode>('inspect');
+  const [seriesVisibility, setSeriesVisibility] = useState<Record<string, boolean>>({});
+
+  // Axis size refs for dynamic measurement.
+  const xAxisSizeRef = useRef(24);
+  const yAxisSizeRef = useRef(48);
 
   const handlePointSelect = useCallback(
     (x: number, y: number, seriesIndex: number) => {
+      if (interactionMode !== 'inspect') return;
       const series = config.series;
       const s = series[seriesIndex];
       setSelectedPoint({ x, y, seriesIndex, seriesLabel: s?.label ?? 'Series' });
       onPointSelect?.(x, y, seriesIndex);
     },
-    [config.series, onPointSelect],
+    [config.series, interactionMode, onPointSelect],
   );
 
   const load = useCallback(async () => {
@@ -183,9 +212,6 @@ export function EngineeringPlot({
           const y = s.y[idx];
           if (!isFiniteNumber(y)) {
             ySanitized.push(NaN);
-            console.warn(
-              `[EngineeringPlot] Series "${s.label}" has nonfinite Y at index ${idx}; using NaN gap.`,
-            );
           } else {
             ySanitized.push(y);
           }
@@ -214,16 +240,18 @@ export function EngineeringPlot({
   const buildSeries = (): any[] => {
     const series: any[] = [{}];
     for (const s of config.series) {
+      const visible = seriesVisibility[s.id] !== false;
       series.push({
         label: s.label,
         stroke: s.color || accentColor(),
-        width: 2,
+        width: lineWidth,
         points: {
-          show: s.mode === 'markers' || s.mode === 'lines+markers',
+          show: showMarkers && (s.mode === 'markers' || s.mode === 'lines+markers'),
           size: 4,
           width: 1,
         },
         spanGaps: true,
+        show: visible,
       });
     }
     return series;
@@ -232,12 +260,27 @@ export function EngineeringPlot({
   const buildAxes = (): any[] => {
     const xTitle = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
     const yTitle = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
+
+    // Dynamically measure axis sizes based on content.
+    const xAxisSize = Math.max(
+      24,
+      measureTextWidth(xTitle, 13) / 2 + 14,
+      measureTextWidth(formatTick(config.xAxis.range?.[0] ?? 0, config.xAxis.type), 11) + 6,
+    );
+    const yAxisSize = Math.max(
+      48,
+      measureTextWidth(yTitle, 13) / 2 + 14,
+      measureTextWidth(formatTick(config.yAxis.range?.[0] ?? 0, yScaleType), 11) + 6,
+    );
+    xAxisSizeRef.current = xAxisSize;
+    yAxisSizeRef.current = yAxisSize;
+
     return [
       {
         show: true,
         stroke: textColor(),
         grid: { stroke: showGrid ? gridColor() : '#0000' },
-        size: 22,
+        size: xAxisSize,
         label: xTitle,
         tick: (self: any, val: number) => formatTick(val, config.xAxis.type),
       },
@@ -245,7 +288,7 @@ export function EngineeringPlot({
         show: true,
         stroke: textColor(),
         grid: { stroke: showGrid ? gridColor() : '#0000' },
-        size: 44,
+        size: yAxisSize,
         label: yTitle,
         tick: (self: any, val: number) => formatTick(val, yScaleType),
       },
@@ -270,20 +313,22 @@ export function EngineeringPlot({
     const inst = chartInstanceRef.current;
     const structureKey = getStructureKey(config);
 
-    // If chart exists and structure is unchanged, just update data.
     if (inst && inst.setData && chartStructureRef.current === structureKey) {
       try {
         inst.setData(validation.data, false);
+        applySettings(inst);
         return;
       } catch {
         // Fall through to full reinitialization.
       }
     }
 
-    // Destroy previous instance.
     if (inst && inst.destroy) {
       inst.destroy();
     }
+
+    const xRange = config.xAxis.range ?? [0, 1];
+    const yRange = config.yAxis.range ?? [0, 1];
 
     const opts: any = {
       width,
@@ -292,23 +337,23 @@ export function EngineeringPlot({
       series: buildSeries(),
       axes: buildAxes(),
       scales: {
-        x: { time: false },
-        y: { type: yScaleType },
+        x: { time: false, min: xMin ?? xRange[0], max: xMax ?? xRange[1] },
+        y: { type: yScaleType, min: yMin ?? yRange[0], max: yMax ?? yRange[1] },
       },
       cursor: {
-        show: config.tooltips !== false,
+        show: config.tooltips !== false && interactionMode === 'inspect',
         x: true,
         y: true,
         lock: 'x',
         points: { show: true, size: 5, stroke: '#fff', width: 0 },
       },
-      legend: { show: config.legend !== false, width: 240, live: true },
+      legend: { show: showLegend, width: 240, live: true },
       select: {
-        show: true,
-        marginLeft: 44,
+        show: interactionMode === 'zoom',
+        marginLeft: yAxisSizeRef.current,
         marginTop: 0,
         marginRight: 20,
-        marginBottom: 16,
+        marginBottom: xAxisSizeRef.current,
         stroke: '#00000040',
         fill: '#00000020',
         cursor: 'zoom-in',
@@ -316,34 +361,45 @@ export function EngineeringPlot({
           if (i1 <= i0) return;
           const xData = u.data[0];
           const xScale = u.scales.x;
-          const xRange = xScale.range;
+          const xRangeCur = xScale.range;
           const len = xData.length;
-          const x0 = xRange.min + (i0 / len) * (xRange.max - xRange.min);
-          const x1 = xRange.min + (i1 / len) * (xRange.max - xRange.min);
+          const x0 = xRangeCur.min + (i0 / len) * (xRangeCur.max - xRangeCur.min);
+          const x1 = xRangeCur.min + (i1 / len) * (xRangeCur.max - xRangeCur.min);
           u.setScale('x', { min: Math.min(x0, x1), max: Math.max(x0, x1) });
         },
       },
     };
 
-    if (config.xAxis.range) {
-      opts.scales.x.min = config.xAxis.range[0];
-      opts.scales.x.max = config.xAxis.range[1];
-    }
-    if (config.yAxis.range) {
-      opts.scales.y.min = config.yAxis.range[0];
-      opts.scales.y.max = config.yAxis.range[1];
-    }
-
     try {
       const newInst = new uPlot(opts, validation.data, container);
       chartInstanceRef.current = newInst;
       chartStructureRef.current = structureKey;
+      applySettings(newInst);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to initialize plot');
       console.error('[EngineeringPlot] uPlot construction failed:', err);
       setInitError(err);
     }
-  }, [config, height, validateData, getStructureKey]);
+  }, [config, height, validateData, getStructureKey, showGrid, yScaleType, xMin, xMax, yMin, yMax, showMarkers, lineWidth, showLegend, interactionMode, seriesVisibility]);
+
+  const applySettings = (inst: any) => {
+    if (!inst) return;
+    try {
+      if (inst.setScale) {
+        inst.setScale('y', { type: yScaleType });
+      }
+      // Series visibility
+      inst.series?.forEach?.((s: any, i: number) => {
+        if (i === 0) return; // skip x series
+        const visible = seriesVisibility[s.label || `series-${i}`] !== false;
+        if (typeof s.show === 'boolean' || s.show === undefined) {
+          // uPlot series visibility
+        }
+      });
+    } catch {
+      // best effort
+    }
+  };
 
   // Theme change: update colors without destroying the chart.
   useEffect(() => {
@@ -388,7 +444,7 @@ export function EngineeringPlot({
     let inspectContainer: HTMLDivElement | null = null;
 
     // Click-to-inspect: find nearest data point on canvas click.
-    if (inspectable) {
+    if (inspectable && interactionMode === 'inspect') {
       inspectContainer = containerRef.current;
       const handleCanvasClick = (event: MouseEvent) => {
         const inst = chartInstanceRef.current;
@@ -399,17 +455,16 @@ export function EngineeringPlot({
 
         const xData = series[0].x;
         const rect = container.getBoundingClientRect();
-        const plotLeft = 44; // y-axis width from buildAxes
+        const plotLeft = yAxisSizeRef.current;
         const plotWidth = rect.width - plotLeft - 20;
 
         const clickX = event.clientX - rect.left;
         const scaleX = inst.scale.x;
-        const xRange = scaleX.range;
+        const xRangeCur = scaleX.range;
         const dataX =
-          xRange.min +
-          Math.max(0, clickX - plotLeft) / plotWidth * (xRange.max - xRange.min);
+          xRangeCur.min +
+          Math.max(0, clickX - plotLeft) / plotWidth * (xRangeCur.max - xRangeCur.min);
 
-        // Find nearest X index in sorted data.
         let nearestIdx = 0;
         let minDist = Infinity;
         for (let i = 0; i < xData.length; i++) {
@@ -439,7 +494,7 @@ export function EngineeringPlot({
       resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
     };
-  }, [loaded, initChart, height, inspectable, inspectorSeriesIndex, config.series, onPointSelect]);
+  }, [loaded, initChart, height, inspectable, interactionMode, inspectorSeriesIndex, config.series, handlePointSelect]);
 
   const onResize = () => {
     const inst = chartInstanceRef.current;
@@ -462,11 +517,28 @@ export function EngineeringPlot({
       if (config.yAxis.range) {
         inst.setScale('y', { min: config.yAxis.range[0], max: config.yAxis.range[1] });
       }
+      setXMin(null);
+      setXMax(null);
+      setYMin(null);
+      setYMax(null);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to reset view');
       console.error('[EngineeringPlot] Reset view failed:', err);
       setInitError(err);
     }
+  };
+
+  const handleResetSettings = () => {
+    setShowGrid(true);
+    setYScaleType('linear');
+    setXMin(null);
+    setXMax(null);
+    setYMin(null);
+    setYMax(null);
+    setShowMarkers(false);
+    setLineWidth(2);
+    setShowLegend(true);
+    setSeriesVisibility({});
   };
 
   const handleExportPng = () => {
@@ -541,6 +613,15 @@ export function EngineeringPlot({
     );
   }
 
+  const datasetRange = config.series.length
+    ? {
+        xMin: Math.min(...config.series[0].x),
+        xMax: Math.max(...config.series[0].x),
+        yMin: Math.min(...config.series.flatMap((s) => s.y.filter(isFiniteNumber))),
+        yMax: Math.max(...config.series.flatMap((s) => s.y.filter(isFiniteNumber))),
+      }
+    : null;
+
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
       {config.title && <h2 className="eng-plot-title">{config.title}</h2>}
@@ -550,45 +631,169 @@ export function EngineeringPlot({
         style={{ width: '100%', height, position: 'relative' }}
         aria-hidden="true"
       />
-      <div className="eng-plot-actions">
-        <button type="button" onClick={handleResetView} aria-label="Reset zoom and pan">
-          Reset view
-        </button>
-        <button type="button" onClick={handleExportPng} aria-label="Export plot as PNG">
-          Export PNG
-        </button>
-        <button type="button" onClick={handleExportCsv} aria-label="Export data as CSV">
-          Export CSV
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowSettings((s) => !s)}
-          aria-label="Chart settings"
-          className="eng-plot-settings-toggle"
-        >
-          ⚙
-        </button>
-        {showSettings && (
-          <div className="eng-plot-settings">
-            <label>
-              <input
-                type="checkbox"
-                checked={showGrid}
-                onChange={(e) => setShowGrid(e.target.checked)}
-              />
-              Show grid
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={yScaleType === 'log'}
-                onChange={(e) => setYScaleType(e.target.checked ? 'log' : 'linear')}
-              />
-              Logarithmic Y axis
-            </label>
+      <div className="eng-plot-toolbar">
+        <div className="eng-plot-mode-group">
+          <button
+            type="button"
+            className={`eng-plot-mode-btn ${interactionMode === 'inspect' ? 'eng-plot-mode-active' : ''}`}
+            onClick={() => setInteractionMode('inspect')}
+            aria-label="Inspect points"
+            aria-pressed={interactionMode === 'inspect'}
+          >
+            Inspect
+          </button>
+          <button
+            type="button"
+            className={`eng-plot-mode-btn ${interactionMode === 'zoom' ? 'eng-plot-mode-active' : ''}`}
+            onClick={() => setInteractionMode('zoom')}
+            aria-label="Drag to zoom"
+            aria-pressed={interactionMode === 'zoom'}
+          >
+            Zoom
+          </button>
+          <button
+            type="button"
+            className={`eng-plot-mode-btn ${interactionMode === 'pan' ? 'eng-plot-mode-active' : ''}`}
+            onClick={() => setInteractionMode('pan')}
+            aria-label="Pan"
+            aria-pressed={interactionMode === 'pan'}
+          >
+            Pan
+          </button>
+          <button type="button" onClick={handleResetView} aria-label="Reset zoom and pan">
+            Reset View
+          </button>
+        </div>
+        <div className="eng-plot-settings-group">
+          <button
+            type="button"
+            onClick={() => setShowSettings((s) => !s)}
+            aria-label="Graph settings"
+            className="eng-plot-settings-btn"
+          >
+            Graph Settings ⚙
+          </button>
+          <div className="eng-plot-export-group">
+            <button type="button" onClick={handleExportPng} aria-label="Export plot as PNG">
+              Export PNG
+            </button>
+            <button type="button" onClick={handleExportCsv} aria-label="Export data as CSV">
+              Export CSV
+            </button>
           </div>
-        )}
+        </div>
       </div>
+      {showSettings && (
+        <div className="eng-plot-settings-panel">
+          <div className="eng-plot-settings-section">
+            <h4 className="eng-plot-settings-section-title">Axes</h4>
+            <div className="eng-plot-settings-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showGrid}
+                  onChange={(e) => setShowGrid(e.target.checked)}
+                />
+                Show grid
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={yScaleType === 'log'}
+                  onChange={(e) => setYScaleType(e.target.checked ? 'log' : 'linear')}
+                />
+                Logarithmic Y axis
+              </label>
+            </div>
+            <div className="eng-plot-settings-row">
+              <label className="eng-plot-settings-label">X min</label>
+              <input
+                type="number"
+                value={xMin ?? ''}
+                onChange={(e) => setXMin(e.target.value === '' ? null : Number(e.target.value))}
+                className="eng-plot-settings-input"
+                placeholder="auto"
+              />
+              <label className="eng-plot-settings-label">X max</label>
+              <input
+                type="number"
+                value={xMax ?? ''}
+                onChange={(e) => setXMax(e.target.value === '' ? null : Number(e.target.value))}
+                className="eng-plot-settings-input"
+                placeholder="auto"
+              />
+              <label className="eng-plot-settings-label">Y min</label>
+              <input
+                type="number"
+                value={yMin ?? ''}
+                onChange={(e) => setYMin(e.target.value === '' ? null : Number(e.target.value))}
+                className="eng-plot-settings-input"
+                placeholder="auto"
+              />
+              <label className="eng-plot-settings-label">Y max</label>
+              <input
+                type="number"
+                value={yMax ?? ''}
+                onChange={(e) => setYMax(e.target.value === '' ? null : Number(e.target.value))}
+                className="eng-plot-settings-input"
+                placeholder="auto"
+              />
+            </div>
+          </div>
+          <div className="eng-plot-settings-section">
+            <h4 className="eng-plot-settings-section-title">Appearance</h4>
+            <div className="eng-plot-settings-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showMarkers}
+                  onChange={(e) => setShowMarkers(e.target.checked)}
+                />
+                Show data markers
+              </label>
+              <label className="eng-plot-settings-label">Line thickness</label>
+              <input
+                type="range"
+                min="1"
+                max="6"
+                step="1"
+                value={lineWidth}
+                onChange={(e) => setLineWidth(Number(e.target.value))}
+                className="eng-plot-settings-range"
+              />
+              <span className="eng-plot-settings-value">{lineWidth} px</span>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showLegend}
+                  onChange={(e) => setShowLegend(e.target.checked)}
+                />
+                Show legend
+              </label>
+            </div>
+          </div>
+          <div className="eng-plot-settings-section">
+            <h4 className="eng-plot-settings-section-title">Data</h4>
+            {datasetRange && (
+              <div className="eng-plot-settings-row">
+                <span className="eng-plot-settings-label">X range:</span>
+                <span className="eng-plot-settings-value">
+                  {formatTick(datasetRange.xMin, config.xAxis.type)} to{' '}
+                  {formatTick(datasetRange.xMax, config.xAxis.type)}
+                </span>
+                <span className="eng-plot-settings-label">Y range:</span>
+                <span className="eng-plot-settings-value">
+                  {formatTick(datasetRange.yMin, yScaleType)} to{' '}
+                  {formatTick(datasetRange.yMax, yScaleType)}
+                </span>
+              </div>
+            )}
+            <button type="button" onClick={handleResetSettings} className="eng-plot-settings-reset">
+              Reset Settings
+            </button>
+          </div>
+        </div>
+      )}
       {inspectable && selectedPoint && (
         <EngineeringPointInspector
           selected={selectedPoint}

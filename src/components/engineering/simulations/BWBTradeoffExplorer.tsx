@@ -1,7 +1,7 @@
 // Blended-Wing-Body Aircraft: Aerodynamic Efficiency vs. Structural Mass
 // Interactive demonstration built on the shared engineering visualization framework.
 // All calculations live in the pure model layer (src/lib/engineering/models).
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';

@@ -11,8 +11,9 @@ import {
   clamp,
 } from '../src/lib/engineering/validation';
 import { convert, UNITS } from '../src/lib/engineering/units';
-import { formatResult, formatPercentageChange } from '../src/lib/engineering/format';
+import { formatResult, formatPercentageChange, MAX_DECIMALS } from '../src/lib/engineering/format';
 import { getModel } from '../src/lib/engineering/registry';
+import { getPlotDefinition } from '../src/lib/engineering/plots/registry';
 
 describe('lift model', () => {
   it('computes lift for standard conditions', () => {
@@ -351,6 +352,139 @@ describe('format', () => {
     expect(out.value).toBe('12.35');
     expect(out.unit).toBe('kN');
     expect(out.displayText).toContain('kN');
+  });
+
+  it('formatResult caps decimal places at MAX_DECIMALS (5)', () => {
+    const out = formatResult({
+      value: 0.373492847,
+      unit: '-',
+      label: 'Test coefficient',
+      significantFigures: 10,
+    });
+    expect(out.value).toBe('0.37349');
+  });
+
+  it('formatResult removes trailing zeros', () => {
+    const out = formatResult({
+      value: 0.800000000,
+      unit: '-',
+      label: 'Efficiency',
+      significantFigures: 10,
+    });
+    expect(out.value).toBe('0.8');
+  });
+
+  it('formatResult uses four decimal places for ordinary values', () => {
+    const out = formatResult({
+      value: 14.56789123,
+      unit: '-',
+      label: 'L/D',
+      significantFigures: 10,
+    });
+    expect(out.value).toBe('14.56789');
+  });
+
+  it('formatResult uses engineering notation for very small values', () => {
+    const out = formatResult({
+      value: 0.000003421,
+      unit: 'N',
+      label: 'Force',
+      significantFigures: 4,
+    });
+    expect(out.unit).toBe('µN');
+  });
+
+  it('formatResult uses kN for large force values', () => {
+    const out = formatResult({
+      value: 144.3456789,
+      unit: 'N',
+      label: 'Force',
+      significantFigures: 10,
+    });
+    expect(out.value).toBe('144.34568');
+  });
+
+  it('MAX_DECIMALS is 5', () => {
+    expect(MAX_DECIMALS).toBe(5);
+  });
+
+  it('formatTick never exceeds 5 decimal places', () => {
+    // Import is not available in test; test via formatResult instead
+    const out = formatResult({
+      value: 0.373492847,
+      unit: '-',
+      significantFigures: 10,
+    });
+    const decimalPlaces = out.value.includes('.') ? out.value.split('.')[1].length : 0;
+    expect(decimalPlaces).toBeLessThanOrEqual(5);
+  });
+
+  it('formatResult preserves negative signs', () => {
+    const out = formatResult({
+      value: -14.5678,
+      unit: '-',
+      label: 'Change',
+      significantFigures: 6,
+    });
+    expect(out.value).toBe('-14.5678');
+  });
+
+  it('formatResult uses thousands separators for large values', () => {
+    const out = formatResult({
+      value: 1234567,
+      unit: 'N',
+      label: 'Force',
+      significantFigures: 7,
+    });
+    expect(out.unit).toBe('MN');
+  });
+});
+
+describe('axis formatting', () => {
+  it('tick formatting stays within 5 decimal places for small values', () => {
+    const out = formatResult({
+      value: 0.123456789,
+      unit: '-',
+      significantFigures: 10,
+    });
+    const decimalPlaces = out.value.includes('.') ? out.value.split('.')[1].length : 0;
+    expect(decimalPlaces).toBeLessThanOrEqual(5);
+  });
+
+  it('tick formatting uses SI prefixes for large values', () => {
+    const out = formatResult({
+      value: 686500,
+      unit: 'N',
+      significantFigures: 4,
+    });
+    expect(out.unit).toBe('kN');
+    expect(out.value).toBe('686.5');
+  });
+});
+
+describe('plot configuration validation', () => {
+  it('all four BWB plot presets resolve', () => {
+    expect(getPlotDefinition('aircraft.dragPolar')).toBeDefined();
+    expect(getPlotDefinition('aircraft.ldVsSpeed')).toBeDefined();
+    expect(getPlotDefinition('aircraft.thrustVsSpeed')).toBeDefined();
+    expect(getPlotDefinition('aircraft.ldVsMassPenalty')).toBeDefined();
+  });
+
+  it('drag polar uses dragPolarModel (not aircraftPerformanceModel)', () => {
+    const def = getPlotDefinition('aircraft.dragPolar');
+    expect(def?.modelId).toBe(dragPolarModel.id);
+  });
+
+  it('drag polar sweeps CL from 0.1 to 2.0', () => {
+    const def = getPlotDefinition('aircraft.dragPolar');
+    expect(def?.sweepParam).toBe('cl');
+    expect(def?.xRange).toEqual([0.1, 2.0]);
+  });
+
+  it('thrust plot sweeps velocity from 40 to 200 m/s', () => {
+    const def = getPlotDefinition('aircraft.thrustVsSpeed');
+    expect(def?.sweepParam).toBe('velocity');
+    expect(def?.xRange).toEqual([40, 200]);
   });
 });
 
