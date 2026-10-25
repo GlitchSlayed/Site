@@ -1,9 +1,10 @@
 // Blended-Wing-Body Aircraft: Aerodynamic Efficiency vs. Structural Mass
 // Interactive demonstration built on the shared engineering visualization framework.
 // All calculations live in the pure model layer (src/lib/engineering/models).
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { getModel } from '../../../lib/engineering/registry';
+import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { ParameterSet } from '../shared/ParameterSet';
 import { PresetSelector } from '../shared/PresetSelector';
 import { EquationExplorer } from '../equations/EquationExplorer';
@@ -22,7 +23,6 @@ interface BWBTradeoffExplorerProps {
 
 export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}) {
   const model = getModel(MODEL_ID);
-  const [activeCase, setActiveCase] = useState<'conventional' | 'bwb' | 'both'>('both');
 
   if (!model) {
     return (
@@ -32,50 +32,49 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     );
   }
 
-  // Build a comparison table from two independent parameter configurations.
-  // Each case reads from the same scoped store; the "both" view shows conventional
-  // defaults vs the BWB-optimized preset side by side.
-  const conventionalInputs: Record<string, number> = {};
-  const bwbInputs: Record<string, number> = {};
+  // Version state that increments whenever any scoped parameter changes,
+  // forcing re-render of live calculations and the comparison table.
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    const unsubscribes = model.parameters.map((param) =>
+      subscribeParameter(SCOPE_ID, param.id, () => setVersion((v) => v + 1))
+    );
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [model, setVersion]);
+
+  // Read live parameter values from scoped state.
+  const liveInputs: Record<string, number> = {};
   for (const param of model.parameters) {
-    conventionalInputs[param.id] = param.defaultValue;
-    bwbInputs[param.id] = param.defaultValue;
+    liveInputs[param.id] = getParameter(SCOPE_ID, param.id) ?? param.defaultValue;
   }
 
-  const bwbPreset = {
-    mass: 70000,
-    structuralPenalty: 0.05,
-    area: 450,
-    span: 55,
-    ar: 7,
-    e: 0.85,
-    cd0: 0.018,
-    inducedCorrection: 1,
-    rho: 1.225,
-    velocity: 80,
-  };
-  for (const [key, value] of Object.entries(bwbPreset)) {
-    bwbInputs[key] = value;
+  // Reference aircraft: fixed conventional defaults (not affected by live sliders).
+  const conventionalInputs: Record<string, number> = {};
+  for (const param of model.parameters) {
+    conventionalInputs[param.id] = param.defaultValue;
   }
 
   const conventional = model.compute(conventionalInputs);
-  const bwb = model.compute(bwbInputs);
+  const adjustable = model.compute(liveInputs);
 
   const rows: ComparisonRow[] = [
-    { id: 'totalMass', label: 'Total mass', unit: 'kg', values: [conventional.totalMass.value, bwb.totalMass.value] },
-    { id: 'weight', label: 'Weight', unit: 'N', values: [conventional.weight.value, bwb.weight.value] },
-    { id: 'cl', label: 'Lift coefficient C_L', unit: '-', values: [conventional.cl.value, bwb.cl.value] },
-    { id: 'cd', label: 'Drag coefficient C_D', unit: '-', values: [conventional.cd.value, bwb.cd.value] },
-    { id: 'ld', label: 'Lift-to-drag ratio L/D', unit: '-', values: [conventional.ld.value, bwb.ld.value], highlight: true },
-    { id: 'drag', label: 'Drag', unit: 'N', values: [conventional.drag.value, bwb.drag.value] },
-    { id: 'thrust', label: 'Thrust required', unit: 'N', values: [conventional.thrust.value, bwb.thrust.value] },
+    { id: 'totalMass', label: 'Total mass', unit: 'kg', values: [conventional.totalMass.value, adjustable.totalMass.value] },
+    { id: 'weight', label: 'Weight', unit: 'N', values: [conventional.weight.value, adjustable.weight.value] },
+    { id: 'cl', label: 'Lift coefficient C_L', unit: '-', values: [conventional.cl.value, adjustable.cl.value] },
+    { id: 'cd', label: 'Drag coefficient C_D', unit: '-', values: [conventional.cd.value, adjustable.cd.value] },
+    { id: 'ld', label: 'Lift-to-drag ratio L/D', unit: '-', values: [conventional.ld.value, adjustable.ld.value], highlight: true },
+    { id: 'drag', label: 'Drag', unit: 'N', values: [conventional.drag.value, adjustable.drag.value] },
+    { id: 'thrust', label: 'Thrust required', unit: 'N', values: [conventional.thrust.value, adjustable.thrust.value] },
   ];
 
   const comparisonConfig: EngineeringComparisonConfig = {
-    title: 'Conventional vs. BWB (reference conditions)',
+    title: 'Conventional reference vs. adjustable aircraft',
     configurations: [
       { id: 'conventional', label: 'Conventional reference', color: '#99999f' },
-      { id: 'bwb', label: 'BWB (illustrative)', color: '#ff603b' },
+      { id: 'adjustable', label: 'Adjustable aircraft (live)', color: '#ff603b' },
     ],
     rows,
     referenceConfigId: 'conventional',
@@ -109,10 +108,15 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
 
       <div className="eng-demo-controls">
         <div className="eng-demo-preset">
-          <PresetSelector model={model} scopeId={SCOPE_ID} label="Configuration" />
+          <div className="eng-demo-preset-selector">
+            <PresetSelector model={model} scopeId={SCOPE_ID} label="Configuration" />
+          </div>
         </div>
-        <div className="eng-demo-parameters">
-          <ParameterSet model={model} scopeId={SCOPE_ID} />
+        <div className="eng-demo-parameters-section">
+          <h3 className="eng-parameters-label">Aircraft parameters</h3>
+          <div className="eng-parameter-grid">
+            <ParameterSet model={model} scopeId={SCOPE_ID} />
+          </div>
         </div>
       </div>
 

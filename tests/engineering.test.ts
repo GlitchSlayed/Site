@@ -35,6 +35,30 @@ describe('lift model', () => {
     expect(out.lift.value).toBe(0);
   });
 
+  it('computes reference lift case: 61250 N', () => {
+    // L = 0.5 * rho * V^2 * S * C_L = 0.5 * 1.225 * 100^2 * 20 * 0.5 = 61250 N
+    const out = liftModel.compute({
+      rho: 1.225,
+      velocity: 100,
+      area: 20,
+      cl: 0.5,
+    });
+    expect(out.lift.value).toBeCloseTo(61250, 4);
+  });
+
+  it('lift scales linearly with density, area, and cl, quadratically with velocity', () => {
+    const base = liftModel.compute({ rho: 1.225, velocity: 100, area: 20, cl: 0.5 }).lift.value!;
+    const doubleDensity = liftModel.compute({ rho: 2.45, velocity: 100, area: 20, cl: 0.5 }).lift.value!;
+    const doubleArea = liftModel.compute({ rho: 1.225, velocity: 100, area: 40, cl: 0.5 }).lift.value!;
+    const doubleCL = liftModel.compute({ rho: 1.225, velocity: 100, area: 20, cl: 1.0 }).lift.value!;
+    const doubleVelocity = liftModel.compute({ rho: 1.225, velocity: 200, area: 20, cl: 0.5 }).lift.value!;
+
+    expect(doubleDensity).toBeCloseTo(base * 2, 4);
+    expect(doubleArea).toBeCloseTo(base * 2, 4);
+    expect(doubleCL).toBeCloseTo(base * 2, 4);
+    expect(doubleVelocity).toBeCloseTo(base * 4, 4);
+  });
+
   it('is registered in the model registry', () => {
     expect(getModel('aerodynamics.lift')).toBe(liftModel);
   });
@@ -81,7 +105,7 @@ describe('aircraft performance model', () => {
     const out = aircraftPerformanceModel.compute(base);
     const weight = 70000 * 9.80665;
     const q = 0.5 * 1.225 * 80 * 80;
-    const cl = 2 * weight / (q * 300);
+    const cl = weight / (q * 300);
     const k = 1 / (Math.PI * 0.8 * 9);
     const cd = 0.02 + k * cl * cl;
     expect(out.weight.value).toBeCloseTo(weight, 2);
@@ -95,8 +119,11 @@ describe('aircraft performance model', () => {
   });
 
   it('structural mass penalty raises required C_L and drag', () => {
-    const baseline = aircraftPerformanceModel.compute({ ...base, structuralPenalty: 0 });
-    const penalized = aircraftPerformanceModel.compute({ ...base, structuralPenalty: 0.2 });
+    // Use velocity=60 so required C_L exceeds the L/D-optimal point (~0.67),
+    // ensuring added mass reduces L/D.
+    const lowSpeedBase = { ...base, velocity: 60 };
+    const baseline = aircraftPerformanceModel.compute({ ...lowSpeedBase, structuralPenalty: 0 });
+    const penalized = aircraftPerformanceModel.compute({ ...lowSpeedBase, structuralPenalty: 0.2 });
     expect(penalized.cl.value).toBeGreaterThan(baseline.cl.value);
     expect(penalized.cd.value).toBeGreaterThan(baseline.cd.value);
     expect(penalized.ld.value).toBeLessThan(baseline.ld.value);
@@ -112,6 +139,34 @@ describe('aircraft performance model', () => {
   it('L/D = C_L / C_D identity', () => {
     const out = aircraftPerformanceModel.compute(base);
     expect(out.ld.value).toBeCloseTo(out.cl.value / out.cd.value, 4);
+  });
+
+  it('lift equals weight in steady level flight', () => {
+    const out = aircraftPerformanceModel.compute(base);
+    // In steady level flight, L = W = m_total * g
+    expect(out.lift.value).toBeCloseTo(out.weight.value, 4);
+  });
+
+  it('geometry consistency: AR = b^2 / S', () => {
+    // With span=45, area=300: AR = 45^2/300 = 6.75
+    const out = aircraftPerformanceModel.compute({ ...base, ar: 6.75 });
+    const expectedAR = (45 * 45) / 300;
+    expect(expectedAR).toBeCloseTo(6.75, 4);
+    // The induced-drag factor uses the provided AR
+    const k = 1 / (Math.PI * 0.8 * expectedAR);
+    expect(out.k.value).toBeCloseTo(k, 6);
+  });
+
+  it('structural mass penalty reduces L/D through increased required C_L', () => {
+    // Use velocity=60 so required C_L exceeds the L/D-optimal point (~0.67),
+    // ensuring added mass reduces L/D.
+    const lowSpeedBase = { ...base, velocity: 60 };
+    const baseline = aircraftPerformanceModel.compute({ ...lowSpeedBase, structuralPenalty: 0 });
+    const penalized = aircraftPerformanceModel.compute({ ...lowSpeedBase, structuralPenalty: 0.2 });
+    expect(penalized.cl.value).toBeGreaterThan(baseline.cl.value);
+    expect(penalized.cd.value).toBeGreaterThan(baseline.cd.value);
+    expect(penalized.ld.value).toBeLessThan(baseline.ld.value);
+    expect(penalized.totalMass.value).toBeCloseTo(70000 * 1.2, 4);
   });
 });
 

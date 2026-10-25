@@ -1,9 +1,9 @@
 // Model-driven plot: resolves a plot definition, sweeps parameters, and renders
 // EngineeringPlot. Inputs are read from scoped state so multiple visualizations
 // can share the same parameters.
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EngineeringPlotConfig } from '../../../lib/engineering/types';
-import { getParameter } from '../../../lib/engineering/scopedState';
+import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { getModel } from '../../../lib/engineering/registry';
 import { getPlotDefinition, generateSeries, type PlotDefinition } from '../../../lib/engineering/plots/registry';
 import { EngineeringPlot } from './EngineeringPlot';
@@ -54,16 +54,27 @@ export function ModelEngineeringPlot({
     );
   }
 
+  // Version state that increments whenever any subscribed parameter changes,
+  // forcing a re-render that re-reads current parameter values.
+  const [version, setVersion] = useState(0);
+
+  // Subscribe to all model parameters so slider changes propagate to the plot.
+  useEffect(() => {
+    const unsubscribes = model.parameters.map((param) =>
+      subscribeParameter(scopeId, param.id, () => setVersion((v) => v + 1))
+    );
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [scopeId, model]);
+
   // Read current parameter values from scoped state, falling back to defaults.
   const inputs: Record<string, number> = {};
   for (const param of model.parameters) {
     inputs[param.id] = getParameter(scopeId, param.id) ?? param.defaultValue;
   }
 
-  const config = useMemo(() => buildConfig(definition, inputs), [
-    definition,
-    JSON.stringify(inputs),
-  ]);
+  const config = useMemo(() => buildConfig(definition, inputs), [definition, version]);
 
   return <EngineeringPlot config={config} className={className} height={height} />;
 }

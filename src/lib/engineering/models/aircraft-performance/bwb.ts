@@ -73,7 +73,7 @@ export const aircraftPerformanceModel: EngineeringModel = {
       max: 120,
       step: 0.5,
       defaultValue: 45,
-      description: 'Entered for geometry reference; aspect ratio is used directly in the induced-drag term.',
+      description: 'Wingspan. Aspect ratio is derived as b²/S for geometric consistency.',
     },
     {
       id: 'ar',
@@ -83,8 +83,8 @@ export const aircraftPerformanceModel: EngineeringModel = {
       min: 1,
       max: 50,
       step: 0.5,
-      defaultValue: 9,
-      description: 'Aspect ratio used in the induced-drag factor k = 1/(pi * e * AR).',
+      defaultValue: 6.75,
+      description: 'Aspect ratio, derived as b²/S. Default is consistent with span = 45 m and area = 300 m².',
     },
     {
       id: 'e',
@@ -139,6 +139,7 @@ export const aircraftPerformanceModel: EngineeringModel = {
     },
   ],
   outputs: {
+    lift: { label: 'Lift', symbol: 'L', unit: 'N', significantFigures: 4 },
     totalMass: { label: 'Total mass', symbol: 'm_total', unit: 'kg', significantFigures: 4 },
     weight: { label: 'Weight', symbol: 'W', unit: 'N', significantFigures: 4 },
     cl: { label: 'Lift coefficient', symbol: 'C_L', unit: '-', significantFigures: 4 },
@@ -151,7 +152,7 @@ export const aircraftPerformanceModel: EngineeringModel = {
   },
   presets: {
     conventional: {
-      mass: 70000, structuralPenalty: 0, area: 300, span: 45, ar: 9, e: 0.8, cd0: 0.02, inducedCorrection: 1, rho: 1.225, velocity: 80,
+      mass: 70000, structuralPenalty: 0, area: 300, span: 45, ar: 6.75, e: 0.8, cd0: 0.02, inducedCorrection: 1, rho: 1.225, velocity: 80,
     },
     bwbOptimistic: {
       mass: 70000, structuralPenalty: 0.05, area: 450, span: 55, ar: 7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
@@ -178,7 +179,8 @@ export const aircraftPerformanceModel: EngineeringModel = {
     const dynamicPressure = 0.5 * rho * velocity * velocity;
 
     // Guard against division by zero / nonpositive area or density.
-    const cl = safeDivide(2 * weight, dynamicPressure * area, 0);
+    const cl = safeDivide(weight, dynamicPressure * area, 0);
+    const lift = safeResult(dynamicPressure * area * cl);
     const k = safeDivide(inducedCorrection, Math.PI * e * ar, 0);
     const cd = cd0 + k * cl * cl;
     const ld = safeDivide(cl, cd, 0);
@@ -186,6 +188,7 @@ export const aircraftPerformanceModel: EngineeringModel = {
     const thrust = drag;
 
     return {
+      lift: { value: safeResult(lift) },
       totalMass: { value: safeResult(totalMass) },
       weight: { value: safeResult(weight) },
       cl: { value: safeResult(cl) },

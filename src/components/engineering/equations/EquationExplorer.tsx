@@ -1,10 +1,10 @@
 // Equation explorer: KaTeX presentation + typed calculation + live result.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import katex from 'katex';
 import type { EngineeringOutputValue } from '../../../lib/engineering/types';
 import { formatEngineering, significantFigures } from '../../../lib/engineering/validation';
 import { getModel } from '../../../lib/engineering/registry';
-import { getParameter } from '../../../lib/engineering/scopedState';
+import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { ParameterSet } from '../shared/ParameterSet';
 import { EngineeringPlot } from '../plots/EngineeringPlot';
 import type { EngineeringPlotConfig } from '../../../lib/engineering/types';
@@ -39,6 +39,20 @@ export function EquationExplorer({
   const model = getModel(modelId);
   const katexElRef = useRef<HTMLSpanElement>(null);
 
+  // Version state that increments whenever any subscribed parameter changes,
+  // forcing a re-render that re-reads current parameter values.
+  const [version, setVersion] = useState(0);
+
+  // Subscribe to all model parameters so slider changes propagate to the result.
+  useEffect(() => {
+    const unsubscribes = model ? model.parameters.map((param) =>
+      subscribeParameter(scopeId, param.id, () => setVersion((v) => v + 1))
+    ) : [];
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [scopeId, model]);
+
   const inputs = useMemo(() => {
     const values: Record<string, number> = {};
     if (!model) return values;
@@ -46,7 +60,7 @@ export function EquationExplorer({
       values[param.id] = getParameter(scopeId, param.id) ?? param.defaultValue;
     }
     return values;
-  }, [model, scopeId]);
+  }, [model, version]);
 
   // Render KaTeX during SSR as well as on the client so the equation is present
   // in the static HTML rather than appearing only after hydration.

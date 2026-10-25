@@ -13,20 +13,22 @@ The framework separates concerns into five layers:
 | Engineering models | `src/lib/engineering/models/` | Pure TypeScript calculation functions (no rendering) |
 | Validation / units / numerics | `src/lib/engineering/validation.ts`, `units.ts` | Input sanitization, edge-case guards, unit conversion |
 | Scoped state | `src/lib/engineering/scopedState.ts` | Isolated, shareable parameter store |
-| Visualization components | `src/components/engineering/` | React islands that render models (Plotly, Three.js) |
-| Plot definitions | `src/lib/engineering/plots/registry.ts` | Configuration-driven mapping from model → Plotly series |
+| Visualization components | `src/components/engineering/` | React islands that render models (uPlot, Three.js) |
+| Plot definitions | `src/lib/engineering/plots/registry.ts` | Configuration-driven mapping from model → uPlot series |
 
 ```
 model.compute(inputs)  →  outputs   (pure, testable, no DOM)
-                          ↑
-                 component reads outputs, renders UI
+                           ↑
+                  component reads outputs, renders UI
 ```
 
 ### Design rules
 
-- **No site-wide visualization bundle.** Plotly.js and Three.js are dynamically imported inside each component only when that component mounts/is visible.
+- **No site-wide visualization bundle.** uPlot and Three.js are dynamically imported inside each component only when that component mounts/is visible.
+- **CSP-safe plotting.** uPlot has no `eval`/`new-Function` dependency, so it works under strict Content Security Policy.
 - **No arbitrary LaTeX evaluation.** KaTeX is the presentation layer only. Equations are backed by explicitly typed calculation functions.
 - **No global state linking unrelated charts.** Parameters live in scopes keyed by `scopeId` + `paramId`; two visualizations sharing a scope stay synchronized, unrelated ones do not.
+- **Reactive propagation.** Parameter changes flow through scoped state subscriptions → component re-render → model recalculation → visualization update.
 - **SI units internally.** All models compute in SI; the `units` layer converts for display.
 - **Graceful degradation.** Every component has loading, error, and empty states. One failed visualization does not break an article.
 
@@ -34,15 +36,15 @@ model.compute(inputs)  →  outputs   (pure, testable, no DOM)
 
 | Component | Location | Lazy library | Purpose |
 |-----------|----------|--------------|---------|
-| `EngineeringPlot` | `components/engineering/plots/EngineeringPlot.tsx` | plotly.js-dist-min | Interactive scientific plots |
-| `ModelEngineeringPlot` | `components/engineering/plots/ModelEngineeringPlot.tsx` | plotly.js-dist-min | Model-driven plot from a registry definition |
+| `EngineeringPlot` | `components/engineering/plots/EngineeringPlot.tsx` | uPlot | Interactive scientific plots |
+| `ModelEngineeringPlot` | `components/engineering/plots/ModelEngineeringPlot.tsx` | uPlot | Model-driven plot from a registry definition |
 | `EquationExplorer` | `components/engineering/equations/EquationExplorer.tsx` | katex | Equation + controls + live result + optional plot |
 | `EngineeringComparison` | `components/engineering/tables/EngineeringComparison.tsx` | none | Side-by-side configuration comparison table |
 | `EngineeringModelViewer` | `components/engineering/viewers/EngineeringModelViewer.tsx` | three | GLB/glTF 3D model viewer with overlays |
 | `ParameterSet` | `components/engineering/shared/ParameterSet.tsx` | none | Renders a control for every model parameter |
 | `ParameterControl` | `components/engineering/shared/ParameterControl.tsx` | none | Synchronized slider + numeric input for one parameter |
 | `PresetSelector` | `components/engineering/shared/PresetSelector.tsx` | none | Named configuration / reset selector |
-| `BWBTradeoffExplorer` | `components/engineering/simulations/BWBTradeoffExplorer.tsx` | plotly | Complete BWB vs conventional demo |
+| `BWBTradeoffExplorer` | `components/engineering/simulations/BWBTradeoffExplorer.tsx` | uPlot | Complete BWB vs conventional demo |
 
 ## 3. Supported engineering models
 
@@ -52,7 +54,7 @@ Registered in `src/lib/engineering/registry.ts`:
 |----------|-------|---------|
 | `aerodynamics.lift` | Lift Equation | Lift (N) |
 | `aerodynamics.dragPolar` | Drag Polar | Drag coefficient `C_D`, induced factor `k` |
-| `aircraft.performance` | Aircraft Performance (steady, level) | mass, weight, `C_L`, `k`, `C_D`, `L/D`, drag, thrust, dynamic pressure |
+| `aircraft.performance` | Aircraft Performance (steady, level) | lift, total mass, weight, `C_L`, `k`, `C_D`, `L/D`, drag, thrust, dynamic pressure |
 
 ## 4. How to define a new model
 
@@ -141,7 +143,7 @@ import { EquationExplorer, EngineeringPlot, EngineeringComparison } from '../../
 
 Ordinary `.md` articles use the Markdown pipeline and **do not** support arbitrary interactive MDX components. To embed an interactive visualization, use a `.mdx` file (as done for `src/content/projects/bwb-aircraft-feasibility.mdx`). Document this limitation rather than placing a component tag in `.md` where it will render as literal text.
 
-All components should include `client:load` (or `client:visible`) so Plotly/Three.js initialize on the client.
+All components should include `client:load` (or `client:visible`) so uPlot/Three.js initialize on the client.
 
 ## 7. How to add a new plot
 
@@ -224,29 +226,45 @@ All model tests must not import rendering components.
 
 ## 11. Performance considerations
 
-- Heavy libraries (Plotly ~ several hundred KB, Three.js) are dynamic imports inside components; they are not in the site-wide bundle.
+- Heavy libraries (uPlot, Three.js) are dynamic imports inside components; they are not in the site-wide bundle. uPlot is code-split into its own chunk by Vite.
 - `EngineeringModelViewer` initializes WebGL only when visible and disposes on unmount.
 - Prefer static HTML for titles, captions, and fallback text; enhance interactively after hydration.
 - For large datasets, downsample before plotting rather than plotting every point.
 - One failed visualization has an error/fallback state and does not break the article.
 - Components use `client:load`/`client:visible` so they hydrate only on pages that include them.
+- Chart instances are destroyed on unmount to prevent memory leaks.
 
 ## 12. GitHub Pages base path (`/Site/`)
 
 The site deploys under a repository subpath (e.g. `/Site/`). Astro handles this via `base: process.env.BASE_PATH || '/'` set by the Pages workflow.
 
 - Use the `url()` helper (`src/config.ts`) for internal links in Astro components.
-- Dynamic imports of Plotly/Three.js are bundled by Vite and respect the base path.
-- GLB/model assets referenced by `EngineeringModelViewer` must be placed in `public/` and referenced with a root-relative path that works under the base path (the `url()` helper / Pages base handles this).
+- Dynamic imports of uPlot/Three.js are bundled by Vite and respect the base path.
+- GLB/model assets referenced by `EngineeringModelViewer` must be placed in `public/` and referenced with a root-relative path that works under the base path.
 - Do not hardcode `http://localhost` or assume hosting at `/`.
 
-## 13. Limitations
+## 13. Geometry consistency
+
+For the aircraft performance model, aspect ratio is related to wingspan and reference area by `AR = b² / S`. The default values are chosen to be geometrically consistent (span = 45 m, area = 300 m² → AR = 6.75). Users may override any parameter independently for exploratory analysis, but should be aware that physically inconsistent combinations produce physically meaningless results.
+
+## 14. Limitations
 
 - `.md` articles do not support interactive MDX components; use `.mdx`.
+- uPlot does not provide SVG export; PNG export is available via canvas.
 - The drag polar and aircraft performance models are low-order, steady-level-flight approximations — not CFD/FEA and not certified data.
 - The BWB structural-mass penalty is an explicit illustrative assumption, not a validated structural prediction.
 - Three.js WebGL is unavailable on some devices/components; the viewer shows an error/fallback state.
 - KaTeX rendering in MDX requires the `remark-math`/`rehype-katex` pipeline (configured in `astro.config.mjs`).
+
+## 15. Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| "Unable to load the interactive plot" | uPlot dynamic import failed | Ensure `import('uplot')` is a string literal so Vite code-splits it; check network for `uPlot.esm.*.js` |
+| Equation renders vertically with whitespace | CSS `display: block` on KaTeX spans | Use `.eng-equation > span` not `.eng-equation span` to avoid targeting KaTeX internal spans |
+| `Result output "lift" not produced by model` | Output ID mismatch | Ensure `resultOutputId` matches a key in the model's `outputs` schema |
+| Plots don't update when sliders move | Missing reactive subscription | Components must subscribe to scoped state via `subscribeParameter` and trigger re-render on change |
+| Duplicate form field IDs | Multiple component instances on one page | Use `useId()` for per-instance DOM IDs while sharing state via `scopeId` + `paramId` |
 
 ## Minimal examples
 
@@ -254,7 +272,6 @@ The site deploys under a repository subpath (e.g. `/Site/`). Astro handles this 
 
 ```mdx
 import { EquationExplorer } from '../../components/engineering/equations/EquationExplorer';
-import { getModel } from '../../lib/engineering/registry';
 
 <EquationExplorer
   modelId="aerodynamics.lift"
@@ -265,6 +282,8 @@ import { getModel } from '../../lib/engineering/registry';
   client:load
 />
 ```
+
+Reference case: ρ=1.225 kg/m³, V=100 m/s, S=20 m², C_L=0.5 → L = 61,250 N.
 
 ### 2. Parameterized drag polar plot
 
@@ -280,7 +299,16 @@ import { ModelEngineeringPlot } from '../../components/engineering/plots/ModelEn
 />
 ```
 
-### 3. Basic GLB aircraft model viewer
+### 3. Engineering comparison table
+
+```mdx
+import { EngineeringComparison } from '../../components/engineering/tables/EngineeringComparison';
+import { getModel } from '../../lib/engineering/registry';
+
+// Build config from live model outputs, see BWBTradeoffExplorer for pattern
+```
+
+### 4. Basic GLB aircraft model viewer
 
 ```mdx
 import { EngineeringModelViewer } from '../../components/engineering/viewers/EngineeringModelViewer';
@@ -297,7 +325,17 @@ import { EngineeringModelViewer } from '../../components/engineering/viewers/Eng
 
 *(A real `.glb` file must be provided in `public/models/`. This example does not ship a model file.)*
 
+### 5. BWB tradeoff explorer
+
+```mdx
+import { BWBTradeoffExplorer } from '../../components/engineering/simulations/BWBTradeoffExplorer';
+
+<BWBTradeoffExplorer client:load />
+```
+
 ## Completed BWB tradeoff explorer
 
 `src/components/engineering/simulations/BWBTradeoffExplorer.tsx` demonstrates the full framework:
-drag polar, L/D vs airspeed, thrust vs airspeed, L/D vs structural-mass penalty, and a conventional-vs-BWB comparison table, all sharing parameters through scope `bwb-tradeoff-explorer`. It is embedded in `src/content/projects/bwb-aircraft-feasibility.mdx`.
+drag polar, L/D vs airspeed, thrust vs airspeed, L/D vs structural-mass penalty, and a conventional-vs-adjustable comparison table, all sharing parameters through scope `bwb-tradeoff-explorer`. It is embedded in `src/content/projects/bwb-aircraft-feasibility.mdx`.
+
+The comparison table shows the conventional reference (fixed defaults) versus the adjustable aircraft (live scoped state), so slider changes are immediately reflected in the table.

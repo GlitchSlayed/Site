@@ -24,7 +24,10 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
   const uid = useId().replace(/:/g, '-');
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(Number(event.target.value));
+    const raw = Number(event.target.value);
+    // Convert slider position back from log space when logarithmic scaling is active.
+    const next = param.scale === 'log' ? Math.pow(10, raw) : raw;
+    setValue(next);
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {

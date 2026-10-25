@@ -29,28 +29,52 @@
 }
 
 .eng-demo-controls {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.eng-demo-preset,
-.eng-demo-parameters {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
-  overflow: visible;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.eng-demo-parameters {
-  max-height: none;
+.eng-demo-preset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eng-demo-preset-selector {
+  flex: 1;
+  min-width: 200px;
+}
+
+.eng-demo-parameters-section {
+  margin-top: 4px;
+}
+
+.eng-parameters-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+  padding-left: 2px;
+}
+
+.eng-parameter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px 16px;
 }
 
 @media (min-width: 768px) {
-  .eng-demo-controls {
-    grid-template-columns: 260px 1fr;
+  .eng-parameter-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -58,7 +82,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .eng-parameter-label {
@@ -96,7 +120,7 @@
 }
 
 .eng-parameter-inputs input[type="text"] {
-  width: 80px;
+  width: 70px;
   font-family: var(--mono);
   font-size: 13px;
   background: var(--background);
@@ -112,8 +136,8 @@
 }
 
 .eng-parameter-inputs button {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--background);
@@ -121,6 +145,7 @@
   font-size: 14px;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
 }
 
 .eng-parameter-inputs button:hover {
@@ -131,7 +156,7 @@
 .eng-parameter-description {
   font-size: 11px;
   color: var(--muted);
-  margin: 0;
+  margin: 4px 0 0 0;
 }
 
 .eng-parameter-set {
@@ -188,8 +213,7 @@
   margin: 0 0 8px 0;
 }
 
-.eng-equation katex,
-.eng-equation span {
+.eng-equation > span {
   display: block;
   overflow-x: auto;
   margin: 8px 0;
