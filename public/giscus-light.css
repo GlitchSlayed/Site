@@ -233,3 +233,11 @@ main .pagination-loader-container {
 main .gsc-loading-image {
   background-image: url("https://github.githubassets.com/images/mona-loading-default.gif");
 }
+
+/* Hide "– powered by giscus" branding */
+.gsc-left-header em,
+.gsc-header em,
+.gsc-comments em:has(a[href*="giscus.app"]),
+a[href*="giscus.app"] {
+  display: none !important;
+}
