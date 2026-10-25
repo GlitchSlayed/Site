@@ -12,7 +12,6 @@ visualAccent: "#739cda"
 visualLabel: "Fedora remix · Concept"
 visualAnimate: false
 ---
-
 # GOFR: Glitchy's Opinionated Fedora Remix
 
 **GOFR** (pronounced *Gopher*) is a planned Fedora-based Linux distribution remix built around a relatively simple idea: take the Fedora Workstation experience I already enjoy and make a handful of opinionated changes to its underlying architecture, boot process, kernel, and command-line environment.
@@ -23,6 +22,7 @@ The project is currently in its **conceptual and early planning phase**. The spe
 
 As a heads-up I often go by the name **Glitchy** or **GlitchSlayed** digitally, so that is where the name stems from.
 
+---
 ## Project Goals
 
 GOFR is guided by several principles:
@@ -33,6 +33,8 @@ GOFR is guided by several principles:
 - **Improve the command-line experience.** Experiment with newer tools such as Brush, zoxide, and uutils coreutils.
 - **Minimize unnecessary changes.** Avoid excessive customization, redundant components, or changes made solely for aesthetic reasons.
 - **Remain maintainable.** Prioritize standard packaging, reliable updates, and upstream compatibility over fragile custom scripts.
+
+---
 
 ## Planned Architecture
 
@@ -53,6 +55,8 @@ GOFR is guided by several principles:
 | User-facing core utilities | uutils, where compatible |
 | Security | SELinux enforcing; planned Secure Boot support |
 | Initial platform | x86_64 UEFI |
+
+---
 
 ### 1. Fedora as the Foundation
 
