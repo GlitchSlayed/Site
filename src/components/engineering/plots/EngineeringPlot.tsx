@@ -30,6 +30,8 @@ interface EngineeringPlotProps {
   onPointSelect?: (x: number, y: number, seriesIndex: number) => void;
   inspectable?: boolean;
   inspectorSeriesIndex?: number;
+  inspectorMetrics?: Array<{ id: string; label: string; unit?: string; significantFigures?: number }>;
+  inspectorMetricValues?: Record<string, number>;
 }
 
 const ENGINEERING_PREFIXES: Record<number, string> = {
@@ -52,7 +54,7 @@ function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
   const abs = Math.abs(val);
   let formatted: string;
 
-  // For very small or very large values, use engineering notation.
+  // For very small or very large values, use engineering notation with SI prefix.
   if (abs < 0.01 || abs >= 1000) {
     const exponent = Math.floor(Math.log10(abs) / 3) * 3;
     const scaled = val / Math.pow(10, exponent);
@@ -60,8 +62,8 @@ function formatTick(val: number, scale: 'linear' | 'log' = 'linear'): string {
     const sig = significantFigures(scaled, 3);
     formatted = `${sig}${prefix}`;
   } else {
-    // Use up to 4 significant figures, dropping trailing zeros.
-    const sig = significantFigures(val, 4);
+    // Use up to 3 significant figures, dropping trailing zeros.
+    const sig = significantFigures(val, 3);
     formatted = sig.toString();
     // Ensure at least one decimal place for non-integers.
     if (!Number.isInteger(sig) && !formatted.includes('.')) {
@@ -79,6 +81,8 @@ export function EngineeringPlot({
   onPointSelect,
   inspectable = false,
   inspectorSeriesIndex = 0,
+  inspectorMetrics,
+  inspectorMetricValues,
 }: EngineeringPlotProps) {
   const uPlotConstructorRef = useRef<any>(null);
   const chartInstanceRef = useRef<any>(null);
@@ -89,6 +93,9 @@ export function EngineeringPlot({
   const [initError, setInitError] = useState<Error | null>(null);
   const mountedRef = useRef(false);
   const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number; seriesIndex: number; seriesLabel: string } | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
+  const [yScaleType, setYScaleType] = useState<'linear' | 'log'>('linear');
 
   const handlePointSelect = useCallback(
     (x: number, y: number, seriesIndex: number) => {
@@ -229,7 +236,7 @@ export function EngineeringPlot({
       {
         show: true,
         stroke: textColor(),
-        grid: { stroke: gridColor() },
+        grid: { stroke: showGrid ? gridColor() : '#0000' },
         size: 22,
         label: xTitle,
         tick: (self: any, val: number) => formatTick(val, config.xAxis.type),
@@ -237,10 +244,10 @@ export function EngineeringPlot({
       {
         show: true,
         stroke: textColor(),
-        grid: { stroke: gridColor() },
+        grid: { stroke: showGrid ? gridColor() : '#0000' },
         size: 44,
         label: yTitle,
-        tick: (self: any, val: number) => formatTick(val, config.yAxis.type),
+        tick: (self: any, val: number) => formatTick(val, yScaleType),
       },
     ];
   };
@@ -286,7 +293,7 @@ export function EngineeringPlot({
       axes: buildAxes(),
       scales: {
         x: { time: false },
-        y: { type: config.yAxis.type === 'log' ? 'log' : 'linear' },
+        y: { type: yScaleType },
       },
       cursor: {
         show: config.tooltips !== false,
@@ -296,6 +303,26 @@ export function EngineeringPlot({
         points: { show: true, size: 5, stroke: '#fff', width: 0 },
       },
       legend: { show: config.legend !== false, width: 240, live: true },
+      select: {
+        show: true,
+        marginLeft: 44,
+        marginTop: 0,
+        marginRight: 20,
+        marginBottom: 16,
+        stroke: '#00000040',
+        fill: '#00000020',
+        cursor: 'zoom-in',
+        selected: (u: any, i0: number, i1: number) => {
+          if (i1 <= i0) return;
+          const xData = u.data[0];
+          const xScale = u.scales.x;
+          const xRange = xScale.range;
+          const len = xData.length;
+          const x0 = xRange.min + (i0 / len) * (xRange.max - xRange.min);
+          const x1 = xRange.min + (i1 / len) * (xRange.max - xRange.min);
+          u.setScale('x', { min: Math.min(x0, x1), max: Math.max(x0, x1) });
+        },
+      },
     };
 
     if (config.xAxis.range) {
@@ -533,12 +560,40 @@ export function EngineeringPlot({
         <button type="button" onClick={handleExportCsv} aria-label="Export data as CSV">
           Export CSV
         </button>
+        <button
+          type="button"
+          onClick={() => setShowSettings((s) => !s)}
+          aria-label="Chart settings"
+          className="eng-plot-settings-toggle"
+        >
+          ⚙
+        </button>
+        {showSettings && (
+          <div className="eng-plot-settings">
+            <label>
+              <input
+                type="checkbox"
+                checked={showGrid}
+                onChange={(e) => setShowGrid(e.target.checked)}
+              />
+              Show grid
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={yScaleType === 'log'}
+                onChange={(e) => setYScaleType(e.target.checked ? 'log' : 'linear')}
+              />
+              Logarithmic Y axis
+            </label>
+          </div>
+        )}
       </div>
       {inspectable && selectedPoint && (
         <EngineeringPointInspector
           selected={selectedPoint}
-          metrics={[]}
-          metricValues={{}}
+          metrics={inspectorMetrics ?? []}
+          metricValues={inspectorMetricValues ?? {}}
           onClear={() => setSelectedPoint(null)}
         />
       )}

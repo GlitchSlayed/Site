@@ -74,6 +74,27 @@ export function formatResult({
     return def ? def.symbol : u;
   };
 
+  // Auto-select an SI-prefixed unit when no explicit override is given and
+  // the value magnitude warrants it (e.g. 686500 N → 686.5 kN).
+  if (!displayUnit && unit && UNITS[unit]) {
+    const abs = Math.abs(value);
+    if (abs >= 1000 || (abs > 0 && abs < 1)) {
+      const exponent = Math.floor(Math.log10(abs) / 3) * 3;
+      const prefixChars: Record<number, string> = {
+        '-12': 'p', '-9': 'n', '-6': 'µ', '-3': 'm', '0': '', '3': 'k', '6': 'M', '9': 'G', '12': 'T',
+      };
+      const prefix = prefixChars[exponent];
+      if (prefix) {
+        const candidate = `${prefix}${unit}` as string;
+        if (UNITS[candidate] && UNITS[candidate].dimension === UNITS[unit].dimension) {
+          displayValue = convert(value, unit, candidate);
+          finalUnit = candidate;
+          finalSymbol = UNITS[candidate].symbol;
+        }
+      }
+    }
+  }
+
   if (displayUnit && unit) {
     const from = UNITS[unit];
     const to = UNITS[displayUnit];
@@ -82,7 +103,7 @@ export function formatResult({
       finalUnit = displayUnit;
       finalSymbol = resolveUnitSymbol(displayUnit);
     }
-  } else if (unit) {
+  } else if (unit && !finalSymbol) {
     finalSymbol = resolveUnitSymbol(unit);
   }
 
@@ -100,8 +121,9 @@ export function formatResult({
     }
   }
 
-  // Build the unit string.
-  const unitStr = showUnit && finalSymbol ? `[${finalSymbol}]` : '';
+  // Build the unit string. Dimensionless units are shown without brackets.
+  const isDimensionless = finalUnit === '-';
+  const unitStr = showUnit && finalSymbol && !isDimensionless ? `[${finalSymbol}]` : '';
 
   // Build the value-with-unit string.
   const valueWithUnit = unitStr ? `${formatted} ${unitStr}` : formatted;
@@ -132,5 +154,5 @@ export function formatPercentageChange(
   if (Math.abs(reference) < 1e-9) return null;
   const change = ((value - reference) / reference) * 100;
   const sign = change >= 0 ? '+' : '-';
-  return `${sign}${significantFigures(Math.abs(change), sigFigs)}%`;
+  return `(${sign}${significantFigures(Math.abs(change), sigFigs)}%)`;
 }

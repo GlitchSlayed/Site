@@ -195,24 +195,54 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
           plotPresetId="aircraft.dragPolar"
           scopeId={SCOPE_ID}
           height={360}
+          inspectable
+          inspectorMetrics={[
+            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+            { id: 'k', label: 'Induced factor k', unit: '-', significantFigures: 4 },
+          ]}
         />
         <ModelEngineeringPlot
           modelId={MODEL_ID}
           plotPresetId="aircraft.ldVsSpeed"
           scopeId={SCOPE_ID}
           height={360}
+          inspectable
+          inspectorMetrics={[
+            { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
+            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+            { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+            { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+          ]}
         />
         <ModelEngineeringPlot
           modelId={MODEL_ID}
           plotPresetId="aircraft.thrustVsSpeed"
           scopeId={SCOPE_ID}
           height={360}
+          inspectable
+          inspectorMetrics={[
+            { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
+            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+            { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+            { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+          ]}
         />
         <ModelEngineeringPlot
           modelId={MODEL_ID}
           plotPresetId="aircraft.ldVsMassPenalty"
           scopeId={SCOPE_ID}
           height={360}
+          inspectable
+          inspectorMetrics={[
+            { id: 'structuralPenalty', label: 'Structural penalty Δm/m', unit: '-', significantFigures: 3 },
+            { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+            { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+            { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+            { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+          ]}
         />
       </div>
 

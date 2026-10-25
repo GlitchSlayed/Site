@@ -64,12 +64,17 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
   };
 
   // Extract explicit percentage annotation for a cell, if provided.
+  // Accepts both parenthesized "(+5%)" and plain "+5%" formats.
   const getAnnotation = (row: ComparisonRow, colIndex: number): string | null => {
     const ann = row.annotations?.[colIndex];
     if (!ann) return null;
-    // Validate the annotation looks like a percentage: (+15.1%), (-8.4%), (±2.0%)
-    if (/^\([+-]?\d+(\.\d+)?%\)$/.test(ann) || /^\(±\d+(\.\d+)?%\)$/.test(ann)) {
-      return ann;
+    // Validate the annotation looks like a percentage: (+15.1%), (-8.4%), (±2.0%), +5%, -3%
+    const normalized = ann.trim();
+    if (/^\([+-]?\d+(\.\d+)?%\)$/.test(normalized) || /^\(±\d+(\.\d+)?%\)$/.test(normalized)) {
+      return normalized;
+    }
+    if (/^[+-]?\d+(\.\d+)?%$/.test(normalized)) {
+      return `(${normalized})`;
     }
     return null;
   };

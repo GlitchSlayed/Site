@@ -35,6 +35,10 @@ export const UNITS: Record<string, UnitDefinition> = {
   'ft²': { id: 'ft²', label: 'square feet', symbol: 'ft²', dimension: 'area', toSI: (v) => v * INCH_TO_M * INCH_TO_M * 144, fromSI: (v) => v / (INCH_TO_M * INCH_TO_M * 144) },
   // Dimensionless
   '-': { id: '-', label: 'dimensionless', symbol: '-', dimension: 'dimensionless', toSI: (v) => v, fromSI: (v) => v },
+  // Force
+  N: { id: 'N', label: 'newton', symbol: 'N', dimension: 'force', toSI: (v) => v, fromSI: (v) => v },
+  kN: { id: 'kN', label: 'kilonewton', symbol: 'kN', dimension: 'force', toSI: (v) => v * 1000, fromSI: (v) => v / 1000 },
+  mN: { id: 'mN', label: 'millinewton', symbol: 'mN', dimension: 'force', toSI: (v) => v * 0.001, fromSI: (v) => v / 0.001 },
 };
 
 export function convert(value: number, fromUnitId: string, toUnitId: string): number {

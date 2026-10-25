@@ -11,6 +11,7 @@ import {
   clamp,
 } from '../src/lib/engineering/validation';
 import { convert, UNITS } from '../src/lib/engineering/units';
+import { formatResult, formatPercentageChange } from '../src/lib/engineering/format';
 import { getModel } from '../src/lib/engineering/registry';
 
 describe('lift model', () => {
@@ -308,3 +309,48 @@ describe('model registry', () => {
     expect(model?.presets?.bwbPenalized).toBeDefined();
   });
 });
+
+describe('format', () => {
+  it('formatPercentageChange returns parenthesized values', () => {
+    expect(formatPercentageChange(115, 100)).toBe('(+15%)');
+    expect(formatPercentageChange(85, 100)).toBe('(-15%)');
+    expect(formatPercentageChange(100, 100)).toBe('(+0%)');
+    expect(formatPercentageChange(100, 0)).toBeNull();
+    expect(formatPercentageChange(NaN, 100)).toBeNull();
+  });
+
+  it('formatResult auto-scales N to kN for large values', () => {
+    const out = formatResult({
+      value: 686500,
+      unit: 'N',
+      label: 'Required Lift',
+      significantFigures: 4,
+    });
+    expect(out.value).toBe('686.5');
+    expect(out.unit).toBe('kN');
+    expect(out.displayText).toContain('kN');
+  });
+
+  it('formatResult shows dimensionless values without unit brackets', () => {
+    const out = formatResult({
+      value: 0.527,
+      unit: '-',
+      label: 'Lift coefficient',
+      significantFigures: 3,
+    });
+    expect(out.unit).toBe('-');
+    expect(out.displayText).toBe('Lift coefficient: 0.527');
+  });
+
+  it('formatResult preserves full precision internally, rounds for display only', () => {
+    const out = formatResult({
+      value: 12345.6789,
+      unit: 'N',
+      significantFigures: 4,
+    });
+    expect(out.value).toBe('12.35');
+    expect(out.unit).toBe('kN');
+    expect(out.displayText).toContain('kN');
+  });
+});
+
