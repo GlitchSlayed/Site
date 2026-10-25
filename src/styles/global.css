@@ -16,3 +16,4 @@
 @media(prefers-reduced-motion:reduce){.toc-nav .toc-indicator,.toc-nav a{transition:none!important}}
 .project-category{color:var(--accent);font-weight:550}
 .project-date{color:var(--muted)}
+.card-body h3{overflow-wrap:break-word;word-break:normal}

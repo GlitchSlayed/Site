@@ -5,7 +5,7 @@
 .pv-shader{z-index:1;opacity:.72;pointer-events:none}
 .pv-copy{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:clamp(22px,5.5%,46px);gap:12px;background:linear-gradient(0deg,rgba(5,7,11,.8),rgba(5,7,11,.14) 62%,transparent);pointer-events:none}
 .pv-label{font:500 clamp(8px,1.4vw,10px)/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.15em;color:#b6bdc9}
-.pv-title{font:550 clamp(26px,4vw,54px)/1.05 var(--sans,system-ui,sans-serif);letter-spacing:-.045em;max-width:95%;overflow-wrap:anywhere;color:#f4f4f5;text-shadow:0 2px 25px #0008}
+.pv-title{font:550 clamp(20px,3.2vw,34px)/1.1 var(--sans,system-ui,sans-serif);letter-spacing:-.045em;max-width:100%;overflow-wrap:break-word;word-break:normal;color:#f4f4f5;text-shadow:0 2px 25px #0008}
 .pv-grid .pv-background{background-image:linear-gradient(#a5b0c414 1px,transparent 1px),linear-gradient(90deg,#a5b0c414 1px,transparent 1px),radial-gradient(ellipse at 75% 30%,color-mix(in srgb,var(--pv-accent) 27%,transparent),transparent 65%);background-size:32px 32px,32px 32px,100% 100%;background-color:#090b10}
 .pv-dots .pv-background{background-image:radial-gradient(circle,#aebcd648 1px,transparent 1.3px),radial-gradient(ellipse at 75% 25%,color-mix(in srgb,var(--pv-accent) 32%,transparent),transparent 65%);background-size:17px 17px,100% 100%;background-color:#090b10}
 img.pv-asset{z-index:1;object-fit:cover;object-position:center}
