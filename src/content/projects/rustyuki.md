@@ -6,7 +6,7 @@ tags: [Linux, Fedora, Open source]
 status: "Pre-release / In development"
 art: code
 featured: false
-draft: true
+draft: false
 sample: false
 visual: dither
 visualAccent: "#e58a58"
