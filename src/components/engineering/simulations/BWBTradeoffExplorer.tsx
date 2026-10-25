@@ -124,6 +124,7 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
           resultOutputId="lift"
           resultLabel="Lift (steady level flight)"
           significantFigures={4}
+          showParameters={false}
         />
       </div>
 

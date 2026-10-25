@@ -1,4 +1,5 @@
-// Interactive scientific plot built on Plotly.js, loaded lazily only when visible.
+// Interactive scientific plot built on uPlot, loaded lazily only when visible.
+// uPlot has no eval/new-Function dependency, so it works under strict CSP.
 // All calculations remain in the model layer; this component only renders.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
@@ -9,128 +10,156 @@ interface EngineeringPlotProps {
   height?: number;
 }
 
-const PLOTLY_MODULE = 'plotly.js-dist-min';
+const UPLOT_MODULE = 'uplot';
 
-function isLightTheme(): boolean {
-  return typeof document !== 'undefined' && document.documentElement.dataset.theme === 'light';
+function isDark(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
+}
+
+function textColor(): string {
+  return isDark() ? '#ededed' : '#171717';
+}
+
+function gridColor(): string {
+  return isDark() ? '#252525' : '#dedede';
+}
+
+function accentColor(): string {
+  return isDark() ? '#ff603b' : '#c63c18';
 }
 
 export function EngineeringPlot({ config, className, height = 400 }: EngineeringPlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const plotlyRef = useRef<any>(null);
+  const uRef = useRef<any>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
-  const [plotId, setPlotId] = useState<number | null>(null);
   const mountedRef = useRef(false);
   const lastDataRef = useRef<string | null>(null);
 
-  const loadPlotly = useCallback(async () => {
-    if (plotlyRef.current) {
+  const load = useCallback(async () => {
+    if (uRef.current) {
       setLoaded(true);
       return;
     }
     try {
-      // Dynamic import: Plotly is never part of the site-wide bundle.
-      const module = await import(PLOTLY_MODULE);
-      plotlyRef.current = module;
+      // Dynamic import: uPlot is never part of the site-wide bundle.
+      const mod = await import(UPLOT_MODULE);
+      uRef.current = (mod.default ?? mod) as any;
       setLoaded(true);
       setLoadError(null);
       if (mountedRef.current && containerRef.current) {
-        drawPlot(module);
+        draw();
       }
     } catch (error) {
-      setLoadError(error instanceof Error ? error : new Error('Failed to load Plotly'));
+      setLoadError(error instanceof Error ? error : new Error('Failed to load plot library'));
     }
   }, []);
 
-  const traceForSeries = (series: PlotSeries) => ({
-    x: series.x,
-    y: series.y,
-    mode: series.mode ?? 'lines',
-    name: series.label,
-    type: 'scatter' as const,
-    line: series.color ? { color: series.color } : undefined,
-    marker: series.color ? { color: series.color, size: 6 } : undefined,
-    visible: series.visible !== false,
-    hovertemplate: `${series.label}<br>%{xaxis.title.text}: %{x}<br>%{yaxis.title.text}: %{y}<extra></extra>`,
-  });
-
-  const layoutFor = (): any => {
-    const dark = !isLightTheme();
-    return {
-      title: { text: config.title || '', font: { size: 16 } },
-      font: { size: 12 },
-      xaxis: {
-        title: `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`,
-        type: config.xAxis.type ?? 'linear',
-        range: config.xAxis.range,
-        automargin: true,
-      },
-      yaxis: {
-        title: `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`,
-        type: config.yAxis.type ?? 'linear',
-        range: config.yAxis.range,
-        automargin: true,
-      },
-      showlegend: config.legend !== false,
-      legend: { orientation: 'h', yanchor: 'bottom', y: 1.02, xanchor: 'right', x: 1 },
-      hovermode: 'closest',
-      template: dark ? 'plotly_dark' : 'plotly',
-      margin: { l: 60, r: 20, t: 60, b: 60 },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-    };
+  const buildSeries = (): any[] => {
+    // uPlot: series[0] is the shared x series (no label -> hidden from legend).
+    const series: any[] = [{}];
+    for (const s of config.series) {
+      series.push({
+        label: s.label,
+        stroke: s.color || accentColor(),
+        width: 2,
+        points: {
+          show: s.mode === 'markers' || s.mode === 'lines+markers',
+          size: 4,
+          width: 1,
+        },
+        spanGaps: true,
+      });
+    }
+    return series;
   };
 
-  const drawPlot = useCallback(
-    (plotly: any) => {
-      if (!containerRef.current) return;
-      const data = config.series.map(traceForSeries) as any;
-      const dataSignature = JSON.stringify(data);
-      if (dataSignature === lastDataRef.current && plotId !== null) {
-        PlotlyUpdate(plotly, containerRef.current, data, layoutFor());
-        return;
-      }
-      lastDataRef.current = dataSignature;
-      if (plotId !== null) {
-        plotly.react(containerRef.current, data, layoutFor(), { responsive: true });
-      } else {
-        plotly.newPlot(containerRef.current, data, layoutFor(), {
-          responsive: true,
-          displayModeBar: true,
-          displaylogo: false,
-          modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-        });
-        setPlotId(Date.now());
-      }
-    },
-    [config],
-  );
+  const buildAxes = (): any[] => {
+    const xTitle = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
+    const yTitle = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
+    return [
+      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 16 }, // bottom x axis
+      { show: true, stroke: textColor(), grid: { stroke: gridColor() }, size: 34 }, // left y axis
+    ];
+  };
 
-  // Theme change handler.
+  const draw = useCallback(() => {
+    const u = uRef.current;
+    const container = containerRef.current;
+    if (!u || !container) return;
+
+    // Destroy previous instance if any.
+    if (u.destroy) u.destroy();
+
+    const data: number[][] = [];
+    if (config.series.length) {
+      data.push([...config.series[0].x]);
+      for (const s of config.series) data.push([...s.y]);
+    }
+
+    const width = container.clientWidth || 600;
+    const opts: any = {
+      width,
+      height,
+      plugins: [],
+      series: buildSeries(),
+      axes: buildAxes(),
+      scales: {
+        x: { time: false },
+        y: { type: config.yAxis.type === 'log' ? 'log' : 'linear' },
+      },
+      xAxis: { ...config.xAxis.range && { min: config.xAxis.range[0], max: config.xAxis.range[1] } },
+      yAxis: { ...config.yAxis.range && { min: config.yAxis.range[0], max: config.yAxis.range[1] } },
+      cursor: {
+        show: config.tooltips !== false,
+        x: true,
+        y: true,
+        lock: 'x',
+        points: { show: true, size: 5, stroke: '#fff', width: 0 },
+      },
+      legend: { show: config.legend !== false, width: 240, live: true },
+    };
+
+    try {
+      const inst = new u(opts, data, container);
+      uRef.current = inst;
+      lastDataRef.current = JSON.stringify(data);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error : new Error('Failed to initialize plot'));
+    }
+  }, [config, height]);
+
+  // Theme change redraw.
   useEffect(() => {
-    if (!mountedRef.current || !plotlyRef.current || !containerRef.current) return;
+    if (!mountedRef.current || !uRef.current || !containerRef.current) return;
     const observer = new MutationObserver(() => {
-      drawPlot(plotlyRef.current);
+      draw();
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     return () => observer.disconnect();
-  }, [drawPlot]);
+  }, [draw]);
 
   useEffect(() => {
     mountedRef.current = true;
-    loadPlotly();
+    load();
     return () => {
       mountedRef.current = false;
+      if (uRef.current && uRef.current.destroy) {
+        uRef.current.destroy();
+      }
+      uRef.current = null;
     };
-  }, [loadPlotly]);
+  }, [load]);
 
   useEffect(() => {
-    if (!loaded || !plotlyRef.current || !containerRef.current) return;
-    drawPlot(plotlyRef.current as any);
-    // Resize handling.
+    if (!loaded || !uRef.current || !containerRef.current) return;
+    draw();
     const resizeObserver = new ResizeObserver(() => {
-      (plotlyRef.current as any).Plotly?.Plots?.resize?.(containerRef.current);
+      const inst = uRef.current;
+      if (!inst) return;
+      const box = containerRef.current!;
+      if (inst.setSize) inst.setSize(box.clientWidth || 600, height);
+      else draw();
     });
     resizeObserver.observe(containerRef.current);
     window.addEventListener('resize', onResize);
@@ -138,31 +167,33 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
     };
-  }, [loaded, drawPlot]);
+  }, [loaded, draw, height]);
 
   const onResize = () => {
-    if (plotlyRef.current && containerRef.current) {
-      (plotlyRef.current as any).Plots.resize(containerRef.current);
-    }
+    const inst = uRef.current;
+    const box = containerRef.current;
+    if (!inst || !box) return;
+    if (inst.setSize) inst.setSize(box.clientWidth || 600, height);
+    else draw();
   };
 
   const handleResetView = () => {
-    if (!plotlyRef.current || !containerRef.current) return;
-    plotlyRef.current.relayout(containerRef.current, {
-      'xaxis.autorange': true,
-      'yaxis.autorange': true,
-    });
-  };
-
-  const handleExportPng = () => {
-    if (!plotlyRef.current || !containerRef.current) return;
-    plotlyRef.current.downloadImage(containerRef.current, { format: 'png', width: 1000, height: 600 });
-  };
-
-  const handleExportSvg = async () => {
-    if (!plotlyRef.current || !containerRef.current) return;
+    const inst = uRef.current;
+    if (!inst) return;
     try {
-      const svg = await plotlyRef.current.toSVG(containerRef.current, { width: 1000, height: 600 });
+      if (inst.setScale) {
+        inst.setScale({ x: { min: config.xAxis.range?.[0], max: config.xAxis.range?.[1] } });
+      }
+    } catch {
+      // reset not supported; no-op
+    }
+  };
+
+  const handleExportSvg = () => {
+    const inst = uRef.current;
+    if (!inst || !inst.toSVG) return;
+    try {
+      const svg = inst.toSVG();
       const blob = new Blob([svg], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -173,7 +204,36 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // SVG export not supported in this Plotly build.
+      // SVG export not supported in this build.
+    }
+  };
+
+  const handleExportPng = () => {
+    const inst = uRef.current;
+    if (!inst || !inst.toSVG) return;
+    try {
+      const svg = inst.toSVG();
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1000;
+        canvas.height = 600;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.fillStyle = isDark() ? '#0a0a0a' : '#ffffff';
+        ctx.fillRect(0, 0, 1000, 600);
+        ctx.drawImage(img, 0, 0, 1000, 600);
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(config.title || 'plot').replace(/\s+/g, '_')}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    } catch {
+      // PNG export not supported in this build.
     }
   };
 
@@ -198,19 +258,11 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     URL.revokeObjectURL(url);
   };
 
-  const PlotlyUpdate = (
-    plotly: any,
-    container: HTMLDivElement,
-    data: any[],
-    layout: any,
-  ) => {
-    plotly.react(container, data, layout, { responsive: true });
-  };
   if (loadError) {
     return (
       <div className={`eng-plot eng-plot-error ${className || ''}`} role="alert" aria-live="polite">
         <p>Unable to load the interactive plot.</p>
-        <button type="button" onClick={loadPlotly} aria-label="Retry loading plot">
+        <button type="button" onClick={load} aria-label="Retry loading plot">
           Retry
         </button>
       </div>
@@ -219,7 +271,7 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
 
   if (!loaded) {
     return (
-      <div className={`eng-plot eng-plot-loading ${className || ''}`} style={{ height }}>
+      <div className={`eng-plot eng-plot-loading ${className || ''}`} style={{ height }} aria-label="Plot loading">
         <p>Loading plot…</p>
       </div>
     );
@@ -232,7 +284,15 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
       {config.title && <h2 className="eng-plot-title">{config.title}</h2>}
       {config.description && <p className="eng-plot-description">{config.description}</p>}
-      <div ref={containerRef} style={{ width: '100%', height }} />
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height, position: 'relative' }}
+        aria-hidden="true"
+      />
+      <div className="eng-plot-axes">
+        <span className="eng-plot-axislabel eng-plot-yaxislabel">{yLabel}</span>
+        <span className="eng-plot-axislabel eng-plot-xaxislabel">{xLabel}</span>
+      </div>
       <div className="eng-plot-actions">
         <button type="button" onClick={handleResetView} aria-label="Reset zoom and pan">
           Reset view
@@ -247,9 +307,6 @@ export function EngineeringPlot({ config, className, height = 400 }: Engineering
           Export CSV
         </button>
       </div>
-      <p className="eng-plot-axes" id={`eng-plot-axes-${plotId}`}>
-        {xLabel} &mdash; {yLabel}
-      </p>
     </section>
   );
 }

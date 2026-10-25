@@ -27,7 +27,8 @@
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "sharp": "^0.35.5",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "uplot": "^1.6.32"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",

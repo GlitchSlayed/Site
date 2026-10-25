@@ -16,7 +16,6 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
 
   const referenceId = config.referenceConfigId || config.configurations[0]?.id;
   const referenceIndex = config.configurations.findIndex((c) => c.id === referenceId);
-  const referenceValues = referenceIndex >= 0 ? config.rows.map((r) => r.values[referenceIndex]) : [];
 
   const toggleNote = (rowId: string) => {
     setExpanded((prev) => {
@@ -108,7 +107,7 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
                     let cell = formatCell(row.values[ci]);
                     let change: string | null = null;
                     if (!isReference && config.showPercentageChange && referenceIndex >= 0) {
-                      change = percentageChange(row.values[ci], referenceValues[ci]);
+                      change = percentageChange(row.values[ci], row.values[referenceIndex]);
                     }
                     return (
                       <td

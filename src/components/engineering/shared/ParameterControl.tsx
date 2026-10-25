@@ -1,5 +1,5 @@
 // Reusable parameter control: slider and numeric input stay synchronized.
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { EngineeringParameter } from '../../../lib/engineering/types';
 import { sanitizeInput } from '../../../lib/engineering/validation';
 import { useScopedParameter } from './useScopedParameter';
@@ -19,6 +19,9 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
 
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Unique per-instance DOM id so multiple ParameterSets on a page never collide,
+  // while scopeId+paramId still shares the underlying parameter state.
+  const uid = useId().replace(/:/g, '-');
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(Number(event.target.value));
@@ -47,7 +50,7 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
 
   return (
     <div className="eng-parameter-control" role="group" aria-label={param.label}>
-      <label className="eng-parameter-label" htmlFor={`eng-input-${param.id}`}>
+      <label className="eng-parameter-label" htmlFor={`eng-input-${uid}-${param.id}`}>
         {param.label}
         {param.symbol && <span className="eng-parameter-symbol"> ({param.symbol})</span>}
         {param.unit && <span className="eng-parameter-unit">[{param.unit}]</span>}
@@ -68,7 +71,7 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
           aria-label={`${param.label} slider`}
         />
         <input
-          id={`eng-input-${param.id}`}
+          id={`eng-input-${uid}-${param.id}`}
           type="text"
           value={editing ? value.toString() : formatValue(param, value)}
           onChange={handleInputChange}

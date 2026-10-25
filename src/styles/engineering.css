@@ -41,11 +41,11 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
+  overflow: visible;
 }
 
 .eng-demo-parameters {
-  overflow: auto;
-  max-height: 360px;
+  max-height: none;
 }
 
 @media (min-width: 768px) {
@@ -201,10 +201,19 @@
   gap: 20px;
 }
 
+.eng-equation-body--result-only {
+  grid-template-columns: 1fr;
+}
+
 @media (min-width: 768px) {
   .eng-equation-body {
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: 1fr 340px;
   }
+}
+
+.eng-equation-parameters {
+  overflow: visible;
+  max-height: none;
 }
 
 .eng-result-value {

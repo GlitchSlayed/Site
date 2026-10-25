@@ -20,6 +20,7 @@ interface EquationExplorerProps {
   significantFigures?: number;
   className?: string;
   height?: number;
+  showParameters?: boolean;
 }
 
 export function EquationExplorer({
@@ -33,9 +34,9 @@ export function EquationExplorer({
   significantFigures: sigFigs = 4,
   className,
   height = 300,
+  showParameters = true,
 }: EquationExplorerProps) {
   const model = getModel(modelId);
-  const [rendered, setRendered] = useState('');
   const katexElRef = useRef<HTMLSpanElement>(null);
 
   const inputs = useMemo(() => {
@@ -47,6 +48,22 @@ export function EquationExplorer({
     return values;
   }, [model, scopeId]);
 
+  // Render KaTeX during SSR as well as on the client so the equation is present
+  // in the static HTML rather than appearing only after hydration.
+  const renderedKaTeX = useMemo(() => {
+    try {
+      return katex.renderToString(equation, { throwOnError: false, output: 'html' });
+    } catch {
+      return null;
+    }
+  }, [equation]);
+
+  const [rendered, setRendered] = useState<string | null>(renderedKaTeX);
+
+  useEffect(() => {
+    if (rendered === null) setRendered(renderedKaTeX);
+  }, [rendered, renderedKaTeX]);
+
   const outputs = useMemo(() => {
     if (!model) return {};
     try {
@@ -57,20 +74,6 @@ export function EquationExplorer({
   }, [model, inputs]);
 
   const result = outputs[resultOutputId];
-
-  // Render KaTeX once the equation is available. KaTeX CSS is loaded globally.
-  useEffect(() => {
-    if (!katexElRef.current) return;
-    try {
-      const html = katex.renderToString(equation, {
-        throwOnError: false,
-        output: 'html',
-      });
-      setRendered(html);
-    } catch {
-      setRendered('');
-    }
-  }, [equation]);
 
   const formatResult = (value: number | undefined): string => {
     if (value === undefined || !Number.isFinite(value)) return '—';
@@ -87,17 +90,19 @@ export function EquationExplorer({
     <section className={`eng-equation-explorer ${className || ''}`} aria-label="Equation explorer">
       <div className="eng-equation">
         <h3 className="eng-equation-title">{resultLabel || model?.title || 'Equation'}</h3>
-        <span ref={katexElRef} dangerouslySetInnerHTML={{ __html: rendered }} aria-label="Equation" />
+        <span ref={katexElRef} dangerouslySetInnerHTML={{ __html: rendered ?? '' }} aria-label="Equation" />
       </div>
 
-      <div className="eng-equation-body">
-        <div className="eng-equation-parameters">
-          {model ? (
-            <ParameterSet model={model} scopeId={scopeId} />
-          ) : (
-            <p>Unknown model: {modelId}</p>
-          )}
-        </div>
+      <div className={`eng-equation-body ${showParameters ? '' : 'eng-equation-body--result-only'}`}>
+        {showParameters && (
+          <div className="eng-equation-parameters">
+            {model ? (
+              <ParameterSet model={model} scopeId={scopeId} />
+            ) : (
+              <p>Unknown model: {modelId}</p>
+            )}
+          </div>
+        )}
 
         <div className="eng-equation-result">
           <h4>Result</h4>
