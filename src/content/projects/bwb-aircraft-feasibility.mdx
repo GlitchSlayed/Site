@@ -18,6 +18,8 @@ visual: mesh
 visualAccent: "#33d17a"
 ---
 
+import { BWBTradeoffExplorer } from '../../components/engineering/simulations/BWBTradeoffExplorer';
+
 Blended wing body (BWB) aircraft have always fascinated me. Their shape is so different from the conventional tube-and-wing aircraft we are used to seeing that it raises a fairly simple question: if this configuration offers meaningful aerodynamic advantages, why is it not more common?
 
 One of the most appealing possibilities is a higher lift-to-drag ratio, which could translate into reduced fuel consumption. A BWB also has a much wider central body, potentially creating more usable internal volume and allowing payload weight to be distributed across a larger portion of the wingspan. I suspect that distributing weight closer to where lift is generated could reduce some wing-root bending loads compared with a conventional aircraft, although I want to investigate the limits of that assumption rather than take it for granted.
@@ -29,6 +31,20 @@ This project is my attempt to explore that tradeoff using simplified engineering
 ## Current status
 
 **Conceptual investigation.** The research question and initial scope are defined, but I have not yet built the aircraft models, selected a reference mission, or produced verified calculations or simulation results. The 15–20% figure is a target for evaluation, not a predicted result.
+
+## Interactive aerodynamic tradeoff explorer
+
+The calculator below is a live, interactive demonstration of the simplified steady-level-flight model described in this project. It uses a parabolic drag polar
+
+$$
+C_D=C_{D,0}+kC_L^2,\qquad k=\frac{1}{\pi e AR}
+$$
+
+and computes lift coefficient, drag, and lift-to-drag ratio for two independently comparable aircraft cases. Adjust any parameter and every plot and table updates together.
+
+The structural-mass penalty is an explicit, adjustable assumption: it is illustrative and is **not** a validated BWB structural prediction.
+
+<BWBTradeoffExplorer client:load />
 
 ## The engineering question
 

@@ -1,0 +1,136 @@
+// Equation explorer: KaTeX presentation + typed calculation + live result.
+import { useEffect, useMemo, useRef, useState } from 'react';
+import katex from 'katex';
+import type { EngineeringOutputValue } from '../../../lib/engineering/types';
+import { formatEngineering, significantFigures } from '../../../lib/engineering/validation';
+import { getModel } from '../../../lib/engineering/registry';
+import { getParameter } from '../../../lib/engineering/scopedState';
+import { ParameterSet } from '../shared/ParameterSet';
+import { EngineeringPlot } from '../plots/EngineeringPlot';
+import type { EngineeringPlotConfig } from '../../../lib/engineering/types';
+
+interface EquationExplorerProps {
+  modelId: string;
+  equation: string;
+  scopeId: string;
+  resultOutputId: string;
+  resultLabel?: string;
+  variableDefinitions?: { id: string; label: string; description?: string }[];
+  plotConfig?: EngineeringPlotConfig;
+  significantFigures?: number;
+  className?: string;
+  height?: number;
+}
+
+export function EquationExplorer({
+  modelId,
+  equation,
+  scopeId,
+  resultOutputId,
+  resultLabel,
+  variableDefinitions,
+  plotConfig,
+  significantFigures: sigFigs = 4,
+  className,
+  height = 300,
+}: EquationExplorerProps) {
+  const model = getModel(modelId);
+  const [rendered, setRendered] = useState('');
+  const katexElRef = useRef<HTMLSpanElement>(null);
+
+  const inputs = useMemo(() => {
+    const values: Record<string, number> = {};
+    if (!model) return values;
+    for (const param of model.parameters) {
+      values[param.id] = getParameter(scopeId, param.id) ?? param.defaultValue;
+    }
+    return values;
+  }, [model, scopeId]);
+
+  const outputs = useMemo(() => {
+    if (!model) return {};
+    try {
+      return model.compute(inputs);
+    } catch {
+      return {};
+    }
+  }, [model, inputs]);
+
+  const result = outputs[resultOutputId];
+
+  // Render KaTeX once the equation is available. KaTeX CSS is loaded globally.
+  useEffect(() => {
+    if (!katexElRef.current) return;
+    try {
+      const html = katex.renderToString(equation, {
+        throwOnError: false,
+        output: 'html',
+      });
+      setRendered(html);
+    } catch {
+      setRendered('');
+    }
+  }, [equation]);
+
+  const formatResult = (value: number | undefined): string => {
+    if (value === undefined || !Number.isFinite(value)) return '—';
+    const out = outputs[resultOutputId];
+    const figs = out?.significantFigures ?? sigFigs;
+    if (out?.engineeringNotation) return formatEngineering(value, figs);
+    return significantFigures(value, figs).toString();
+  };
+
+  const unit = result?.unit;
+  const symbol = result?.symbol;
+
+  return (
+    <section className={`eng-equation-explorer ${className || ''}`} aria-label="Equation explorer">
+      <div className="eng-equation">
+        <h3 className="eng-equation-title">{resultLabel || model?.title || 'Equation'}</h3>
+        <span ref={katexElRef} dangerouslySetInnerHTML={{ __html: rendered }} aria-label="Equation" />
+      </div>
+
+      <div className="eng-equation-body">
+        <div className="eng-equation-parameters">
+          {model ? (
+            <ParameterSet model={model} scopeId={scopeId} />
+          ) : (
+            <p>Unknown model: {modelId}</p>
+          )}
+        </div>
+
+        <div className="eng-equation-result">
+          <h4>Result</h4>
+          <div className="eng-result-value">
+            <span className="eng-result-number">{formatResult(result?.value)}</span>
+            {symbol && <span className="eng-result-symbol">{symbol}</span>}
+            {unit && <span className="eng-result-unit">[{unit}]</span>}
+          </div>
+          {result?.label && <p className="eng-result-label">{result.label}</p>}
+          {!result && !model ? <p className="eng-result-empty">No result available.</p> : null}
+          {!result && model && <p className="eng-result-empty">Result output "{resultOutputId}" not produced by model.</p>}
+        </div>
+      </div>
+
+      {variableDefinitions && variableDefinitions.length > 0 && (
+        <div className="eng-equation-definitions">
+          <h4>Variables</h4>
+          <dl className="eng-definition-list">
+            {variableDefinitions.map((def) => (
+              <div key={def.id} className="eng-definition-item">
+                <dt>{def.label}</dt>
+                <dd>{def.description}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      {plotConfig && (
+        <div className="eng-equation-plot">
+          <EngineeringPlot config={plotConfig} height={height} />
+        </div>
+      )}
+    </section>
+  );
+}
