@@ -4,9 +4,10 @@ description: A conceptual engineering investigation into whether the aerodynamic
   advantages of blended wing body aircraft can outweigh pressurization and
   structural penalties to reduce mission fuel consumption.
 date: 2026-10-25
+category: Aerospace
 tags:
-  - Aerospace
-  - Aircraft design
+  - Aircraft Design
+  - Aerodynamics
   - Simulation
 status: Concept
 art: wing
