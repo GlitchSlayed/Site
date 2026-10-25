@@ -12,7 +12,6 @@ import { getParameter, subscribeParameter } from '../../../lib/engineering/scope
 import { getModel } from '../../../lib/engineering/registry';
 import { getPlotDefinition, generateSeries, type PlotDefinition } from '../../../lib/engineering/plots/registry';
 import { EngineeringPlot } from './EngineeringPlot';
-import { safeResult } from '../../../lib/engineering/validation';
 
 interface InspectorMetric {
   id: string;
@@ -106,10 +105,17 @@ export function ModelEngineeringPlot({
     seriesIndex: number;
     seriesLabel: string;
   } | null>(null);
+  const [inspectorComparisonPoint, setInspectorComparisonPoint] = useState<{
+    x: number;
+    y: number;
+    seriesIndex: number;
+    seriesLabel: string;
+  } | null>(null);
   const [inspectorValues, setInspectorValues] = useState<Record<string, number>>({});
+  const [inspectorComparisonValues, setInspectorComparisonValues] = useState<Record<string, number>>({});
 
-  const handlePointSelect = useCallback(
-    (x: number, y: number, seriesIndex: number) => {
+  const computeMetricValues = useCallback(
+    (x: number): Record<string, number> => {
       // Compute model outputs at the selected X (sweep parameter value).
       const swept: Record<string, number> = { ...inputs, [definition.sweepParam]: x };
       let outputs: Record<string, { value: number }>;
@@ -124,18 +130,31 @@ export function ModelEngineeringPlot({
         const out = outputs[metric.id];
         values[metric.id] = out && typeof out.value === 'number' ? out.value : 0;
       }
+      return values;
+    },
+    [calcModel, definition, inputs, inspectorMetrics],
+  );
 
+  const handlePointSelect = useCallback(
+    (x: number, y: number, seriesIndex: number, kind: 'primary' | 'comparison') => {
+      const values = computeMetricValues(x);
       const series = config.series;
       const s = series[seriesIndex];
-      setInspectorPoint({
+      const point = {
         x,
         y,
         seriesIndex,
         seriesLabel: s?.label ?? 'Series',
-      });
-      setInspectorValues(values);
+      };
+      if (kind === 'comparison') {
+        setInspectorComparisonPoint(point);
+        setInspectorComparisonValues(values);
+      } else {
+        setInspectorPoint(point);
+        setInspectorValues(values);
+      }
     },
-    [calcModel, definition, inputs, inspectorMetrics, config.series],
+    [calcModel, definition, inputs, inspectorMetrics, config.series, computeMetricValues],
   );
 
   return (
@@ -147,6 +166,7 @@ export function ModelEngineeringPlot({
       inspectorSeriesIndex={0}
       inspectorMetrics={inspectorMetrics}
       inspectorMetricValues={inspectorValues}
+      inspectorComparisonValues={inspectorComparisonValues}
       onPointSelect={inspectable ? handlePointSelect : undefined}
     />
   );

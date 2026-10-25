@@ -36,7 +36,8 @@ model.compute(inputs)  →  outputs   (pure, testable, no DOM)
 
 | Component | Location | Lazy library | Purpose |
 |-----------|----------|--------------|---------|
-| `EngineeringPlot` | `components/engineering/plots/EngineeringPlot.tsx` | uPlot | Interactive scientific plots |
+| `EngineeringPlot` | `components/engineering/plots/EngineeringPlot.tsx` | uPlot | Interactive scientific plots with cursor readout, two-point operating-point inspection, autoscale, zoom/pan/reset, series visibility, PNG+CSV export, and a settings panel |
+| `EngineeringPointInspector` | `components/engineering/shared/EngineeringPointInspector.tsx` | none | Click-to-inspect readout showing coordinates, units, deltas, slopes, and model-derived metrics at primary and comparison points |
 | `ModelEngineeringPlot` | `components/engineering/plots/ModelEngineeringPlot.tsx` | uPlot | Model-driven plot from a registry definition |
 | `EquationExplorer` | `components/engineering/equations/EquationExplorer.tsx` | katex | Equation + controls + live result + optional plot |
 | `EngineeringComparison` | `components/engineering/tables/EngineeringComparison.tsx` | none | Side-by-side configuration comparison table |
@@ -135,6 +136,39 @@ import { EquationExplorer, EngineeringPlot, EngineeringComparison } from '../../
 
 <EngineeringPlot
   config={myPlotConfig}
+  client:load
+/>
+```
+
+### Graph settings and interactions
+
+Every `EngineeringPlot` ships with a fully functional toolbar and settings panel:
+
+- **Inspect / Zoom / Pan** modes — click a curve to select an operating point (primary); Shift+click to select a comparison point.
+- **Reset View / Autoscale** — restore configured limits or fit axes to the data.
+- **Graph Settings** — grid on/off, logarithmic Y axis, axis bounds (X/Y min/max), data markers, line thickness, series visibility, legend on/off, cursor readout on/off, display precision (3–6 significant figures), and "Reset Settings".
+- **Export** — "Export PNG" (canvas) and "Export CSV" (underlying data).
+
+Settings apply live to the chart; they do not recreate the instance unless the structure (series, axes, scale type) changes.
+
+### Two-point operating-point inspection
+
+Clicking a curve selects an operating point. The `EngineeringPointInspector` renders below the chart showing:
+- X and Y coordinates with units
+- Series name
+- Difference (Δx, Δy) and slope Δy/Δx between primary and comparison points
+- Model-derived metrics at each point (e.g. thrust, drag at a given airspeed) with deltas and percentage change
+
+```mdx
+<ModelEngineeringPlot
+  modelId="aircraft.performance"
+  plotPresetId="aircraft.ldVsSpeed"
+  scopeId="bwb-demo"
+  inspectable
+  inspectorMetrics={[
+    { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+    { id: 'drag', label: 'Drag', unit: 'N', significantFigures: 4 },
+  ]}
   client:load
 />
 ```
@@ -296,10 +330,35 @@ import { ModelEngineeringPlot } from '../../components/engineering/plots/ModelEn
   scopeId="drag-polar"
   client:load
   height={320}
+ />
+```
+
+### 3. Direct `EngineeringPlot` config (no registry)
+
+`EngineeringPlot` accepts a fully declarative `config` prop, useful for one-off plots without registering a definition:
+
+```mdx
+import { EngineeringPlot } from '../../components/engineering/plots/EngineeringPlot';
+
+const ldPlotConfig = {
+  title: 'Lift-to-drag ratio vs airspeed',
+  description: 'Steady, level flight at sea level.',
+  xAxis: { title: 'Airspeed', unit: 'm/s', type: 'linear', range: [40, 200] },
+  yAxis: { title: 'L/D', unit: '-', type: 'linear' },
+  series: [
+    { id: 'ld', label: 'L/D', x: [40, 80, 120, 160, 200], y: [10, 15, 17, 14, 10], mode: 'lines' },
+  ],
+};
+
+<EngineeringPlot
+  config={ldPlotConfig}
+  height={320}
+  inspectable
+  client:load
 />
 ```
 
-### 3. Engineering comparison table
+### 4. Engineering comparison table
 
 ```mdx
 import { EngineeringComparison } from '../../components/engineering/tables/EngineeringComparison';
@@ -308,7 +367,7 @@ import { getModel } from '../../lib/engineering/registry';
 // Build config from live model outputs, see BWBTradeoffExplorer for pattern
 ```
 
-### 4. Basic GLB aircraft model viewer
+### 5. Basic GLB aircraft model viewer
 
 ```mdx
 import { EngineeringModelViewer } from '../../components/engineering/viewers/EngineeringModelViewer';
@@ -325,7 +384,7 @@ import { EngineeringModelViewer } from '../../components/engineering/viewers/Eng
 
 *(A real `.glb` file must be provided in `public/models/`. This example does not ship a model file.)*
 
-### 5. BWB tradeoff explorer
+### 6. BWB tradeoff explorer
 
 ```mdx
 import { BWBTradeoffExplorer } from '../../components/engineering/simulations/BWBTradeoffExplorer';

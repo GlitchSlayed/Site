@@ -316,32 +316,69 @@
 
 /* Plot */
 
+.eng-plot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface);
+}
+
+.eng-plot-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .eng-plot-title {
   font-size: 17px;
-  margin: 0 0 8px 0;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.eng-plot-units {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
 }
 
 .eng-plot-description {
   font-size: 13px;
   color: var(--muted);
-  margin: 0 0 12px 0;
+  margin: 0;
 }
 
 .eng-plot-loading,
 .eng-plot-error {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   height: 360px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--muted);
   font-size: 14px;
+  text-align: center;
+}
+
+.eng-plot-error-detail {
+  font-size: 12px;
+  color: var(--foreground);
+  max-width: 420px;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .eng-plot-error button {
-  margin-left: 10px;
   font: inherit;
   font-size: 12px;
   padding: 4px 10px;
@@ -361,9 +398,10 @@
 .eng-plot-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
   flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
 }
 
 .eng-plot-mode-group {
@@ -459,6 +497,105 @@
   color: var(--foreground);
 }
 
+/* Plot viewport */
+
+.eng-plot-viewport {
+  position: relative;
+  min-height: 240px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .eng-plot-viewport {
+    min-height: 200px;
+  }
+}
+
+/* Keep uPlot theme-consistent: cursor crosshairs, selection band, legend text. */
+.eng-plot-viewport .uplot {
+  font-family: var(--sans);
+  font-size: 11px;
+}
+
+.eng-plot-viewport .u-cursor-x,
+.eng-plot-viewport .u-cursor-y {
+  border-color: var(--muted);
+}
+
+html[data-theme='light'] .eng-plot-viewport .u-cursor-x,
+html[data-theme='light'] .eng-plot-viewport .u-cursor-y {
+  border-color: #9a9a9f;
+}
+
+.eng-plot-viewport .u-select {
+  background: rgba(255, 96, 59, 0.18);
+  border: 1px solid rgba(255, 96, 59, 0.55);
+}
+
+html[data-theme='light'] .eng-plot-viewport .u-select {
+  background: rgba(198, 60, 24, 0.18);
+  border: 1px solid rgba(198, 60, 24, 0.55);
+}
+
+.eng-plot-viewport .u-legend {
+  font-size: 11px;
+  color: var(--foreground);
+}
+
+.eng-plot-viewport .u-legend th {
+  color: var(--foreground);
+}
+
+.eng-plot-viewport .u-legend .u-off {
+  opacity: 0.35;
+}
+
+.eng-plot-viewport .u-legend .u-marker {
+  border-radius: 2px;
+}
+
+/* Cursor readout below the chart: tracks the cursor, never covers toolbar controls. */
+.eng-plot-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--foreground);
+}
+
+.eng-plot-readout-label {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.eng-plot-readout-series {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.eng-plot-readout-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 0 1px currentColor;
+}
+
 /* Plot settings panel */
 
 .eng-plot-settings-panel {
@@ -512,6 +649,17 @@
   color: var(--foreground);
 }
 
+.eng-plot-settings-select {
+  font: inherit;
+  font-size: 11px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
 .eng-plot-settings-range {
   width: 100px;
 }
@@ -545,7 +693,56 @@
   display: contents;
 }
 
-/* Comparison table */
+/* Series visibility toggles in settings */
+.eng-plot-settings-series {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.eng-plot-settings-series-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.eng-plot-settings-series-color {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Plot footer: dataset range summary. */
+
+.eng-plot-footer {
+  margin-top: 6px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.eng-plot-footer-label {
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.eng-plot-footer-value {
+  color: var(--foreground);
+}
+
+/* Comparison table (unchanged styles below) */
 
 .eng-comparison-wrapper {
   overflow-x: auto;
@@ -845,6 +1042,9 @@ html[data-theme="light"] .eng-viewer-toolbar button {
   border-radius: 8px;
   background: var(--surface);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .eng-inspector-header {
@@ -921,6 +1121,86 @@ html[data-theme="light"] .eng-inspector-indicator {
   letter-spacing: 0.4px;
 }
 
+.eng-inspector-metric--delta .eng-inspector-metric-label {
+  color: var(--accent);
+}
+
+.eng-inspector-point {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (min-width: 480px) {
+  .eng-inspector-point {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 14px;
+  }
+}
+
+.eng-inspector-series {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.eng-inspector-coord {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.eng-inspector-delta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .eng-inspector-delta {
+    flex-direction: row;
+    align-items: baseline;
+  }
+}
+
+.eng-inspector-delta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eng-inspector-delta-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.eng-inspector-delta-value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.eng-inspector-divider {
+  border-top: 1px solid var(--border);
+  margin: 0 14px;
+}
+
+.eng-inspector-metric-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .eng-inspector-metric-value {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
@@ -929,115 +1209,47 @@ html[data-theme="light"] .eng-inspector-indicator {
   color: var(--foreground);
 }
 
+.eng-inspector-metric-value--compare {
+  color: var(--muted);
+}
+
+.eng-inspector-metric-value--delta {
+  color: var(--accent);
+}
+
 .eng-inspector-metric-unit {
   font-size: 12px;
   color: var(--muted);
   font-weight: 500;
 }
 
-.eng-inspector-divider {
+.eng-inspector-metric-change {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 6px;
+}
+
+.eng-inspector-footer {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
   border-top: 1px solid var(--border);
-  margin: 0 14px;
+  background: var(--background);
 }
 
 .eng-inspector-selected {
-  font-size: 12px;
+  margin: 0;
+}
+
+.eng-inspector-selected--compare {
   color: var(--muted);
-  padding: 10px 14px;
-  font-family: var(--mono);
 }
 
-.eng-plot-settings-toggle {
-  font-size: 16px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--background);
-  color: var(--muted);
-  cursor: pointer;
-  line-height: 1;
-}
-
-.eng-plot-settings-toggle:hover {
-  background: var(--hover);
-  color: var(--foreground);
-}
-
-.eng-plot-settings {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 12px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-html[data-theme="light"] .eng-plot-settings {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.eng-plot-settings label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--foreground);
-  cursor: pointer;
-}
-
-.eng-plot-settings label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-}
-
-
-/* Plot hover readout - positioned below chart, never overlaps toolbar */
-.eng-plot-hover-readout {
-  display: flex;
-  gap: 16px;
-  margin-top: 6px;
-  padding: 4px 8px;
-  background: var(--hover);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 12px;
-  font-family: var(--mono);
-  color: var(--foreground);
-  width: fit-content;
-}
-
-.eng-plot-hover-x,
-.eng-plot-hover-y {
-  white-space: nowrap;
-}
-
-/* Series visibility toggles in settings */
-.eng-plot-settings-series {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.eng-plot-settings-series-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--foreground);
-  cursor: pointer;
-}
-
-.eng-plot-settings-series-color {
-  width: 12px;
-  height: 3px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
+/* Removed dead styles: .eng-plot-settings (absolute floating panel) and the
+   old .eng-plot-hover-readout / .eng-plot-hover-region floating tooltip that
+   overlapped toolbar controls. The readout now lives below the chart and the
+   settings panel sits in the document flow. */
