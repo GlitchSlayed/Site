@@ -1,5 +1,5 @@
 ---
-title: "GOFR — Glitchy's Opinionated Fedora Remix"
+title: "GOFR: Glitchy's Opinionated Fedora Remix"
 description: "A Fedora-based Linux remix exploring modern boot infrastructure, performance-oriented defaults, and a refreshed command-line experience."
 status: "Concept / Planning"
 tags: ["Linux", "Fedora", "Operating Systems", "Open Source", "Systemd", "Rust"]
@@ -13,7 +13,7 @@ visualLabel: "Fedora remix · Concept"
 visualAnimate: false
 ---
 
-# GOFR — Glitchy's Opinionated Fedora Remix
+# GOFR: Glitchy's Opinionated Fedora Remix
 
 **GOFR** (pronounced *Gopher*) is a planned Fedora-based Linux distribution remix built around a relatively simple idea: take the Fedora Workstation experience I already enjoy and make a handful of opinionated changes to its underlying architecture, boot process, kernel, and command-line environment.
 
@@ -113,12 +113,12 @@ This decision introduces additional considerations involving redistribution, pac
 
 The roadmap is provisional and may change as technical limitations and design decisions become clearer.
 
-- [ ] **Phase 1 — Research and Architecture:** Validate upstream dependencies, select image-building tools, and finalize major architectural decisions.
-- [ ] **Phase 2 — Configuration and Packaging:** Develop GOFR-specific RPM packages for system defaults, boot configuration, and integration.
-- [ ] **Phase 3 — Virtual Machine Prototype:** Build an initial disk image and validate systemd-boot, UKIs, and the CachyOS kernel.
-- [ ] **Phase 4 — Installable ISO:** Produce an installable Fedora-based ISO with the intended defaults.
-- [ ] **Phase 5 — Automated Testing:** Validate installation, boot behavior, package updates, kernel lifecycle, and recovery.
-- [ ] **Phase 6 — Release Infrastructure:** Establish reproducible build procedures, GitHub Actions, documentation, and versioned development releases.
+- [ ] **Phase 1: Research and Architecture:** Validate upstream dependencies, select image-building tools, and finalize major architectural decisions.
+- [ ] **Phase 2: Configuration and Packaging:** Develop GOFR-specific RPM packages for system defaults, boot configuration, and integration.
+- [ ] **Phase 3: Virtual Machine Prototype:** Build an initial disk image and validate systemd-boot, UKIs, and the CachyOS kernel.
+- [ ] **Phase 4: Installable ISO:** Produce an installable Fedora-based ISO with the intended defaults.
+- [ ] **Phase 5: Automated Testing:** Validate installation, boot behavior, package updates, kernel lifecycle, and recovery.
+- [ ] **Phase 6: Release Infrastructure:** Establish reproducible build procedures, GitHub Actions, documentation, and versioned development releases.
 
 ## Technical Challenges
 

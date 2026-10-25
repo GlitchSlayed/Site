@@ -1,6 +1,6 @@
 export const site = {
  name: 'Vansh',
- title: 'Vansh — Aerospace & Technology',
+ title: 'Vansh | Aerospace & Technology',
  description: 'Notes, projects, and experiments in aerospace, engineering, and technology.',
  // Fill these in to show contact links. Empty values hide the links.
  github: '', linkedin: '', email: '',

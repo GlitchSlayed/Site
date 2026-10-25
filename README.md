@@ -6,13 +6,13 @@ Built with a minimal layout, light and dark themes, and subtle red-orange accent
 
 ## Stack
 
-- **Astro 7** — static site generation
-- **TypeScript** — typed configuration and application code
-- **Markdown / MDX** — articles and project pages
-- **KaTeX** — mathematical equations
-- **Plain CSS** — styling and responsive layouts
-- **React + Paper Design shaders** — decorative project and homepage visuals
-- **GitHub Pages + Actions** — hosting and deployment
+- **Astro 7:** static site generation
+- **TypeScript:** typed configuration and application code
+- **Markdown / MDX:** articles and project pages
+- **KaTeX:** mathematical equations
+- **Plain CSS:** styling and responsive layouts
+- **React + Paper Design shaders:** decorative project and homepage visuals
+- **GitHub Pages + Actions:** hosting and deployment
 
 ## Development
 
