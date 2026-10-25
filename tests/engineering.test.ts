@@ -12,6 +12,7 @@ import {
 } from '../src/lib/engineering/validation';
 import { convert, UNITS } from '../src/lib/engineering/units';
 import { formatResult, formatPercentageChange, MAX_DECIMALS } from '../src/lib/engineering/format';
+import { formatNumber } from '../src/lib/engineering/format';
 import { getModel } from '../src/lib/engineering/registry';
 import { getPlotDefinition } from '../src/lib/engineering/plots/registry';
 
@@ -459,6 +460,46 @@ describe('axis formatting', () => {
     });
     expect(out.unit).toBe('kN');
     expect(out.value).toBe('686.5');
+  });
+});
+
+describe('formatNumber', () => {
+  it('removes floating-point representation artifacts', () => {
+    expect(formatNumber(0.027330000000000004)).toBe('0.02733');
+    expect(formatNumber(14.950000000000001)).toBe('14.95');
+    expect(formatNumber(2.2800000000000002)).toBe('2.28');
+    expect(formatNumber(0.40860000000000002)).toBe('0.4086');
+  });
+
+  it('groups thousands for large values', () => {
+    expect(formatNumber(73500.00000000001, { thousands: true, engineering: false })).toBe('73,500');
+  });
+
+  it('trims trailing zeros', () => {
+    expect(formatNumber(0.8)).toBe('0.8');
+    expect(formatNumber(10)).toBe('10');
+  });
+
+  it('uses SI-prefix notation for very small values', () => {
+    expect(formatNumber(0.000000123456789, { engineering: true })).toBe('123.5n');
+    expect(formatNumber(0.000123456789, { engineering: true })).toBe('123.5µ');
+  });
+
+  it('caps decimal places at MAX_DECIMALS', () => {
+    const out = formatNumber(0.373492847, { sigFigs: 10 });
+    const decimals = out.includes('.') ? out.split('.')[1].length : 0;
+    expect(decimals).toBeLessThanOrEqual(5);
+  });
+
+  it('returns em dash for non-finite values', () => {
+    expect(formatNumber(NaN)).toBe('—');
+    expect(formatNumber(Infinity)).toBe('—');
+    expect(formatNumber(-Infinity)).toBe('—');
+  });
+
+  it('preserves negative sign', () => {
+    expect(formatNumber(-14.5678)).toBe('-14.57');
+    expect(formatNumber(-0.02733)).toBe('-0.02733');
   });
 });
 

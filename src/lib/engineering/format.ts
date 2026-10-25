@@ -4,7 +4,7 @@
 // Precision standard: maximum 5 decimal places, default 4.
 // Trailing zeros are removed. Thousands separators used for large values.
 import { convert, UNITS } from './units';
-import { formatEngineering, isFiniteNumber, significantFigures } from './validation';
+import { isFiniteNumber, significantFigures } from './validation';
 
 export interface FormatResultOptions {
   value: number;
@@ -28,16 +28,98 @@ export interface FormattedResult {
   fullText: string;
 }
 
-// Group thousands with narrow no-break spaces for readability.
-function groupThousands(value: number): string {
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-
 /** Hard cap on decimal places across the framework. */
-const MAX_DECIMALS = 5;
+export const MAX_DECIMALS = 5;
 
 /** Default significant figures for ordinary engineering results. */
 const DEFAULT_SIG_FIGS = 4;
+
+/** SI prefix characters by power-of-ten exponent (step of 3). */
+const SI_PREFIXES: Record<number, string> = {
+  '-12': 'p',
+  '-9': 'n',
+  '-6': 'µ',
+  '-3': 'm',
+  '0': '',
+  '3': 'k',
+  '6': 'M',
+  '9': 'G',
+  '12': 'T',
+};
+
+/**
+ * Format a number into a clean, artifact-free string for presentation.
+ *
+ * - Rounds only for presentation; internal precision is untouched.
+ * - Defaults to 4 significant figures with trailing zeros trimmed.
+ * - Caps decimal places at maxDecimals (default 5).
+ * - Uses SI-prefix / scientific notation for very small or large values.
+ * - Optionally groups thousands.
+ *
+ * Returns '—' for non-finite values.
+ */
+export interface FormatNumberOptions {
+  sigFigs?: number;        // significant figures (default 4)
+  maxDecimals?: number;    // hard cap on decimal places (default 5)
+  thousands?: boolean;     // add thousands separators
+  engineering?: boolean;   // force SI-prefix / scientific notation
+  forceDecimals?: number;  // exact decimal places (overrides sigFigs)
+}
+
+export function formatNumber(
+  value: number,
+  {
+    sigFigs = DEFAULT_SIG_FIGS,
+    maxDecimals = MAX_DECIMALS,
+    thousands = false,
+    engineering = false,
+    forceDecimals,
+  }: FormatNumberOptions = {},
+): string {
+  if (!isFiniteNumber(value)) return '—';
+  if (value === 0) return '0';
+
+  const abs = Math.abs(value);
+
+  // Engineering / SI-prefix notation for very small values, or when forced.
+  // Large values use thousands separators instead (handled below).
+  if (engineering || abs < 0.01) {
+    const exponent = Math.floor(Math.log10(abs) / 3) * 3;
+    const scaled = value / Math.pow(10, exponent);
+    const prefix = SI_PREFIXES[exponent] ?? `×10^${exponent}`;
+    const scaledStr = formatNumber(scaled, {
+      sigFigs,
+      maxDecimals,
+      thousands: false,
+      engineering: false,
+      forceDecimals: forceDecimals !== undefined ? forceDecimals : undefined,
+    });
+    return `${scaledStr}${prefix}`;
+  }
+
+  // Determine decimal places needed for the requested significant figures.
+  const magnitude = Math.floor(Math.log10(abs));
+  const decimals =
+    forceDecimals !== undefined
+      ? forceDecimals
+      : Math.max(0, sigFigs - 1 - magnitude);
+  const cappedDecimals = Math.min(decimals, maxDecimals);
+
+  // Round via toFixed to avoid binary float representation artifacts.
+  const rounded = Number(value.toFixed(cappedDecimals));
+  let str = rounded.toFixed(cappedDecimals);
+
+  // Trim trailing zeros but keep at least one decimal for non-integers.
+  str = str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
+
+  if (thousands && Math.abs(rounded) >= 1000) {
+    const parts = str.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    str = parts.join('.');
+  }
+
+  return str;
+}
 
 /**
  * Format a numerical engineering result with units, SI prefixes, and
@@ -119,24 +201,9 @@ export function formatResult({
   // Format the number with precision limits.
   let formatted: string;
   if (engineeringNotation) {
-    formatted = formatEngineering(displayValue, sigFigs);
+    formatted = formatNumber(displayValue, { sigFigs, maxDecimals, engineering: true });
   } else {
-    const rounded = significantFigures(displayValue, sigFigs);
-    // Cap decimal places at maxDecimals.
-    const decimalCap = Math.pow(10, maxDecimals);
-    const capped = Math.round(rounded * decimalCap) / decimalCap;
-    // Use grouping for large numbers, plain for small.
-    if (Math.abs(capped) >= 1000) {
-      formatted = groupThousands(capped);
-    } else {
-      // Remove trailing zeros but keep at least one decimal for non-integers.
-      const str = capped.toString();
-      if (str.includes('.')) {
-        formatted = str.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.$/, '');
-      } else {
-        formatted = str;
-      }
-    }
+    formatted = formatNumber(displayValue, { sigFigs, maxDecimals, thousands: Math.abs(displayValue) >= 1000 });
   }
 
   // Build the unit string. Dimensionless units are shown without brackets.
@@ -174,6 +241,3 @@ export function formatPercentageChange(
   const sign = change >= 0 ? '+' : '-';
   return `(${sign}${significantFigures(Math.abs(change), sigFigs)}%)`;
 }
-
-/** Maximum decimal places enforced by the framework. */
-export { MAX_DECIMALS };

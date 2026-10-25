@@ -16,7 +16,8 @@
 import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type uPlot from 'uplot';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
-import { isFiniteNumber, significantFigures } from '../../../lib/engineering/validation';
+import { isFiniteNumber } from '../../../lib/engineering/validation';
+import { formatNumber } from '../../../lib/engineering/format';
 import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
 
 type InteractionMode = 'inspect' | 'zoom' | 'pan';
@@ -28,18 +29,6 @@ const PRECISION_LABELS: Record<Precision, string> = { 3: '3 sig figs', 4: '4 sig
 // which is awkward to import under isolatedModules).
 const DISTR_LINEAR = 1;
 const DISTR_LOGARITHMIC = 3;
-
-const ENGINEERING_PREFIXES: Record<number, string> = {
-  '-12': 'p',
-  '-9': 'n',
-  '-6': 'µ',
-  '-3': 'm',
-  '0': '',
-  '3': 'k',
-  '6': 'M',
-  '9': 'G',
-  '12': 'T',
-};
 
 interface InspectionPoint {
   x: number;
@@ -102,49 +91,16 @@ function themeAccent(theme: 'dark' | 'light'): string {
 function formatAxisValue(val: number, unit: string | undefined, sigFigs: number): string {
   if (!isFiniteNumber(val)) return '—';
   if (val === 0) return unit && unit !== '-' ? `0 [${unit}]` : '0';
-
-  const abs = Math.abs(val);
-  let formatted: string;
-
-  if (abs < 0.01 || abs >= 1000) {
-    const exponent = Math.floor(Math.log10(abs) / 3) * 3;
-    const scaled = val / Math.pow(10, exponent);
-    const prefix = ENGINEERING_PREFIXES[exponent] ?? `×10^${exponent}`;
-    formatted = `${significantFigures(scaled, 3)}${prefix}`;
-  } else {
-    const capped = Math.round(significantFigures(val, sigFigs) * 100000) / 100000;
-    formatted = capped.toString();
-    if (!Number.isInteger(capped) && !formatted.includes('.')) {
-      formatted = capped.toFixed(1);
-    }
-    formatted = formatted.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.$/, '');
-  }
-
-  return unit && unit !== '-' ? `${formatted} [${unit}]` : formatted;
+  return `${formatNumber(val, { sigFigs, engineering: true })} ${
+    unit && unit !== '-' ? `[${unit}]` : ''
+  }`.trim();
 }
 
 /** Format a tick label for an axis (no unit suffix). */
 function formatTick(val: number, sigFigs: number): string {
   if (!Number.isFinite(val)) return '';
   if (val === 0) return '0';
-
-  const abs = Math.abs(val);
-  let formatted: string;
-
-  if (abs < 0.01 || abs >= 1000) {
-    const exponent = Math.floor(Math.log10(abs) / 3) * 3;
-    const scaled = val / Math.pow(10, exponent);
-    const prefix = ENGINEERING_PREFIXES[exponent] ?? `×10^${exponent}`;
-    formatted = `${significantFigures(scaled, 3)}${prefix}`;
-  } else {
-    const capped = Math.round(significantFigures(val, sigFigs) * 100000) / 100000;
-    formatted = capped.toString();
-    if (!Number.isInteger(capped) && !formatted.includes('.')) {
-      formatted = capped.toFixed(1);
-    }
-  }
-
-  return formatted;
+  return formatNumber(val, { sigFigs, engineering: true });
 }
 
 /** Estimate text width using canvas font metrics. */

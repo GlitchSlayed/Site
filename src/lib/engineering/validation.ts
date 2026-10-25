@@ -65,7 +65,9 @@ export function significantFigures(value: number, sigFigs: number): number {
   const magnitude = Math.floor(Math.log10(Math.abs(value)));
   const digits = magnitude - sigFigs + 1;
   const factor = Math.pow(10, digits);
-  return Math.round(value / factor) * factor;
+  // Multiply then divide via a single rounded step to minimize binary float
+  // representation artifacts (e.g. 0.027330000000000004).
+  return Number(Math.round(value / factor) * factor);
 }
 
 export function formatEngineering(value: number, sigFigs = 3): string {

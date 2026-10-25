@@ -5,7 +5,8 @@
 // explicitly via row.annotations[columnIndex] (e.g. "(+15.1%)").
 import { useMemo, useState } from 'react';
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
-import { significantFigures } from '../../../lib/engineering/validation';
+import { formatResult } from '../../../lib/engineering/format';
+import { isFiniteNumber } from '../../../lib/engineering/validation';
 
 interface EngineeringComparisonProps {
   config: EngineeringComparisonConfig;
@@ -56,11 +57,10 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
     return rows;
   }, [config.rows, sortBy, sortDirection]);
 
-  const formatCell = (value: string | number): string => {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return significantFigures(value, 4).toString();
-    }
-    return String(value);
+  const formatCell = (value: string | number, unit?: string): string => {
+    if (typeof value === 'string') return value;
+    if (!isFiniteNumber(value)) return '—';
+    return formatResult({ value, unit, significantFigures: 4 }).value;
   };
 
   // Extract explicit percentage annotation for a cell, if provided.
@@ -119,7 +119,7 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
                   <td className="eng-unit-cell">{row.unit || '-'}</td>
                   {config.configurations.map((cfg, ci) => {
                     const isReference = cfg.id === referenceId;
-                    const cell = formatCell(row.values[ci]);
+                    const cell = formatCell(row.values[ci], row.unit);
                     const annotation = getAnnotation(row, ci);
                     return (
                       <td
