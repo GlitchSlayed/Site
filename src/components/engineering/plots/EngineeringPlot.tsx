@@ -173,10 +173,13 @@ export function EngineeringPlot({
   // Pan / touch state.
   const panStateRef = useRef<{
     dragging: boolean;
+    moved: boolean;
     startX: number;
     startY: number;
-    startMin: number;
-    startMax: number;
+    startXMin: number;
+    startXMax: number;
+    startYMin: number;
+    startYMax: number;
   } | null>(null);
   const lastHoverIdxRef = useRef<number | null>(null);
 
@@ -486,6 +489,11 @@ export function EngineeringPlot({
         y: true,
         lock: true,
         points: { show: true, size: 6, stroke: '#ffffff', width: 1.5 },
+        drag: {
+          setScale: false,
+          x: interactionMode === 'zoom',
+          y: interactionMode === 'zoom',
+        },
       },
       legend: { show: showLegend, live: false },
       select:
@@ -506,7 +514,7 @@ export function EngineeringPlot({
           (u: PlotInstance) => {
             if (interactionMode !== 'zoom') return;
             const sel = u.select;
-            if (!sel || sel.width < 5) return;
+            if (!sel || sel.width < 8) return;
             const minX = u.posToVal(sel.left, 'x');
             const maxX = u.posToVal(sel.left + sel.width, 'x');
             if (Number.isFinite(minX) && Number.isFinite(maxX) && minX !== maxX) {
@@ -516,7 +524,7 @@ export function EngineeringPlot({
               setXMax(newMax);
               u.setScale('x', { min: newMin, max: newMax });
             }
-            if (sel.height >= 5) {
+            if (sel.height >= 8 && yScaleType === 'linear') {
               const valY1 = u.posToVal(sel.top, 'y');
               const valY2 = u.posToVal(sel.top + sel.height, 'y');
               if (Number.isFinite(valY1) && Number.isFinite(valY2) && valY1 !== valY2) {
@@ -703,7 +711,13 @@ export function EngineeringPlot({
     (event: MouseEvent) => {
       const inst = chartInstanceRef.current;
       const container = containerRef.current;
-      if (!inst || !container || !inspectable || interactionMode !== 'inspect') return;
+      if (!inst || !container || !inspectable || interactionMode === 'zoom') return;
+
+      // If user was dragging/panning the plot, do not trigger point inspection
+      if (panStateRef.current?.moved) {
+        panStateRef.current.moved = false;
+        return;
+      }
 
       const rect = container.getBoundingClientRect();
       const plotLeft = inst.bbox?.left ?? 0;
@@ -777,18 +791,24 @@ export function EngineeringPlot({
 
   const handlePanDown = useCallback(
     (e: MouseEvent) => {
+      if (e.button !== 0) return; // Only left-click
+      if (interactionMode === 'zoom') return;
       const inst = chartInstanceRef.current;
       const xScale = inst?.scales?.x;
-      if (!inst || !xScale) return;
+      const yScale = inst?.scales?.y;
+      if (!inst || !xScale || xScale.min == null || xScale.max == null) return;
       panStateRef.current = {
         dragging: true,
+        moved: false,
         startX: e.clientX,
         startY: e.clientY,
-        startMin: xScale.min ?? 0,
-        startMax: xScale.max ?? 0,
+        startXMin: xScale.min,
+        startXMax: xScale.max,
+        startYMin: yScale?.min ?? 0,
+        startYMax: yScale?.max ?? 0,
       };
     },
-    [],
+    [interactionMode],
   );
 
   const handlePanMove = useCallback(
@@ -797,33 +817,69 @@ export function EngineeringPlot({
       const inst = chartInstanceRef.current;
       if (!state?.dragging || !inst) return;
       const dx = e.clientX - state.startX;
-      const plotWidth = inst.bbox?.width ?? (containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current;
-      const range = state.startMax - state.startMin;
-      const shift = (dx / plotWidth) * range;
-      inst.setScale('x', { min: state.startMin - shift, max: state.startMax - shift });
+      const dy = e.clientY - state.startY;
+
+      // Strict 4px threshold before initiating pan to protect clicks
+      if (!state.moved) {
+        if (Math.hypot(dx, dy) < 4) return;
+        state.moved = true;
+        if (containerRef.current) {
+          containerRef.current.style.cursor = 'grabbing';
+        }
+      }
+
+      const plotWidth = inst.bbox?.width ?? ((containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current);
+      const plotHeight = inst.bbox?.height ?? (height - xAxisSizeRef.current);
+      const xRange = state.startXMax - state.startXMin;
+      const xShift = (dx / plotWidth) * xRange;
+      const newXMin = state.startXMin - xShift;
+      const newXMax = state.startXMax - xShift;
+      setXMin(newXMin);
+      setXMax(newXMax);
+      inst.setScale('x', { min: newXMin, max: newXMax });
+
+      if (yScaleType === 'linear') {
+        const yRange = state.startYMax - state.startYMin;
+        const yShift = (dy / plotHeight) * yRange;
+        const newYMin = state.startYMin + yShift;
+        const newYMax = state.startYMax + yShift;
+        setYMin(newYMin);
+        setYMax(newYMax);
+        inst.setScale('y', { min: newYMin, max: newYMax });
+      }
     },
-    [],
+    [height, yScaleType],
   );
 
   const handlePanUp = useCallback(() => {
-    if (panStateRef.current) panStateRef.current.dragging = false;
-  }, []);
+    if (panStateRef.current) {
+      panStateRef.current.dragging = false;
+      if (containerRef.current) {
+        containerRef.current.style.cursor = interactionMode === 'zoom' ? 'crosshair' : 'default';
+      }
+    }
+  }, [interactionMode]);
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
+      if (interactionMode === 'zoom') return;
       const inst = chartInstanceRef.current;
       const xScale = inst?.scales?.x;
-      if (!inst || !xScale) return;
+      const yScale = inst?.scales?.y;
+      if (!inst || !xScale || xScale.min == null || xScale.max == null) return;
       const touch = e.touches[0];
       panStateRef.current = {
         dragging: true,
+        moved: false,
         startX: touch.clientX,
         startY: touch.clientY,
-        startMin: xScale.min ?? 0,
-        startMax: xScale.max ?? 0,
+        startXMin: xScale.min,
+        startXMax: xScale.max,
+        startYMin: yScale?.min ?? 0,
+        startYMax: yScale?.max ?? 0,
       };
     },
-    [],
+    [interactionMode],
   );
 
   const handleTouchMove = useCallback(
@@ -833,17 +889,97 @@ export function EngineeringPlot({
       if (!state?.dragging || !inst) return;
       const touch = e.touches[0];
       const dx = touch.clientX - state.startX;
-      const plotWidth = inst.bbox?.width ?? (containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current;
-      const range = state.startMax - state.startMin;
-      const shift = (dx / plotWidth) * range;
-      inst.setScale('x', { min: state.startMin - shift, max: state.startMax - shift });
+      const dy = touch.clientY - state.startY;
+
+      if (!state.moved) {
+        if (Math.hypot(dx, dy) < 4) return;
+        state.moved = true;
+      }
+
+      const plotWidth = inst.bbox?.width ?? ((containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current);
+      const plotHeight = inst.bbox?.height ?? (height - xAxisSizeRef.current);
+      const xRange = state.startXMax - state.startXMin;
+      const xShift = (dx / plotWidth) * xRange;
+      const newXMin = state.startXMin - xShift;
+      const newXMax = state.startXMax - xShift;
+      setXMin(newXMin);
+      setXMax(newXMax);
+      inst.setScale('x', { min: newXMin, max: newXMax });
+
+      if (yScaleType === 'linear') {
+        const yRange = state.startYMax - state.startYMin;
+        const yShift = (dy / plotHeight) * yRange;
+        const newYMin = state.startYMin + yShift;
+        const newYMax = state.startYMax + yShift;
+        setYMin(newYMin);
+        setYMax(newYMax);
+        inst.setScale('y', { min: newYMin, max: newYMax });
+      }
     },
-    [],
+    [height, yScaleType],
   );
 
   const handleTouchEnd = useCallback(() => {
     if (panStateRef.current) panStateRef.current.dragging = false;
   }, []);
+
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      const inst = chartInstanceRef.current;
+      const container = containerRef.current;
+      if (!inst || !container) return;
+
+      const rect = container.getBoundingClientRect();
+      const plotLeft = inst.bbox?.left ?? 0;
+      const plotTop = inst.bbox?.top ?? 0;
+      const plotWidth = inst.bbox?.width ?? container.clientWidth - yAxisSizeRef.current;
+      const plotHeight = inst.bbox?.height ?? (height - xAxisSizeRef.current);
+
+      const mousePlotX = e.clientX - rect.left - plotLeft;
+      const mousePlotY = e.clientY - rect.top - plotTop;
+
+      if (mousePlotX < 0 || mousePlotX > plotWidth || mousePlotY < 0 || mousePlotY > plotHeight) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const cursorXVal = inst.posToVal(mousePlotX, 'x');
+      const cursorYVal = inst.posToVal(mousePlotY, 'y');
+      if (!Number.isFinite(cursorXVal)) return;
+
+      const zoomFactor = e.deltaY < 0 ? 0.88 : 1.14;
+
+      const xScale = inst.scales?.x;
+      const yScale = inst.scales?.y;
+      if (!xScale || xScale.min == null || xScale.max == null) return;
+
+      const currentXMin = xScale.min;
+      const currentXMax = xScale.max;
+      const newXMin = cursorXVal - (cursorXVal - currentXMin) * zoomFactor;
+      const newXMax = cursorXVal + (currentXMax - cursorXVal) * zoomFactor;
+
+      if (Number.isFinite(newXMin) && Number.isFinite(newXMax) && newXMin < newXMax) {
+        setXMin(newXMin);
+        setXMax(newXMax);
+        inst.setScale('x', { min: newXMin, max: newXMax });
+      }
+
+      if (yScaleType === 'linear' && yScale && yScale.min != null && yScale.max != null && Number.isFinite(cursorYVal)) {
+        const currentYMin = yScale.min;
+        const currentYMax = yScale.max;
+        const newYMin = cursorYVal - (cursorYVal - currentYMin) * zoomFactor;
+        const newYMax = cursorYVal + (currentYMax - cursorYVal) * zoomFactor;
+
+        if (Number.isFinite(newYMin) && Number.isFinite(newYMax) && newYMin < newYMax) {
+          setYMin(newYMin);
+          setYMax(newYMax);
+          inst.setScale('y', { min: newYMin, max: newYMax });
+        }
+      }
+    },
+    [height, yScaleType],
+  );
 
   const addListener = useCallback(
     <T extends Event>(
@@ -873,11 +1009,13 @@ export function EngineeringPlot({
       resizeObserver.observe(container);
     }
 
-    if (inspectable && interactionMode === 'inspect') {
+    addListener(container, 'wheel', handleWheel, { passive: false });
+
+    if (inspectable) {
       addListener(container, 'click', handleContainerClick);
     }
 
-    if (interactionMode === 'pan') {
+    if (interactionMode !== 'zoom') {
       addListener(container, 'mousedown', handlePanDown);
       addListener(window, 'mousemove', handlePanMove);
       addListener(window, 'mouseup', handlePanUp);
@@ -902,6 +1040,7 @@ export function EngineeringPlot({
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
+    handleWheel,
     addListener,
   ]);
 
@@ -1188,7 +1327,7 @@ export function EngineeringPlot({
       </header>
 
       <div
-        className="eng-plot-viewport"
+        className={`eng-plot-viewport mode-${interactionMode}`}
         role="region"
         aria-label={config.title || 'Engineering plot'}
         onDoubleClick={handleResetView}

@@ -451,6 +451,53 @@ describe('EngineeringPlot controls', () => {
     expect(keys).toContain('y');
     setScaleSpy.mockRestore();
   });
+
+  it('dragging by more than 4px pans the chart', async () => {
+    const { container } = renderPlot();
+    await flush();
+    await waitForChart();
+    const instance = createdInstances[0];
+    instance.scales = { x: { min: 40, max: 200 }, y: { min: 10, max: 20 } };
+    const setScaleSpy = vi.spyOn(instance, 'setScale');
+
+    const plot = plotContainer(container);
+    act(() => {
+      plot.dispatchEvent(new window.MouseEvent('mousedown', { clientX: 100, clientY: 100, button: 0, bubbles: true }));
+      window.dispatchEvent(new window.MouseEvent('mousemove', { clientX: 140, clientY: 120, bubbles: true }));
+      window.dispatchEvent(new window.MouseEvent('mouseup', { bubbles: true }));
+    });
+    await flush();
+
+    const keys = setScaleSpy.mock.calls.map((c) => c[0]);
+    expect(keys).toContain('x');
+    expect(keys).toContain('y');
+    setScaleSpy.mockRestore();
+  });
+
+  it('wheel scrolling over the plot zooms around cursor', async () => {
+    const { container } = renderPlot();
+    await flush();
+    await waitForChart();
+    const instance = createdInstances[0];
+    instance.scales = { x: { min: 40, max: 200 }, y: { min: 10, max: 20 } };
+    vi.spyOn(instance, 'posToVal').mockImplementation(((_v: number, axis?: string) => (axis === 'x' ? 100 : 15)) as any);
+    const setScaleSpy = vi.spyOn(instance, 'setScale');
+
+    const plot = plotContainer(container);
+    act(() => {
+      const evt = new (window as any).Event('wheel', { bubbles: true, cancelable: true });
+      evt.clientX = 150;
+      evt.clientY = 150;
+      evt.deltaY = -100;
+      plot.dispatchEvent(evt);
+    });
+    await flush();
+
+    const keys = setScaleSpy.mock.calls.map((c) => c[0]);
+    expect(keys).toContain('x');
+    expect(keys).toContain('y');
+    setScaleSpy.mockRestore();
+  });
 });
 
 describe('plot series generation', () => {

@@ -642,6 +642,19 @@ html[data-theme='light'] .eng-modebar-popover {
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: 6px;
+  cursor: default;
+}
+
+.eng-plot-viewport.mode-pan {
+  cursor: grab;
+}
+
+.eng-plot-viewport.mode-pan:active {
+  cursor: grabbing;
+}
+
+.eng-plot-viewport.mode-zoom {
+  cursor: crosshair;
 }
 
 /* Force the uPlot wrapper to fill the viewport properly */
