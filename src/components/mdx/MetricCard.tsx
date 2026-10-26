@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatNumber } from '../../lib/engineering/format';
 import { getParameter, subscribeParameter } from '../../lib/engineering/scopedState';
+import { renderMathText } from '../../lib/engineering/formatMath';
 
 export interface MetricCardProps {
   label: string;
@@ -94,13 +95,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div className={`eng-metric-card ${className}`}>
       <div className="eng-metric-header">
-        {symbol && <span className="eng-metric-symbol">{symbol}</span>}
-        <span className="eng-metric-label">{label}</span>
+        {symbol && <span className="eng-metric-symbol">{renderMathText(symbol)}</span>}
+        <span className="eng-metric-label">{renderMathText(label)}</span>
       </div>
 
       <div className="eng-metric-body">
         <span className="eng-metric-val">{formattedValue}</span>
-        {unit && <span className="eng-metric-unit">{unit}</span>}
+        {unit && <span className="eng-metric-unit">{renderMathText(unit)}</span>}
       </div>
 
       <div className="eng-metric-footer">

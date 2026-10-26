@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { formatNumber } from '../../lib/engineering/format';
+import { renderMathText } from '../../lib/engineering/formatMath';
 
 export interface DataTableColumn {
   key: string;
@@ -185,8 +186,8 @@ export const DataTable: React.FC<DataTableProps> = ({
                     style={{ textAlign: col.align || 'left' }}
                   >
                     <span className="th-content">
-                      <span>{col.label}</span>
-                      {col.unit && <span className="th-unit"> [{col.unit}]</span>}
+                      <span>{renderMathText(col.label)}</span>
+                      {col.unit && <span className="th-unit"> [{renderMathText(col.unit)}]</span>}
                       {isSortable && (
                         <span className="th-sort-icon">
                           {isSorted ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}

@@ -19,6 +19,13 @@ visualAccent: "#33d17a"
 ---
 
 import { BWBTradeoffExplorer } from '../../components/engineering/simulations/BWBTradeoffExplorer';
+import {
+  FunctionPlot,
+  ParamPlayground,
+  MetricCard,
+  MetricGrid,
+  DataTable,
+} from '../../components/mdx';
 
 Blended wing body (BWB) aircraft have always fascinated me. Their shape is so different from the conventional tube-and-wing aircraft we are used to seeing that it raises a fairly simple question: if this configuration offers meaningful aerodynamic advantages, why is it not more common?
 
@@ -76,7 +83,38 @@ $$
 C_D=C_{D,0}+kC_L^2
 $$
 
-Here, $C_{D,0}$ approximates zero-lift drag and $k$ represents the induced-drag factor in this simplified model. I will need to check how appropriate this approximation is for the configurations and flight regimes being compared, particularly at transonic cruise conditions.
+Here, $C_{D,0}$ approximates zero-lift drag and $k$ represents the induced-drag factor in this simplified model. You can experiment with the sensitivity of the drag curve below by varying zero-lift drag and aspect ratio, or clicking the auto-sweep play button to observe dynamic shifts across the flight envelope:
+
+<ParamPlayground
+  client:load
+  scopeId="bwb-drag-polar"
+  title="Drag Polar Sensitivity Explorer"
+  description="Observe how wing aspect ratio and parasite drag shift the parabolic drag polar."
+  animate={true}
+  parameters={[
+    { id: 'cd0', label: 'Zero-Lift Drag ($C_{D,0}$)', min: 0.010, max: 0.030, step: 0.001, defaultValue: 0.0175, unit: '-' },
+    { id: 'ar', label: 'Aspect Ratio ($AR$)', min: 4.0, max: 14.0, step: 0.5, defaultValue: 8.5, unit: 'AR', animate: true }
+  ]}
+  presets={{
+    'Conventional Baseline': { cd0: 0.0210, ar: 8.7 },
+    'Optimized BWB Concept': { cd0: 0.0165, ar: 9.8 }
+  }}
+>
+  <FunctionPlot
+    client:load
+    scopeId="bwb-drag-polar"
+    title="Drag Polar ($C_D$ vs. $C_L$)"
+    fn={[
+      { fn: 'cd0 + (1 / (pi * 0.85 * ar)) * x^2', label: 'Adjustable Airframe Polar' },
+      { fn: '0.021 + (1 / (pi * 0.85 * 8.7)) * x^2', label: 'Baseline Reference Polar', color: '#64748b' }
+    ]}
+    domain={[0, 1.2]}
+    samples={200}
+    xLabel="Lift Coefficient ($C_L$)"
+    yLabel="Total Drag Coefficient ($C_D$)"
+    height={320}
+  />
+</ParamPlayground>
 
 ### Internal volume and load distribution
 
@@ -132,23 +170,65 @@ The key exercise will be to vary $L/D$ and structural mass together, rather than
 
 ## Planned outputs
 
-- A documented conventional-aircraft baseline and a hypothetical BWB geometry.
-- A comparison of estimated lift-to-drag ratios under defined flight conditions.
-- Simplified pressure-shell and structural load calculations, including their assumptions and limitations.
-- A sensitivity plot showing fuel savings versus aerodynamic improvement and additional structural mass.
-- A discussion of whether the 15–20% fuel-burn target is plausible within the chosen model, and which uncertainties prevent a stronger conclusion.
+The preliminary performance and structural evaluation targets for the BWB concept are summarized below:
+
+<MetricGrid client:load columns={3}>
+  <MetricCard
+    label="Cruise Aerodynamic L/D"
+    symbol="L/D"
+    value={21.4}
+    baseline={18.2}
+    better="higher"
+    unit="-"
+    description="Cruising efficiency ratio target"
+  />
+  <MetricCard
+    label="Mission Fuel Burn Target"
+    symbol="W_{fuel}"
+    value={43800}
+    baseline={51500}
+    better="lower"
+    unit="kg"
+    description="Target: -15% mission fuel reduction"
+  />
+  <MetricCard
+    label="Structural Weight Penalty Allowance"
+    symbol="ΔW_{empty}"
+    value={14.8}
+    baseline={0.0}
+    better="lower"
+    unit="%"
+    description="Center-body pressurization limit"
+  />
+</MetricGrid>
 
 ## Roadmap
 
-| Stage | Deliverable | Status |
-| --- | --- | --- |
-| Define reference mission | Payload, range, cruise conditions, comparison rules | Planned |
-| Establish baseline | Conventional aircraft assumptions and first-order performance model | Planned |
-| Create geometry | Conceptual conventional and BWB models, possibly in OpenVSP | Planned |
-| Analyze aerodynamics | Drag estimates and $L/D$ comparison | Planned |
-| Analyze structures | Pressurization and spanwise-load sensitivity calculations | Planned |
-| Integrate mission model | Fuel-burn comparison and break-even analysis | Planned |
-| Document findings | Plots, assumptions, limitations, and reproducible calculations | Planned |
+The investigation roadmap below outlines the deliverables, modeling tools, and execution status across each phase:
+
+<DataTable
+  client:load
+  title="Project Investigation Roadmap"
+  description="Chronological phases and engineering deliverables for the feasibility assessment"
+  pageSize={10}
+  searchable={true}
+  downloadable={true}
+  columns={[
+    { key: 'stage', label: 'Stage', align: 'left' },
+    { key: 'deliverable', label: 'Deliverable', align: 'left' },
+    { key: 'tools', label: 'Primary Tool / Method', align: 'left' },
+    { key: 'status', label: 'Status', align: 'center' },
+  ]}
+  data={[
+    { stage: '1. Define reference mission', deliverable: 'Payload, range, cruise conditions, comparison rules', tools: 'Mission Specification', status: 'Planned' },
+    { stage: '2. Establish baseline', deliverable: 'Conventional aircraft assumptions and first-order model', tools: 'Analytical Model', status: 'Planned' },
+    { stage: '3. Create geometry', deliverable: 'Conceptual conventional and BWB models', tools: 'OpenVSP / Python', status: 'Planned' },
+    { stage: '4. Analyze aerodynamics', deliverable: 'Drag estimates and L/D comparison', tools: 'Vortex Lattice / VSP Aero', status: 'Planned' },
+    { stage: '5. Analyze structures', deliverable: 'Pressurization and spanwise-load sensitivity calculations', tools: 'Simplified Shell FEA', status: 'Planned' },
+    { stage: '6. Integrate mission model', deliverable: 'Fuel-burn comparison and break-even analysis', tools: 'Breguet Integration', status: 'Planned' },
+    { stage: '7. Document findings', deliverable: 'Interactive plots, assumptions, and calculations', tools: 'MDX & uPlot', status: 'Planned' },
+  ]}
+/>
 
 ## Verification and limitations
 

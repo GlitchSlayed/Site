@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ParamSlider } from './ParamSlider';
 import { setParameter } from '../../lib/engineering/scopedState';
+import { renderMathText } from '../../lib/engineering/formatMath';
 
 export interface ParamDefinition {
   id: string;
@@ -11,6 +12,7 @@ export interface ParamDefinition {
   defaultValue: number;
   unit?: string;
   symbol?: string;
+  animate?: boolean;
 }
 
 export interface ParamPlaygroundProps {
@@ -19,6 +21,7 @@ export interface ParamPlaygroundProps {
   presets?: Record<string, Record<string, number>>;
   title?: string;
   description?: string;
+  animate?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
@@ -29,6 +32,7 @@ export const ParamPlayground: React.FC<ParamPlaygroundProps> = ({
   presets,
   title = 'Interactive Parameters',
   description,
+  animate = false,
   children,
   className = '',
 }) => {
@@ -52,7 +56,7 @@ export const ParamPlayground: React.FC<ParamPlaygroundProps> = ({
     <div className={`eng-param-playground ${className}`}>
       <div className="eng-playground-header">
         <div>
-          <h4 className="eng-playground-title">{title}</h4>
+          <h4 className="eng-playground-title">{renderMathText(title)}</h4>
           {description && <p className="eng-playground-desc">{description}</p>}
         </div>
         <button
@@ -95,6 +99,7 @@ export const ParamPlayground: React.FC<ParamPlaygroundProps> = ({
             defaultValue={param.defaultValue}
             unit={param.unit}
             symbol={param.symbol}
+            animate={param.animate ?? animate}
             scopeId={scopeId}
           />
         ))}

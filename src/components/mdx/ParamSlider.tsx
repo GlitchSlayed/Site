@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useId } from 'react';
+import React, { useEffect, useState, useRef, useId } from 'react';
 import { getParameter, setParameter, subscribeParameter } from '../../lib/engineering/scopedState';
+import { renderMathText } from '../../lib/engineering/formatMath';
 
 export interface ParamSliderProps {
   id: string;
@@ -11,6 +12,7 @@ export interface ParamSliderProps {
   unit?: string;
   symbol?: string;
   scopeId?: string;
+  animate?: boolean;
   onChange?: (val: number) => void;
   className?: string;
 }
@@ -25,6 +27,7 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
   unit = '',
   symbol,
   scopeId,
+  animate = false,
   onChange,
   className = '',
 }) => {
@@ -39,6 +42,10 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
     }
     return defaultValue;
   });
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const animRef = useRef<number | null>(null);
+  const directionRef = useRef<1 | -1>(1);
 
   // Keep in sync with scoped state if another controller modifies this param
   useEffect(() => {
@@ -56,7 +63,51 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
     return unsubscribe;
   }, [scopeId, id]);
 
+  // Handle animation sweep loop
+  useEffect(() => {
+    if (!isPlaying) {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      return;
+    }
+
+    let lastTime = performance.now();
+    const sweepDuration = 4; // seconds for full range
+    const speed = (max - min) / sweepDuration;
+
+    const stepAnim = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      setVal((prev) => {
+        let next = prev + directionRef.current * speed * dt;
+        if (next >= max) {
+          next = max;
+          directionRef.current = -1;
+        } else if (next <= min) {
+          next = min;
+          directionRef.current = 1;
+        }
+
+        // Round to 3 decimal places to keep value clean
+        const rounded = Math.round(next * 1000) / 1000;
+        if (scopeId) {
+          setParameter(scopeId, id, rounded);
+        }
+        onChange?.(rounded);
+        return rounded;
+      });
+
+      animRef.current = requestAnimationFrame(stepAnim);
+    };
+
+    animRef.current = requestAnimationFrame(stepAnim);
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+    };
+  }, [isPlaying, min, max, scopeId, id, onChange]);
+
   const handleChange = (newVal: number) => {
+    if (isPlaying) setIsPlaying(false);
     setVal(newVal);
     if (scopeId) {
       setParameter(scopeId, id, newVal);
@@ -65,6 +116,7 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
   };
 
   const handleReset = () => {
+    if (isPlaying) setIsPlaying(false);
     handleChange(defaultValue);
   };
 
@@ -74,14 +126,25 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
     <div className={`eng-param-slider ${className}`}>
       <div className="eng-param-slider-header">
         <label htmlFor={inputId} className="eng-param-label">
-          {symbol && <span className="eng-param-symbol">{symbol}</span>}
-          <span className="eng-param-name">{label}</span>
+          {symbol && <span className="eng-param-symbol">{renderMathText(symbol)}</span>}
+          <span className="eng-param-name">{renderMathText(label)}</span>
         </label>
         <div className="eng-param-value-container">
           <span className="eng-param-val-badge">
-            {val}
-            {unit ? <span className="eng-param-unit"> {unit}</span> : null}
+            {typeof val === 'number' ? (Number.isInteger(val) ? val : val.toFixed(calculatedStep < 0.1 ? 2 : 1)) : val}
+            {unit ? <span className="eng-param-unit"> {renderMathText(unit)}</span> : null}
           </span>
+          {animate && (
+            <button
+              type="button"
+              onClick={() => setIsPlaying(!isPlaying)}
+              className={`eng-param-play-btn ${isPlaying ? 'playing' : ''}`}
+              title={isPlaying ? 'Pause auto-sweep' : 'Play auto-sweep'}
+              aria-label={isPlaying ? 'Pause sweep' : 'Play sweep'}
+            >
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+          )}
           {isModified && (
             <button
               type="button"
