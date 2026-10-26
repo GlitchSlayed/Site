@@ -33,9 +33,16 @@ function sweepValues(min: number, max: number, samples: number): number[] {
   return values;
 }
 
-export function generateSeries(
+export interface PlotScenario {
+  id: string;
+  label: string;
+  inputs: Record<string, number | undefined>;
+  color?: string;
+}
+
+export function generateScenarioSeries(
   definition: PlotDefinition,
-  inputs: EngineeringInputValues,
+  scenarios: PlotScenario[],
 ): PlotSeries[] {
   const model = getRegistryModel(definition.modelId);
   if (!model) return [];
@@ -51,38 +58,64 @@ export function generateSeries(
     return [];
   }
 
+  const multiScenario = scenarios.length > 1;
   const series: PlotSeries[] = [];
-  for (const spec of definition.series) {
-    const yValues: number[] = [];
-    let hasValidData = false;
-    for (const x of xValues) {
-      const swept: EngineeringInputValues = { ...inputs, [definition.sweepParam]: x };
-      let outputs: Record<string, { value: number }>;
-      try {
-        outputs = model.compute(swept);
-      } catch {
-        outputs = {};
+
+  for (const scenario of scenarios) {
+    for (const spec of definition.series) {
+      const yValues: number[] = [];
+      let hasValidData = false;
+      for (const x of xValues) {
+        const swept: EngineeringInputValues = { ...scenario.inputs, [definition.sweepParam]: x } as EngineeringInputValues;
+        let outputs: Record<string, { value: number }>;
+        try {
+          outputs = model.compute(swept);
+        } catch {
+          outputs = {};
+        }
+        const out = outputs[spec.outputId];
+        const value = out && typeof out.value === 'number' ? out.value : NaN;
+        yValues.push(isFiniteNumber(value) ? value : NaN);
+        if (isFiniteNumber(value)) hasValidData = true;
       }
-      const out = outputs[spec.outputId];
-      const value = out && typeof out.value === 'number' ? out.value : NaN;
-      yValues.push(isFiniteNumber(value) ? value : NaN);
-      if (isFiniteNumber(value)) hasValidData = true;
+      if (!hasValidData) {
+        console.warn(
+          `[PlotRegistry] No valid data points for series "${spec.label}" in plot "${definition.id}" (${scenario.label}).`,
+        );
+      }
+
+      const seriesLabel = multiScenario
+        ? definition.series.length > 1
+          ? `${scenario.label}: ${spec.label}`
+          : scenario.label
+        : spec.label;
+
+      const seriesId = multiScenario ? `${scenario.id}-${spec.outputId}` : spec.outputId;
+
+      series.push({
+        id: seriesId,
+        label: seriesLabel,
+        x: xValues,
+        y: yValues,
+        mode: spec.mode ?? 'lines',
+        color: scenario.color || spec.color,
+      });
     }
-    if (!hasValidData) {
-      console.warn(
-        `[PlotRegistry] No valid data points for series "${spec.label}" in plot "${definition.id}".`,
-      );
-    }
-    series.push({
-      id: spec.outputId,
-      label: spec.label,
-      x: xValues,
-      y: yValues,
-      mode: spec.mode ?? 'lines',
-      color: spec.color,
-    });
   }
   return series;
+}
+
+export function generateSeries(
+  definition: PlotDefinition,
+  inputs: EngineeringInputValues,
+): PlotSeries[] {
+  return generateScenarioSeries(definition, [
+    {
+      id: 'active',
+      label: 'Active',
+      inputs,
+    },
+  ]);
 }
 
 const plotDefinitions = new Map<string, PlotDefinition>();

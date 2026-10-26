@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EngineeringPlotConfig } from '../../../lib/engineering/types';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { getModel } from '../../../lib/engineering/registry';
-import { getPlotDefinition, generateSeries, type PlotDefinition } from '../../../lib/engineering/plots/registry';
+import { getPlotDefinition, generateSeries, generateScenarioSeries, type PlotDefinition, type PlotScenario } from '../../../lib/engineering/plots/registry';
 import { EngineeringPlot } from './EngineeringPlot';
 
 interface InspectorMetric {
@@ -20,8 +20,15 @@ interface InspectorMetric {
   significantFigures?: number;
 }
 
-function buildConfig(definition: PlotDefinition, inputs: Record<string, number>): EngineeringPlotConfig {
-  const series = generateSeries(definition, inputs);
+function buildConfig(
+  definition: PlotDefinition,
+  inputs: Record<string, number>,
+  scenarios?: PlotScenario[],
+): EngineeringPlotConfig {
+  const series = scenarios && scenarios.length > 0
+    ? generateScenarioSeries(definition, scenarios)
+    : generateSeries(definition, inputs);
+
   return {
     title: definition.title,
     description: definition.description,
@@ -41,16 +48,18 @@ interface ModelEngineeringPlotProps {
   height?: number;
   inspectable?: boolean;
   inspectorMetrics?: InspectorMetric[];
+  scenarios?: PlotScenario[];
 }
 
 export function ModelEngineeringPlot({
-  modelId,
+  modelId: _modelId,
   plotPresetId,
   scopeId,
   className,
   height = 400,
   inspectable = false,
   inspectorMetrics = [],
+  scenarios,
 }: ModelEngineeringPlotProps) {
   const definition = getPlotDefinition(plotPresetId);
 
@@ -96,21 +105,9 @@ export function ModelEngineeringPlot({
     inputs[param.id] = getParameter(scopeId, param.id) ?? param.defaultValue;
   }
 
-  const config = useMemo(() => buildConfig(definition, inputs), [definition, version]);
+  const config = useMemo(() => buildConfig(definition, inputs, scenarios), [definition, version, scenarios]);
 
-  // Inspector state: selected point and computed metric values at that point.
-  const [inspectorPoint, setInspectorPoint] = useState<{
-    x: number;
-    y: number;
-    seriesIndex: number;
-    seriesLabel: string;
-  } | null>(null);
-  const [inspectorComparisonPoint, setInspectorComparisonPoint] = useState<{
-    x: number;
-    y: number;
-    seriesIndex: number;
-    seriesLabel: string;
-  } | null>(null);
+  // Inspector state: computed metric values at the selected point(s).
   const [inspectorValues, setInspectorValues] = useState<Record<string, number>>({});
   const [inspectorComparisonValues, setInspectorComparisonValues] = useState<Record<string, number>>({});
 
@@ -136,25 +133,15 @@ export function ModelEngineeringPlot({
   );
 
   const handlePointSelect = useCallback(
-    (x: number, y: number, seriesIndex: number, kind: 'primary' | 'comparison') => {
+    (x: number, _y: number, _seriesIndex: number, kind: 'primary' | 'comparison') => {
       const values = computeMetricValues(x);
-      const series = config.series;
-      const s = series[seriesIndex];
-      const point = {
-        x,
-        y,
-        seriesIndex,
-        seriesLabel: s?.label ?? 'Series',
-      };
       if (kind === 'comparison') {
-        setInspectorComparisonPoint(point);
         setInspectorComparisonValues(values);
       } else {
-        setInspectorPoint(point);
         setInspectorValues(values);
       }
     },
-    [calcModel, definition, inputs, inspectorMetrics, config.series, computeMetricValues],
+    [computeMetricValues],
   );
 
   return (

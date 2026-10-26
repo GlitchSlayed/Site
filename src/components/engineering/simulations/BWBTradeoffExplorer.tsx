@@ -1,11 +1,12 @@
 // Blended-Wing-Body Aircraft: Aerodynamic Efficiency vs. Structural Mass
 // Interactive demonstration built on the shared engineering visualization framework.
 // All calculations live in the pure model layer (src/lib/engineering/models).
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { formatPercentageChange } from '../../../lib/engineering/format';
+import type { PlotScenario } from '../../../lib/engineering/plots/registry';
 import { ErrorBoundary } from '../shared/ErrorBoundary';
 import { ParameterSet } from '../shared/ParameterSet';
 import { PresetSelector } from '../shared/PresetSelector';
@@ -36,6 +37,7 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
   // Version state that increments whenever any scoped parameter changes,
   // forcing re-render of live calculations and the comparison table.
   const [, setVersion] = useState(0);
+  const [compareAllScenarios, setCompareAllScenarios] = useState(true);
 
   useEffect(() => {
     const unsubscribes = model.parameters.map((param) =>
@@ -57,6 +59,56 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
   for (const param of model.parameters) {
     conventionalInputs[param.id] = param.defaultValue;
   }
+
+  const conventionalPreset = model.presets?.conventional ?? {
+    mass: 70000, structuralPenalty: 0, area: 300, span: 45, ar: 6.75, e: 0.8, cd0: 0.02, inducedCorrection: 1, rho: 1.225, velocity: 80,
+  };
+  const bwbOptimisticPreset = model.presets?.bwbOptimistic ?? {
+    mass: 70000, structuralPenalty: 0.05, area: 450, span: 55, ar: 6.7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
+  };
+  const bwbPenalizedPreset = model.presets?.bwbPenalized ?? {
+    mass: 70000, structuralPenalty: 0.15, area: 450, span: 55, ar: 6.7, e: 0.85, cd0: 0.018, inducedCorrection: 1, rho: 1.225, velocity: 80,
+  };
+
+  const scenarios: PlotScenario[] = useMemo(() => {
+    if (!compareAllScenarios) {
+      return [
+        {
+          id: 'live',
+          label: 'Active Configuration',
+          inputs: liveInputs,
+          color: '#ff603b',
+        },
+      ];
+    }
+
+    return [
+      {
+        id: 'conventional',
+        label: 'Conventional Reference',
+        inputs: conventionalPreset,
+        color: '#38bdf8', // Sky Blue
+      },
+      {
+        id: 'bwbOptimistic',
+        label: 'BWB Optimistic (+5% mass)',
+        inputs: bwbOptimisticPreset,
+        color: '#22c55e', // Emerald Green
+      },
+      {
+        id: 'bwbPenalized',
+        label: 'BWB Penalized (+15% mass)',
+        inputs: bwbPenalizedPreset,
+        color: '#f59e0b', // Amber
+      },
+      {
+        id: 'live',
+        label: 'Live Adjustable Airframe',
+        inputs: liveInputs,
+        color: '#ff603b', // Coral
+      },
+    ];
+  }, [compareAllScenarios, liveInputs]);
 
   const conventional = model.compute(conventionalInputs);
   const adjustable = model.compute(liveInputs);
@@ -151,15 +203,18 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     ],
   };
 
+  const [activeVizTab, setActiveVizTab] = useState<'all' | 'dragPolar' | 'ldVsSpeed' | 'thrustVsSpeed' | 'ldVsMassPenalty'>('all');
+
   return (
     <section className={`eng-demo bwB-tradeoff-explorer ${className || ''}`} aria-label="BWB aerodynamic efficiency vs structural mass explorer">
       <header className="eng-demo-header">
-        <h1>Blended-Wing-Body Aircraft: Aerodynamic Efficiency vs. Structural Mass</h1>
+        <div className="eng-demo-badge">
+          <span className="eng-demo-badge-dot" aria-hidden="true"></span>
+          <span className="eng-demo-badge-text">Interactive Aerodynamic Model</span>
+        </div>
         <p className="eng-demo-purpose">
-          Explore how a hypothetical blended-wing-body configuration compares against a conventional
-          reference aircraft. Adjust assumptions below and observe their impact on aerodynamic
-          efficiency and simplified mission performance. All models assume steady, level flight and a
-          simplified parabolic drag polar.
+          Live parametric model comparing an adjustable BWB airframe against the conventional
+          reference baseline in steady, level flight. Drag parameters or select configurations to explore tradeoff sensitivities across all four live plots.
         </p>
       </header>
 
@@ -195,69 +250,119 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
         </ErrorBoundary>
       </div>
 
+      <div className="eng-demo-viz-header">
+        <div className="eng-demo-viz-tabs" role="tablist" aria-label="Select plot view">
+          {[
+            { id: 'all', label: 'All 4 Plots' },
+            { id: 'dragPolar', label: 'Drag Polar (CD vs CL)' },
+            { id: 'ldVsSpeed', label: 'L/D vs Airspeed' },
+            { id: 'thrustVsSpeed', label: 'Thrust Required' },
+            { id: 'ldVsMassPenalty', label: 'Mass Penalty Sensitivity' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`eng-demo-viz-tab ${activeVizTab === tab.id ? 'eng-demo-viz-tab-active' : ''}`}
+              onClick={() => setActiveVizTab(tab.id as any)}
+              role="tab"
+              aria-selected={activeVizTab === tab.id}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="eng-demo-scenario-toggle">
+          <button
+            type="button"
+            className={`eng-demo-scenario-btn ${compareAllScenarios ? 'eng-demo-scenario-btn-active' : ''}`}
+            onClick={() => setCompareAllScenarios(!compareAllScenarios)}
+            aria-pressed={compareAllScenarios}
+            title="Toggle comparing all 3 benchmark situations simultaneously on a single graph"
+          >
+            <span className="eng-demo-scenario-indicator" aria-hidden="true">
+              {compareAllScenarios ? '✓ ' : '+ '}
+            </span>
+            {compareAllScenarios ? 'Comparing All 3 Situations + Live' : 'Compare All 3 Situations'}
+          </button>
+        </div>
+      </div>
+
       <div className="eng-demo-visualizations">
-        <ErrorBoundary fallback={<div>Drag polar plot failed to load</div>}>
-          <ModelEngineeringPlot
-            modelId={MODEL_ID}
-            plotPresetId="aircraft.dragPolar"
-            scopeId={SCOPE_ID}
-            height={360}
-            inspectable
-            inspectorMetrics={[
-              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-              { id: 'k', label: 'Induced factor k', unit: '-', significantFigures: 4 },
-            ]}
-          />
-        </ErrorBoundary>
-        <ErrorBoundary fallback={<div>L/D vs airspeed plot failed to load</div>}>
-          <ModelEngineeringPlot
-            modelId={MODEL_ID}
-            plotPresetId="aircraft.ldVsSpeed"
-            scopeId={SCOPE_ID}
-            height={360}
-            inspectable
-            inspectorMetrics={[
-              { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
-              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-              { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-              { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
-            ]}
-          />
-        </ErrorBoundary>
-        <ErrorBoundary fallback={<div>Thrust vs airspeed plot failed to load</div>}>
-          <ModelEngineeringPlot
-            modelId={MODEL_ID}
-            plotPresetId="aircraft.thrustVsSpeed"
-            scopeId={SCOPE_ID}
-            height={360}
-            inspectable
-            inspectorMetrics={[
-              { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
-              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-              { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-              { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
-            ]}
-          />
-        </ErrorBoundary>
-        <ErrorBoundary fallback={<div>L/D vs mass penalty plot failed to load</div>}>
-          <ModelEngineeringPlot
-            modelId={MODEL_ID}
-            plotPresetId="aircraft.ldVsMassPenalty"
-            scopeId={SCOPE_ID}
-            height={360}
-            inspectable
-            inspectorMetrics={[
-              { id: 'structuralPenalty', label: 'Structural penalty Δm/m', unit: '-', significantFigures: 3 },
-              { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-              { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-              { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-              { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
-            ]}
-          />
-        </ErrorBoundary>
+        {(activeVizTab === 'all' || activeVizTab === 'dragPolar') && (
+          <ErrorBoundary fallback={<div>Drag polar plot failed to load</div>}>
+            <ModelEngineeringPlot
+              modelId={MODEL_ID}
+              plotPresetId="aircraft.dragPolar"
+              scopeId={SCOPE_ID}
+              scenarios={scenarios}
+              height={420}
+              inspectable
+              inspectorMetrics={[
+                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+                { id: 'k', label: 'Induced factor k', unit: '-', significantFigures: 4 },
+              ]}
+            />
+          </ErrorBoundary>
+        )}
+        {(activeVizTab === 'all' || activeVizTab === 'ldVsSpeed') && (
+          <ErrorBoundary fallback={<div>L/D vs airspeed plot failed to load</div>}>
+            <ModelEngineeringPlot
+              modelId={MODEL_ID}
+              plotPresetId="aircraft.ldVsSpeed"
+              scopeId={SCOPE_ID}
+              scenarios={scenarios}
+              height={420}
+              inspectable
+              inspectorMetrics={[
+                { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
+                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+                { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+                { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+              ]}
+            />
+          </ErrorBoundary>
+        )}
+        {(activeVizTab === 'all' || activeVizTab === 'thrustVsSpeed') && (
+          <ErrorBoundary fallback={<div>Thrust vs airspeed plot failed to load</div>}>
+            <ModelEngineeringPlot
+              modelId={MODEL_ID}
+              plotPresetId="aircraft.thrustVsSpeed"
+              scopeId={SCOPE_ID}
+              scenarios={scenarios}
+              height={420}
+              inspectable
+              inspectorMetrics={[
+                { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
+                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+                { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+                { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+              ]}
+            />
+          </ErrorBoundary>
+        )}
+        {(activeVizTab === 'all' || activeVizTab === 'ldVsMassPenalty') && (
+          <ErrorBoundary fallback={<div>L/D vs mass penalty plot failed to load</div>}>
+            <ModelEngineeringPlot
+              modelId={MODEL_ID}
+              plotPresetId="aircraft.ldVsMassPenalty"
+              scopeId={SCOPE_ID}
+              scenarios={scenarios}
+              height={420}
+              inspectable
+              inspectorMetrics={[
+                { id: 'structuralPenalty', label: 'Structural penalty Δm/m', unit: '-', significantFigures: 3 },
+                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
+                { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
+                { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+              ]}
+            />
+          </ErrorBoundary>
+        )}
       </div>
 
       <div className="eng-demo-comparison">

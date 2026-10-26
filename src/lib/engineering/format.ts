@@ -81,9 +81,9 @@ export function formatNumber(
 
   const abs = Math.abs(value);
 
-  // Engineering / SI-prefix notation for very small values, or when forced.
-  // Large values use thousands separators instead (handled below).
-  if (engineering || abs < 0.01) {
+  // Engineering / SI-prefix notation when explicitly requested.
+  // Large or small numbers format cleanly as decimals unless engineering is true.
+  if (engineering) {
     const exponent = Math.floor(Math.log10(abs) / 3) * 3;
     const scaled = value / Math.pow(10, exponent);
     const prefix = SI_PREFIXES[exponent] ?? `×10^${exponent}`;

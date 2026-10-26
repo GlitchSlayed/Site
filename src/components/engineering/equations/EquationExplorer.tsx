@@ -1,7 +1,6 @@
 // Equation explorer: KaTeX presentation + typed calculation + live result.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import katex from 'katex';
-import type { EngineeringOutputValue } from '../../../lib/engineering/types';
 import { getModel } from '../../../lib/engineering/registry';
 import { getParameter, subscribeParameter } from '../../../lib/engineering/scopedState';
 import { ParameterSet } from '../shared/ParameterSet';

@@ -91,16 +91,15 @@ function themeAccent(theme: 'dark' | 'light'): string {
 function formatAxisValue(val: number, unit: string | undefined, sigFigs: number): string {
   if (!isFiniteNumber(val)) return '—';
   if (val === 0) return unit && unit !== '-' ? `0 [${unit}]` : '0';
-  return `${formatNumber(val, { sigFigs, engineering: true })} ${
-    unit && unit !== '-' ? `[${unit}]` : ''
-  }`.trim();
+  const numStr = formatNumber(val, { sigFigs, thousands: true });
+  return unit && unit !== '-' ? `${numStr} [${unit}]` : numStr;
 }
 
 /** Format a tick label for an axis (no unit suffix). */
 function formatTick(val: number, sigFigs: number): string {
   if (!Number.isFinite(val)) return '';
   if (val === 0) return '0';
-  return formatNumber(val, { sigFigs, engineering: true });
+  return formatNumber(val, { sigFigs, thousands: true });
 }
 
 /** Estimate text width using canvas font metrics. */
@@ -183,6 +182,25 @@ export function EngineeringPlot({
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [initError, setInitError] = useState<Error | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>(readTheme);
+
+  // Sync theme changes from html[data-theme]
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const updateTheme = () => {
+      const current = readTheme();
+      setTheme(current);
+      themeRef.current = current;
+    };
+    updateTheme();
+    if (typeof MutationObserver === 'undefined') return;
+    const observer = new MutationObserver(() => updateTheme());
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const [inspection, setInspection] = useState<InspectionState>({ primary: null, comparison: null });
   const [showSettings, setShowSettings] = useState(false);
@@ -274,23 +292,36 @@ export function EngineeringPlot({
       distr: yScaleType,
       showLegend,
       sigFigs,
-      theme: readTheme(),
+      theme,
       interactionMode,
+      showGrid,
+      showMarkers,
+      lineWidth,
     });
-  }, [config.xAxis, config.yAxis, config.series, yScaleType, showLegend, sigFigs, interactionMode]);
+  }, [config.xAxis, config.yAxis, config.series, yScaleType, showLegend, sigFigs, theme, interactionMode, showGrid, showMarkers, lineWidth]);
 
   const buildSeries = useCallback((): any[] => {
     const series: any[] = [{}];
+    const theme = themeRef.current;
     for (const s of configRef.current.series) {
       const visible = seriesVisibility[s.id] !== false;
+      const strokeColor = s.color || themeAccent(theme);
+      // Subtle modern area fill for curves
+      const fillColor = strokeColor.startsWith('#')
+        ? `${strokeColor}15`
+        : 'rgba(255, 96, 59, 0.08)';
+
       series.push({
         label: s.label,
-        stroke: s.color || themeAccent(themeRef.current),
+        stroke: strokeColor,
+        fill: s.mode?.includes('lines') ? fillColor : undefined,
         width: lineWidth,
         points: {
           show: showMarkers && (s.mode === 'markers' || s.mode === 'lines+markers'),
-          size: 4,
-          width: 1,
+          size: 5,
+          width: 1.5,
+          stroke: '#ffffff',
+          fill: strokeColor,
         },
         spanGaps: true,
         show: visible,
@@ -315,18 +346,26 @@ export function EngineeringPlot({
       {
         show: true,
         stroke: themeText(theme),
-        grid: { stroke: gridStroke },
+        grid: { stroke: gridStroke, width: 1 },
+        ticks: { stroke: gridStroke, width: 1 },
         size: xAxisSize,
         label: xTitle,
-        tick: (val: number) => formatTick(val, sigFigs),
+        labelSize: 14,
+        labelFont: '12px system-ui, sans-serif',
+        font: '11px system-ui, sans-serif',
+        values: (_u: any, vals: number[]) => vals.map((v) => formatTick(v, sigFigs)),
       },
       {
         show: true,
         stroke: themeText(theme),
-        grid: { stroke: gridStroke },
+        grid: { stroke: gridStroke, width: 1 },
+        ticks: { stroke: gridStroke, width: 1 },
         size: yAxisSize,
         label: yTitle,
-        tick: (val: number) => formatTick(val, sigFigs),
+        labelSize: 14,
+        labelFont: '12px system-ui, sans-serif',
+        font: '11px system-ui, sans-serif',
+        values: (_u: any, vals: number[]) => vals.map((v) => formatTick(v, sigFigs)),
       },
     ];
   }, [config.xAxis, config.yAxis, sigFigs, showGrid]);
@@ -335,41 +374,12 @@ export function EngineeringPlot({
   const applySettings = useCallback((inst: PlotInstance) => {
     if (!inst) return;
     try {
-      const theme = themeRef.current;
       const cfg = configRef.current;
-      let needsRedraw = false;
 
       cfg.series.forEach((series, index) => {
         const visible = seriesVisibility[series.id] !== false;
-        // setSeries supports show/focus natively and redraws.
         inst.setSeries(index + 1, { show: visible });
-        // Width and marker state are not covered by setSeries; mutate the
-        // series descriptor and redraw once at the end.
-        const uSeries = inst.series[index + 1];
-        if (uSeries) {
-          if (uSeries.width !== lineWidth) {
-            uSeries.width = lineWidth;
-            needsRedraw = true;
-          }
-          const pointsShow = showMarkers && (series.mode === 'markers' || series.mode === 'lines+markers');
-          if (uSeries.points?.show !== pointsShow) {
-            uSeries.points = { ...uSeries.points, show: pointsShow };
-            needsRedraw = true;
-          }
-        }
       });
-
-      if (inst.axes) {
-        inst.axes.forEach((axis) => {
-          if (axis && axis.grid) {
-            const stroke = showGrid ? themeGrid(theme) : 'transparent';
-            if (axis.grid.stroke !== stroke) {
-              axis.grid.stroke = stroke;
-              needsRedraw = true;
-            }
-          }
-        });
-      }
 
       if (inst.scales) {
         const xScale = inst.scales.x;
@@ -381,16 +391,10 @@ export function EngineeringPlot({
           inst.setScale('y', { min: yMin ?? yScale.min ?? 0, max: yMax ?? yScale.max ?? 0 });
         }
       }
-
-      // uPlot caches series Path2D objects; width/points changes require a
-      // path rebuild to become visible.
-      if (needsRedraw && inst.redraw) {
-        inst.redraw(true);
-      }
     } catch (e) {
       console.warn('[EngineeringPlot] applySettings partial failure:', e);
     }
-  }, [config.series, seriesVisibility, lineWidth, showMarkers, showGrid, xMin, xMax, yMin, yMax]);
+  }, [config.series, seriesVisibility, xMin, xMax, yMin, yMax]);
 
   const initChart = useCallback(() => {
     const uPlot = uPlotConstructorRef.current;
@@ -405,7 +409,12 @@ export function EngineeringPlot({
     setInitError(null);
 
     const width = container.clientWidth;
-    if (width <= 0) return;
+    if (width <= 0) {
+      // Container hasn't laid out yet (common during Astro hydration).
+      // Retry after a frame so the browser has time to compute layout.
+      requestAnimationFrame(() => initChart());
+      return;
+    }
 
     const inst = chartInstanceRef.current;
     const structureKey = getStructureKey();
@@ -455,8 +464,8 @@ export function EngineeringPlot({
         show: tooltipsEnabled,
         x: true,
         y: true,
-        lock: 'x',
-        points: { show: true, size: 5, stroke: '#ffffff', width: 0 },
+        lock: true,
+        points: { show: true, size: 6, stroke: '#ffffff', width: 1.5 },
       },
       legend: { show: showLegend, live: false },
       select:
@@ -473,6 +482,34 @@ export function EngineeringPlot({
             }
           : false,
       hooks: {
+        setSelect: [
+          (u: PlotInstance) => {
+            if (interactionMode !== 'zoom') return;
+            const sel = u.select;
+            if (!sel || sel.width < 5) return;
+            const minX = u.posToVal(sel.left, 'x');
+            const maxX = u.posToVal(sel.left + sel.width, 'x');
+            if (Number.isFinite(minX) && Number.isFinite(maxX) && minX !== maxX) {
+              const newMin = Math.min(minX, maxX);
+              const newMax = Math.max(minX, maxX);
+              setXMin(newMin);
+              setXMax(newMax);
+              u.setScale('x', { min: newMin, max: newMax });
+            }
+            if (sel.height >= 5) {
+              const valY1 = u.posToVal(sel.top, 'y');
+              const valY2 = u.posToVal(sel.top + sel.height, 'y');
+              if (Number.isFinite(valY1) && Number.isFinite(valY2) && valY1 !== valY2) {
+                const newYMin = Math.min(valY1, valY2);
+                const newYMax = Math.max(valY1, valY2);
+                setYMin(newYMin);
+                setYMax(newYMax);
+                u.setScale('y', { min: newYMin, max: newYMax });
+              }
+            }
+            u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+          },
+        ],
         setCursor: [
           (u: PlotInstance) => {
             if (!tooltipsEnabled) return;
@@ -536,7 +573,6 @@ export function EngineeringPlot({
       const newInst = new uPlot(opts, validation.data as unknown as uPlot.AlignedData, container);
       chartInstanceRef.current = newInst;
       chartStructureRef.current = structureKey;
-      applySettings(newInst);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to initialize plot');
       console.error('[EngineeringPlot] uPlot construction failed:', err);
@@ -603,7 +639,7 @@ export function EngineeringPlot({
   useEffect(() => {
     if (!loaded || !uPlotConstructorRef.current || !containerRef.current) return;
     initChart();
-  }, [loaded, containerRef.current, getStructureKey(), dataVersion, initChart]);
+  }, [loaded, dataVersion, initChart]);
 
   // Destroy the chart instance on unmount so repeated mount/unmount cycles
   // never leak canvases, ResizeObservers or event listeners.
@@ -631,7 +667,13 @@ export function EngineeringPlot({
   const onResize = () => {
     const inst = chartInstanceRef.current;
     const box = containerRef.current;
-    if (!inst || !box) return;
+    if (!box) return;
+    if (!inst) {
+      if (box.clientWidth > 0 && loaded) {
+        initChart();
+      }
+      return;
+    }
     if (inst.setSize) {
       inst.setSize({ width: box.clientWidth || 600, height });
     }
@@ -657,13 +699,17 @@ export function EngineeringPlot({
       if (!xData?.length) return;
 
       let nearestIdx = -1;
-      let minDist = Infinity;
-      for (let i = 0; i < xData.length; i++) {
-        if (!isFiniteNumber(xData[i])) continue;
-        const dist = Math.abs(xData[i] - xValue);
-        if (dist < minDist) {
-          minDist = dist;
-          nearestIdx = i;
+      if (inst.cursor && typeof inst.cursor.idx === 'number' && inst.cursor.idx >= 0) {
+        nearestIdx = inst.cursor.idx;
+      } else {
+        let minDist = Infinity;
+        for (let i = 0; i < xData.length; i++) {
+          if (!isFiniteNumber(xData[i])) continue;
+          const dist = Math.abs(xData[i] - xValue);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestIdx = i;
+          }
         }
       }
 
@@ -800,6 +846,13 @@ export function EngineeringPlot({
 
     addListener(window, 'resize', onResize);
 
+    // ResizeObserver for reliable container-level resize detection
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => onResize());
+      resizeObserver.observe(container);
+    }
+
     if (inspectable && interactionMode === 'inspect') {
       addListener(container, 'click', handleContainerClick);
     }
@@ -814,6 +867,7 @@ export function EngineeringPlot({
     }
 
     return () => {
+      resizeObserver?.disconnect();
       listenersRef.current.forEach((unsub) => unsub());
       listenersRef.current = [];
     };
@@ -1042,24 +1096,33 @@ export function EngineeringPlot({
       <div className="eng-plot-viewport" role="region" aria-label={config.title || 'Engineering plot'}>
         <div
           ref={containerRef}
-          style={{ width: '100%', height, position: 'relative', minHeight: 200 }}
+          style={{ width: '100%', minHeight: height, position: 'relative' }}
           aria-hidden="true"
         />
       </div>
 
-      {hoverReadout && tooltipsEnabled && (
-        <div className="eng-plot-readout" aria-live="polite">
-          <span className="eng-plot-readout-label">{hoverReadout.x}</span>
-          {hoverReadout.series.map((entry) => (
-            <span key={entry.label} className="eng-plot-readout-series">
-              <span
-                className="eng-plot-readout-marker"
-                style={{ background: entry.color, boxShadow: `0 0 0 1px ${entry.color}` }}
-                aria-hidden="true"
-              />
-              {entry.label}: {entry.value}
+      {tooltipsEnabled && (
+        <div className={`eng-plot-readout ${!hoverReadout ? 'eng-plot-readout-idle' : ''}`} aria-live="polite">
+          {hoverReadout ? (
+            <>
+              <span className="eng-plot-readout-label">{hoverReadout.x}</span>
+              {hoverReadout.series.map((entry) => (
+                <span key={entry.label} className="eng-plot-readout-series">
+                  <span
+                    className="eng-plot-readout-marker"
+                    style={{ background: entry.color, boxShadow: `0 0 0 1px ${entry.color}` }}
+                    aria-hidden="true"
+                  />
+                  {entry.label}: {entry.value}
+                </span>
+              ))}
+            </>
+          ) : (
+            <span className="eng-plot-readout-hint">
+              <span className="eng-plot-readout-dot" aria-hidden="true"></span>
+              Hover curve to inspect values · Click to lock operating point
             </span>
-          ))}
+          )}
         </div>
       )}
 

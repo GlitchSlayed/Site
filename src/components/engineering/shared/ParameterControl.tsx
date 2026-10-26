@@ -18,33 +18,55 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
   });
 
   const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(() => formatValue(param, value));
   const inputRef = useRef<HTMLInputElement>(null);
   // Unique per-instance DOM id so multiple ParameterSets on a page never collide,
   // while scopeId+paramId still shares the underlying parameter state.
   const uid = useId().replace(/:/g, '-');
+
+  // Synchronize local input string when external value changes and user isn't typing
+  if (!editing && inputValue !== formatValue(param, value)) {
+    setInputValue(formatValue(param, value));
+  }
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const raw = Number(event.target.value);
     // Convert slider position back from log space when logarithmic scaling is active.
     const next = param.scale === 'log' ? Math.pow(10, raw) : raw;
     setValue(next);
+    setInputValue(formatValue(param, next));
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const next = sanitizeInput(event.target.value, param);
-    setValue(next);
+    const raw = event.target.value;
+    setInputValue(raw);
+    const num = Number(raw);
+    if (!Number.isNaN(num) && Number.isFinite(num) && num >= param.min && num <= param.max) {
+      setValue(num);
+    }
   };
 
   const handleInputBlur = () => {
     setEditing(false);
+    const next = sanitizeInput(inputValue, param);
+    setValue(next);
+    setInputValue(formatValue(param, next));
   };
 
   const handleInputFocus = () => {
     setEditing(true);
+    setInputValue(value.toString());
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      inputRef.current?.blur();
+    }
   };
 
   const handleReset = () => {
     setValue(param.defaultValue);
+    setInputValue(formatValue(param, param.defaultValue));
   };
 
   const scaledMin = param.scale === 'log' ? Math.log10(param.min) : param.min;
@@ -60,11 +82,10 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
       </label>
       <div className="eng-parameter-inputs">
         <input
-          ref={inputRef}
           type="range"
           min={String(scaledMin)}
           max={String(scaledMax)}
-          step={String(param.scale === 'log' ? 0.1 : param.step)}
+          step={String(param.scale === 'log' ? 0.01 : param.step)}
           value={String(scaledValue)}
           onChange={handleSliderChange}
           disabled={disabled}
@@ -74,12 +95,14 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
           aria-label={`${param.label} slider`}
         />
         <input
+          ref={inputRef}
           id={`eng-input-${uid}-${param.id}`}
           type="text"
-          value={editing ? value.toString() : formatValue(param, value)}
+          value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onFocus={handleInputFocus}
+          onKeyDown={handleKeyDown}
           disabled={disabled}
           spellCheck={false}
           aria-label={`${param.label} value`}
