@@ -47,6 +47,9 @@ model.compute(inputs)  →  outputs   (pure, testable, no DOM)
 | `PresetSelector` | `components/engineering/shared/PresetSelector.tsx` | none | Named configuration / reset selector |
 | `BWBTradeoffExplorer` | `components/engineering/simulations/BWBTradeoffExplorer.tsx` | uPlot | Complete BWB vs conventional demo |
 
+> [!NOTE]
+> For author-facing MDX components (`LinePlot`, `ScatterPlot`, `FunctionPlot`, `HeatmapPlot`, `ParamSlider`, `ParamPlayground`, `MetricCard`, `MetricGrid`, `DataTable`, `NotebookCell`), see [`mdx-components-guide.md`](./mdx-components-guide.md).
+
 ## 3. Supported engineering models
 
 Registered in `src/lib/engineering/registry.ts`:
