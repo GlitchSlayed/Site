@@ -53,6 +53,7 @@ export interface PlotSeries {
   y: number[];
   mode?: 'lines' | 'markers' | 'lines+markers';
   color?: string;
+  fill?: boolean | string;
   visible?: boolean;
 }
 
@@ -75,8 +76,12 @@ export interface PlotReferenceLine {
 export interface PlotShadedRegion {
   id: string;
   label?: string;
-  x0: number;
-  x1: number;
+  x0?: number;
+  x1?: number;
+  y0?: number;
+  y1?: number;
+  xRange?: [number, number];
+  yRange?: [number, number];
   color?: string;
   opacity?: number;
 }

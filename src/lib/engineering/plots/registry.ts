@@ -1,6 +1,6 @@
 // Registry of model-driven plot definitions. Each definition describes how to
 // turn a model's inputs into uPlot series by sweeping a parameter.
-import type { EngineeringInputValues, PlotAxis, PlotSeries } from '../types';
+import type { EngineeringInputValues, PlotAxis, PlotSeries, PlotShadedRegion, PlotReferenceLine } from '../types';
 import { getModel as getRegistryModel } from '../registry';
 import { isFiniteNumber } from '../validation';
 
@@ -9,6 +9,7 @@ interface PlotSeriesSpec {
   label: string;
   mode?: 'lines' | 'markers' | 'lines+markers';
   color?: string;
+  fill?: boolean | string;
 }
 
 export interface PlotDefinition {
@@ -22,6 +23,8 @@ export interface PlotDefinition {
   yAxis: PlotAxis;
   series: PlotSeriesSpec[];
   xSamples?: number;
+  shadedRegions?: PlotShadedRegion[];
+  referenceLines?: PlotReferenceLine[];
 }
 
 function sweepValues(min: number, max: number, samples: number): number[] {
@@ -99,6 +102,7 @@ export function generateScenarioSeries(
         y: yValues,
         mode: spec.mode ?? 'lines',
         color: scenario.color || spec.color,
+        fill: spec.fill,
       });
     }
   }

@@ -306,7 +306,7 @@ export function EngineeringPlot({
     return JSON.stringify({
       xAxis: config.xAxis,
       yAxis: config.yAxis,
-      series: config.series.map((s) => ({ id: s.id, label: s.label, mode: s.mode, color: s.color })),
+      series: config.series.map((s) => ({ id: s.id, label: s.label, mode: s.mode, color: s.color, fill: s.fill })),
       scaleX: config.xAxis.range,
       scaleY: config.yAxis.range,
       distr: yScaleType,
@@ -317,8 +317,10 @@ export function EngineeringPlot({
       showGrid,
       showMarkers,
       lineWidth,
+      shadedRegions: config.shadedRegions,
+      referenceLines: config.referenceLines,
     });
-  }, [config.xAxis, config.yAxis, config.series, yScaleType, showLegend, sigFigs, theme, interactionMode, showGrid, showMarkers, lineWidth]);
+  }, [config.xAxis, config.yAxis, config.series, config.shadedRegions, config.referenceLines, yScaleType, showLegend, sigFigs, theme, interactionMode, showGrid, showMarkers, lineWidth]);
 
   const buildSeries = useCallback((): any[] => {
     const series: any[] = [{}];
@@ -326,15 +328,16 @@ export function EngineeringPlot({
     for (const s of configRef.current.series) {
       const visible = seriesVisibility[s.id] !== false;
       const strokeColor = s.color || themeAccent(theme);
-      // Subtle modern area fill for curves
-      const fillColor = strokeColor.startsWith('#')
-        ? `${strokeColor}15`
-        : 'rgba(255, 96, 59, 0.08)';
+      // Only apply area fill when explicitly requested (s.fill: true | color string)
+      const hasFill = s.fill === true || typeof s.fill === 'string';
+      const fillColor = typeof s.fill === 'string'
+        ? s.fill
+        : (strokeColor.startsWith('#') ? `${strokeColor}18` : 'rgba(255, 96, 59, 0.1)');
 
       series.push({
         label: s.label,
         stroke: strokeColor,
-        fill: s.mode?.includes('lines') ? fillColor : undefined,
+        fill: hasFill ? fillColor : undefined,
         width: lineWidth,
         points: {
           show: showMarkers && (s.mode === 'markers' || s.mode === 'lines+markers'),
@@ -584,6 +587,118 @@ export function EngineeringPlot({
               x: formatAxisValue(xVal, config.xAxis.unit, sigFigs),
               series: entries,
             });
+          },
+        ],
+        drawClear: [
+          (u: PlotInstance) => {
+            const shaded = configRef.current.shadedRegions;
+            if (!shaded || shaded.length === 0) return;
+            const ctx = u.ctx;
+            if (!ctx || typeof ctx.save !== 'function') return;
+            const bbox = u.bbox;
+            if (!bbox) return;
+            const { left, top, width, height } = bbox;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(left, top, width, height);
+            ctx.clip();
+
+            for (const region of shaded) {
+              const minXVal = region.x0 ?? region.xRange?.[0];
+              const maxXVal = region.x1 ?? region.xRange?.[1];
+              const minYVal = region.y0 ?? region.yRange?.[0];
+              const maxYVal = region.y1 ?? region.yRange?.[1];
+
+              const px0 = minXVal != null ? left + u.valToPos(minXVal, 'x') : left;
+              const px1 = maxXVal != null ? left + u.valToPos(maxXVal, 'x') : left + width;
+              const py0 = minYVal != null ? top + u.valToPos(minYVal, 'y') : top + height;
+              const py1 = maxYVal != null ? top + u.valToPos(maxYVal, 'y') : top;
+
+              const rLeft = Math.min(px0, px1);
+              const rRight = Math.max(px0, px1);
+              const rTop = Math.min(py0, py1);
+              const rBottom = Math.max(py0, py1);
+
+              ctx.fillStyle = region.color || 'rgba(255, 96, 59, 0.12)';
+              ctx.fillRect(rLeft, rTop, rRight - rLeft, rBottom - rTop);
+
+              if (region.label) {
+                ctx.save();
+                ctx.font = '10px var(--mono, monospace)';
+                ctx.fillStyle = 'var(--muted, #888888)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(region.label, rLeft + 6, rTop + 6);
+                ctx.restore();
+              }
+            }
+            ctx.restore();
+          },
+        ],
+        draw: [
+          (u: PlotInstance) => {
+            const refLines = configRef.current.referenceLines;
+            if (!refLines || refLines.length === 0) return;
+            const ctx = u.ctx;
+            if (!ctx || typeof ctx.save !== 'function') return;
+            const bbox = u.bbox;
+            if (!bbox) return;
+            const { left, top, width, height } = bbox;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(left, top, width, height);
+            ctx.clip();
+
+            for (const ref of refLines) {
+              if (ref.axis === 'x') {
+                const x = left + u.valToPos(ref.value, 'x');
+                ctx.beginPath();
+                ctx.strokeStyle = ref.color || 'var(--accent, #ff603b)';
+                ctx.lineWidth = 1.5;
+                if (typeof ctx.setLineDash === 'function') {
+                  if (ref.dash === 'dot') ctx.setLineDash([2, 2]);
+                  else if (ref.dash === 'dashdot') ctx.setLineDash([6, 3, 2, 3]);
+                  else ctx.setLineDash([4, 4]);
+                }
+                ctx.moveTo(x, top);
+                ctx.lineTo(x, top + height);
+                ctx.stroke();
+                if (typeof ctx.setLineDash === 'function') ctx.setLineDash([]);
+
+                if (ref.label) {
+                  ctx.font = '10px var(--mono, monospace)';
+                  ctx.fillStyle = ref.color || 'var(--accent, #ff603b)';
+                  ctx.textAlign = 'left';
+                  ctx.textBaseline = 'top';
+                  ctx.fillText(ref.label, x + 4, top + 6);
+                }
+              } else {
+                const y = top + u.valToPos(ref.value, 'y');
+                ctx.beginPath();
+                ctx.strokeStyle = ref.color || 'var(--accent, #ff603b)';
+                ctx.lineWidth = 1.5;
+                if (typeof ctx.setLineDash === 'function') {
+                  if (ref.dash === 'dot') ctx.setLineDash([2, 2]);
+                  else if (ref.dash === 'dashdot') ctx.setLineDash([6, 3, 2, 3]);
+                  else ctx.setLineDash([4, 4]);
+                }
+                ctx.moveTo(left, y);
+                ctx.lineTo(left + width, y);
+                ctx.stroke();
+                if (typeof ctx.setLineDash === 'function') ctx.setLineDash([]);
+
+                if (ref.label) {
+                  ctx.font = '10px var(--mono, monospace)';
+                  ctx.fillStyle = ref.color || 'var(--accent, #ff603b)';
+                  ctx.textAlign = 'left';
+                  ctx.textBaseline = 'bottom';
+                  ctx.fillText(ref.label, left + 6, y - 4);
+                }
+              }
+            }
+            ctx.restore();
           },
         ],
       },

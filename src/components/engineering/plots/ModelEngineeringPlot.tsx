@@ -37,6 +37,8 @@ function buildConfig(
     series,
     legend: series.length > 1,
     tooltips: true,
+    shadedRegions: definition.shadedRegions,
+    referenceLines: definition.referenceLines,
   };
 }
 

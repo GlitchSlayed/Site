@@ -316,6 +316,8 @@ describe('format', () => {
   it('formatPercentageChange returns parenthesized values', () => {
     expect(formatPercentageChange(115, 100)).toBe('(+15%)');
     expect(formatPercentageChange(85, 100)).toBe('(-15%)');
+    expect(formatPercentageChange(80.8, 100)).toBe('(-19.2%)');
+    expect(formatPercentageChange(115.5, 100)).toBe('(+15.5%)');
     expect(formatPercentageChange(100, 100)).toBe('(+0%)');
     expect(formatPercentageChange(100, 0)).toBeNull();
     expect(formatPercentageChange(NaN, 100)).toBeNull();

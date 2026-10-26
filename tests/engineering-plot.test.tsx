@@ -498,6 +498,26 @@ describe('EngineeringPlot controls', () => {
     expect(keys).toContain('y');
     setScaleSpy.mockRestore();
   });
+
+  it('initializes hooks for shaded regions and reference lines', async () => {
+    const configWithDecorations: EngineeringPlotConfig = {
+      ...baseConfig,
+      shadedRegions: [
+        { id: 'transonic', label: 'Transonic Regime', x0: 250, x1: 300, color: 'rgba(255, 96, 59, 0.15)' },
+      ],
+      referenceLines: [
+        { id: 'v_stall', label: 'V_stall', value: 55, axis: 'x', color: '#ff603b', dash: 'dash' },
+      ],
+    };
+    const { container } = renderPlot(configWithDecorations);
+    await flush();
+    await waitForChart(1);
+    expect(createdInstances.length).toBe(1);
+    const inst = createdInstances[0];
+    expect(inst.destroyed).toBe(false);
+    expect(inst.opts.hooks?.drawClear).toBeDefined();
+    expect(inst.opts.hooks?.draw).toBeDefined();
+  });
 });
 
 describe('plot series generation', () => {

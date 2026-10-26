@@ -2,9 +2,8 @@
 // Uses declared model output metadata as the authoritative source for units.
 //
 // Precision standard: maximum 5 decimal places, default 4.
-// Trailing zeros are removed. Thousands separators used for large values.
 import { convert, UNITS } from './units';
-import { isFiniteNumber, significantFigures } from './validation';
+import { isFiniteNumber } from './validation';
 
 export interface FormatResultOptions {
   value: number;
@@ -233,11 +232,21 @@ export function formatResult({
 export function formatPercentageChange(
   value: number,
   reference: number,
-  sigFigs = 3,
+  _sigFigs = 3,
 ): string | null {
   if (!isFiniteNumber(value) || !isFiniteNumber(reference)) return null;
   if (Math.abs(reference) < 1e-9) return null;
   const change = ((value - reference) / reference) * 100;
+  if (Math.abs(change) < 1e-6) return '(+0%)';
   const sign = change >= 0 ? '+' : '-';
-  return `(${sign}${significantFigures(Math.abs(change), sigFigs)}%)`;
+  const absChange = Math.abs(change);
+
+  let numStr: string;
+  const rounded1 = Number(absChange.toFixed(1));
+  if (Number.isInteger(rounded1)) {
+    numStr = rounded1.toString();
+  } else {
+    numStr = absChange.toFixed(absChange < 1 ? 2 : 1);
+  }
+  return `(${sign}${numStr}%)`;
 }

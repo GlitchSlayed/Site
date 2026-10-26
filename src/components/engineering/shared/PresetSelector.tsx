@@ -40,7 +40,22 @@ export function PresetSelector({ model, scopeId, label = 'Configuration' }: Pres
 
   return (
     <div className="eng-preset-selector" role="group" aria-label={label}>
-      <span className="eng-preset-label">{label}:</span>
+      <div className="eng-preset-header">
+        <span className="eng-preset-label">{label}</span>
+        <button
+          type="button"
+          className="eng-preset-reset"
+          onClick={() => {
+            for (const param of model.parameters) {
+              setParameter(scopeId, param.id, param.defaultValue);
+            }
+            setActive(presetIds[0] ?? null);
+          }}
+          aria-label="Reset all parameters to defaults"
+        >
+          ↺ Reset
+        </button>
+      </div>
       <div className="eng-preset-pills" role="tablist">
         {presetIds.map((id) => (
           <button
@@ -55,19 +70,6 @@ export function PresetSelector({ model, scopeId, label = 'Configuration' }: Pres
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        className="eng-preset-reset"
-        onClick={() => {
-          for (const param of model.parameters) {
-            setParameter(scopeId, param.id, param.defaultValue);
-          }
-          setActive(presetIds[0] ?? null);
-        }}
-        aria-label="Reset all parameters to defaults"
-      >
-        ↺ Reset
-      </button>
     </div>
   );
 }
