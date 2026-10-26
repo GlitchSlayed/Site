@@ -17,3 +17,44 @@
 .project-category{color:var(--accent);font-weight:550}
 .project-date{color:var(--muted)}
 .card-body h3{overflow-wrap:break-word;word-break:normal}
+
+.footer-commit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.footer-commit svg {
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.footer-commit code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease;
+}
+
+.footer-commit:hover {
+  color: var(--foreground);
+}
+
+.footer-commit:hover svg {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.footer-commit:hover code {
+  background: var(--hover);
+  color: var(--foreground);
+  border-color: var(--accent);
+}
