@@ -389,16 +389,28 @@ export function EngineeringPlot({
           fillValue = (u: PlotInstance) => {
             const ctx = u.ctx;
             const bbox = u.bbox;
-            if (!ctx || !bbox || typeof ctx.createLinearGradient !== 'function') {
-              return colorWithAlpha(strokeColor, theme === 'dark' ? 0.12 : 0.08);
+            const fallback = colorWithAlpha(strokeColor, theme === 'dark' ? 0.14 : 0.08);
+            if (
+              !ctx ||
+              !bbox ||
+              typeof ctx.createLinearGradient !== 'function' ||
+              !Number.isFinite(bbox.top) ||
+              !Number.isFinite(bbox.height) ||
+              bbox.height <= 0
+            ) {
+              return fallback;
             }
-            const grad = ctx.createLinearGradient(0, bbox.top, 0, bbox.top + bbox.height);
-            const topAlpha = theme === 'dark' ? 0.22 : 0.14;
-            const midAlpha = theme === 'dark' ? 0.07 : 0.04;
-            grad.addColorStop(0, colorWithAlpha(strokeColor, topAlpha));
-            grad.addColorStop(0.55, colorWithAlpha(strokeColor, midAlpha));
-            grad.addColorStop(1, colorWithAlpha(strokeColor, 0));
-            return grad;
+            try {
+              const grad = ctx.createLinearGradient(0, bbox.top, 0, bbox.top + bbox.height);
+              const topAlpha = theme === 'dark' ? 0.22 : 0.14;
+              const midAlpha = theme === 'dark' ? 0.07 : 0.04;
+              grad.addColorStop(0, colorWithAlpha(strokeColor, topAlpha));
+              grad.addColorStop(0.55, colorWithAlpha(strokeColor, midAlpha));
+              grad.addColorStop(1, colorWithAlpha(strokeColor, 0));
+              return grad;
+            } catch {
+              return fallback;
+            }
           };
         }
       }
@@ -567,7 +579,21 @@ export function EngineeringPlot({
           y: interactionMode === 'zoom',
         },
       },
-      legend: { show: showLegend, live: false },
+      legend: {
+        show: showLegend,
+        live: false,
+        markers: {
+          show: true,
+          fill: (_u: any, si: number) => {
+            const spec = configRef.current.series[si - 1];
+            return spec?.color || themeAccent(themeRef.current);
+          },
+          stroke: (_u: any, si: number) => {
+            const spec = configRef.current.series[si - 1];
+            return spec?.color || themeAccent(themeRef.current);
+          },
+        },
+      },
       select:
         interactionMode === 'zoom'
           ? {

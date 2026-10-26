@@ -526,7 +526,13 @@ describe('EngineeringPlot controls', () => {
     expect(createdInstances.length).toBe(1);
     const inst = createdInstances[0];
     // Series 0 is x-axis / dummy; series 1 is first data series
-    expect(inst.opts.series[1]?.fill).toBeDefined();
+    const fillOption = inst.opts.series[1]?.fill;
+    expect(fillOption).toBeDefined();
+    if (typeof fillOption === 'function') {
+      // Must safely handle uninitialized or non-finite bbox without throwing
+      const result = fillOption({ ctx: {}, bbox: {} });
+      expect(typeof result).toBe('string');
+    }
 
     // Open settings panel
     const settingsBtn = container.querySelector<HTMLButtonElement>('.eng-plot-settings-btn');
