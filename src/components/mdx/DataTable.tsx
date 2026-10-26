@@ -219,13 +219,19 @@ export const DataTable: React.FC<DataTableProps> = ({
                     } else if (rawVal !== undefined && rawVal !== null) {
                       displayVal = String(rawVal);
                     }
+                    const isNum = typeof rawVal === 'number' && Number.isFinite(rawVal);
+                    const isStatus = col.key.toLowerCase().includes('status');
                     return (
                       <td
                         key={col.key}
                         style={{ textAlign: col.align || 'left' }}
-                        className={`align-${col.align || 'left'}`}
+                        className={`align-${col.align || 'left'} ${isNum ? 'is-numeric' : ''}`}
                       >
-                        {displayVal}
+                        {isStatus ? (
+                          <span className="eng-status-chip">{displayVal}</span>
+                        ) : (
+                          displayVal
+                        )}
                       </td>
                     );
                   })}

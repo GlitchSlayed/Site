@@ -974,6 +974,21 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   white-space: nowrap;
 }
 
+.eng-reference-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  margin-left: 8px;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
 .eng-reference {
   opacity: 0.85;
 }
@@ -1931,9 +1946,29 @@ html[data-theme="light"] .eng-inspector-indicator {
 .eng-data-table td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.eng-data-table td.is-numeric,
+.eng-data-table td.align-right {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
-  color: var(--foreground);
+}
+
+.eng-status-chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 .eng-data-table tbody tr:hover td {

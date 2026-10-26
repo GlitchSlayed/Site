@@ -19,6 +19,7 @@ import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering
 import { isFiniteNumber } from '../../../lib/engineering/validation';
 import { formatNumber } from '../../../lib/engineering/format';
 import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
+import { renderMathText } from '../../../lib/engineering/formatMath';
 
 type InteractionMode = 'inspect' | 'zoom' | 'pan';
 type Precision = 3 | 4 | 5 | 6;
@@ -332,8 +333,11 @@ export function EngineeringPlot({
 
   const buildAxes = useCallback((): any[] => {
     const theme = themeRef.current;
-    const xTitle = `${config.xAxis.title}${config.xAxis.unit ? ` (${config.xAxis.unit})` : ''}`;
-    const yTitle = `${config.yAxis.title}${config.yAxis.unit ? ` (${config.yAxis.unit})` : ''}`;
+    const cleanMath = (s: string) => s.replace(/\$([^\$]+)\$/g, '$1');
+    const xUnit = config.xAxis.unit && config.xAxis.unit !== '-' ? ` (${cleanMath(config.xAxis.unit)})` : '';
+    const yUnit = config.yAxis.unit && config.yAxis.unit !== '-' ? ` (${cleanMath(config.yAxis.unit)})` : '';
+    const xTitle = `${cleanMath(config.xAxis.title)}${xUnit}`;
+    const yTitle = `${cleanMath(config.yAxis.title)}${yUnit}`;
 
     const xAxisSize = Math.max(24, measureTextWidth(xTitle, 12) * 0.5 + 14);
     const yAxisSize = Math.max(48, measureTextWidth(yTitle, 12) * 0.5 + 14);
@@ -1027,12 +1031,12 @@ export function EngineeringPlot({
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
       <header className="eng-plot-header">
-        {config.title && <h2 className="eng-plot-title">{config.title}</h2>}
+        {config.title && <h2 className="eng-plot-title">{renderMathText(config.title)}</h2>}
         <div className="eng-plot-units">
-          {config.xAxis.title}{config.xAxis.unit ? ` [${config.xAxis.unit}]` : ''}&nbsp;·&nbsp;
-          {config.yAxis.title}{config.yAxis.unit ? ` [${config.yAxis.unit}]` : ''}
+          {renderMathText(config.xAxis.title)}{config.xAxis.unit && config.xAxis.unit !== '-' ? ` [${config.xAxis.unit}]` : ''}&nbsp;·&nbsp;
+          {renderMathText(config.yAxis.title)}{config.yAxis.unit && config.yAxis.unit !== '-' ? ` [${config.yAxis.unit}]` : ''}
         </div>
-        {config.description && <p className="eng-plot-description">{config.description}</p>}
+        {config.description && <p className="eng-plot-description">{renderMathText(config.description)}</p>}
       </header>
 
       <div className="eng-plot-toolbar">

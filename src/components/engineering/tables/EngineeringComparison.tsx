@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import type { EngineeringComparisonConfig, ComparisonRow } from '../../../lib/engineering/types';
 import { formatResult } from '../../../lib/engineering/format';
 import { isFiniteNumber } from '../../../lib/engineering/validation';
+import { renderMathText } from '../../../lib/engineering/formatMath';
 
 interface EngineeringComparisonProps {
   config: EngineeringComparisonConfig;
@@ -98,9 +99,9 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
                   tabIndex={0}
                   onKeyDown={(e) => e.key === 'Enter' && handleSort(cfg.id)}
                 >
-                  {cfg.label}
+                  <span>{cfg.label}</span>
                   {cfg.id === referenceId && (
-                    <span className="eng-reference-badge">reference</span>
+                    <span className="eng-reference-badge">Ref</span>
                   )}
                 </th>
               ))}
@@ -115,7 +116,7 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
                   key={row.id}
                   className={`eng-comparison-row ${isAlt ? 'eng-row-alt' : ''}`}
                 >
-                  <td className="eng-property-cell">{row.label}</td>
+                  <td className="eng-property-cell">{renderMathText(row.label)}</td>
                   <td className="eng-unit-cell">{row.unit || '-'}</td>
                   {config.configurations.map((cfg, ci) => {
                     const isReference = cfg.id === referenceId;

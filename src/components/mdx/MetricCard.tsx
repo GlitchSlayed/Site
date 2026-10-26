@@ -101,7 +101,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       <div className="eng-metric-body">
         <span className="eng-metric-val">{formattedValue}</span>
-        {unit && <span className="eng-metric-unit">{renderMathText(unit)}</span>}
+        {unit && unit !== '-' && <span className="eng-metric-unit">{renderMathText(unit)}</span>}
       </div>
 
       <div className="eng-metric-footer">
