@@ -58,6 +58,25 @@ registerPlotDefinition({
   xAxis: xAxisSpeed,
   yAxis: yAxisLD,
   series: [{ outputId: 'ld', label: 'Lift-to-drag ratio L/D', mode: 'lines' }],
+  shadedRegions: [
+    {
+      id: 'stall-margin',
+      label: 'Stall Margin (< 65 m/s)',
+      x0: 40,
+      x1: 65,
+      color: 'rgba(255, 96, 59, 0.08)',
+    },
+  ],
+  referenceLines: [
+    {
+      id: 'best-ld-speed',
+      label: 'V (Best L/D) ≈ 108 m/s',
+      value: 108,
+      axis: 'x',
+      color: '#ff603b',
+      dash: 'dash',
+    },
+  ],
   xSamples: 200,
 });
 
@@ -72,6 +91,25 @@ registerPlotDefinition({
   xAxis: xAxisSpeed,
   yAxis: yAxisForce,
   series: [{ outputId: 'thrust', label: 'Thrust required', mode: 'lines' }],
+  shadedRegions: [
+    {
+      id: 'stall-margin-thrust',
+      label: 'Stall Margin',
+      x0: 40,
+      x1: 65,
+      color: 'rgba(255, 96, 59, 0.08)',
+    },
+  ],
+  referenceLines: [
+    {
+      id: 'min-thrust-speed',
+      label: 'V (Min Thrust) ≈ 95 m/s',
+      value: 95,
+      axis: 'x',
+      color: '#ff603b',
+      dash: 'dash',
+    },
+  ],
   xSamples: 200,
 });
 

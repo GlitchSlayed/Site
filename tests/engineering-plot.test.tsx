@@ -518,6 +518,33 @@ describe('EngineeringPlot controls', () => {
     expect(inst.opts.hooks?.drawClear).toBeDefined();
     expect(inst.opts.hooks?.draw).toBeDefined();
   });
+
+  it('configures area shading fill and glow settings', async () => {
+    const { container } = renderPlot(baseConfig);
+    await flush();
+    await waitForChart(1);
+    expect(createdInstances.length).toBe(1);
+    const inst = createdInstances[0];
+    // Series 0 is x-axis / dummy; series 1 is first data series
+    expect(inst.opts.series[1]?.fill).toBeDefined();
+
+    // Open settings panel
+    const settingsBtn = container.querySelector<HTMLButtonElement>('.eng-plot-settings-btn');
+    expect(settingsBtn).not.toBeNull();
+    act(() => {
+      settingsBtn!.click();
+    });
+
+    const glowLabel = Array.from(container.querySelectorAll('label')).find((l) =>
+      l.textContent?.includes('Curve glow effect')
+    );
+    expect(glowLabel).toBeDefined();
+
+    const shadingLabel = Array.from(container.querySelectorAll('label')).find((l) =>
+      l.textContent?.includes('Area gradient shading')
+    );
+    expect(shadingLabel).toBeDefined();
+  });
 });
 
 describe('plot series generation', () => {

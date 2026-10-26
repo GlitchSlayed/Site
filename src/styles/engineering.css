@@ -749,6 +749,17 @@ html[data-theme='light'] .eng-plot-viewport .u-cursor-y {
   border-color: #9a9a9f;
 }
 
+/* Luminous glowing bead on active cursor point */
+.eng-plot-viewport .u-cursor-pt {
+  box-shadow: 0 0 10px rgba(255, 96, 59, 0.85), 0 0 3px #ffffff !important;
+  border-radius: 50% !important;
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+}
+
+html[data-theme='light'] .eng-plot-viewport .u-cursor-pt {
+  box-shadow: 0 0 8px rgba(198, 60, 24, 0.65), 0 0 2px #ffffff !important;
+}
+
 .eng-plot-viewport .u-select {
   background: rgba(255, 96, 59, 0.18);
   border: 1px solid rgba(255, 96, 59, 0.55);
