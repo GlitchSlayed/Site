@@ -20,6 +20,7 @@ import { isFiniteNumber } from '../../../lib/engineering/validation';
 import { formatNumber } from '../../../lib/engineering/format';
 import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
 import { renderMathText } from '../../../lib/engineering/formatMath';
+import { ZoomIcon, PanIcon, ResetIcon, SettingsIcon, DownloadIcon, CrosshairIcon } from './PlotIcons';
 
 type InteractionMode = 'inspect' | 'zoom' | 'pan';
 type Precision = 3 | 4 | 5 | 6;
@@ -60,6 +61,7 @@ interface EngineeringPlotProps {
   config: EngineeringPlotConfig;
   className?: string;
   height?: number;
+  toolbar?: 'floating' | 'compact' | 'minimal' | 'none';
   onPointSelect?: (x: number, y: number, seriesIndex: number, kind: 'primary' | 'comparison') => void;
   inspectable?: boolean;
   inspectorSeriesIndex?: number;
@@ -145,6 +147,7 @@ export function EngineeringPlot({
   config,
   className,
   height = 400,
+  toolbar = 'floating',
   onPointSelect,
   inspectable = false,
   inspectorSeriesIndex = 0,
@@ -219,6 +222,19 @@ export function EngineeringPlot({
   const [sigFigs, setSigFigs] = useState<Precision>(4);
   const [cursorReadoutEnabled, setCursorReadoutEnabled] = useState(config.tooltips !== false);
   const [hoverReadout, setHoverReadout] = useState<ReadoutState | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportMenu]);
 
   // Bumps whenever the series data reference changes so the chart re-renders
   // new data on the existing instance (no destruction/recreation).
@@ -1028,10 +1044,142 @@ export function EngineeringPlot({
 
   const { primary, comparison } = inspection;
 
+  const renderModebar = () => (
+    <div
+      className={`eng-plot-modebar eng-modebar-${toolbar} ${showExportMenu ? 'has-open-menu' : ''}`}
+      role="toolbar"
+      aria-label="Plot controls"
+    >
+      {toolbar !== 'minimal' && (
+        <div className="eng-modebar-group eng-plot-mode-group" role="group" aria-label="Interaction mode">
+          <button
+            type="button"
+            className={`eng-modebar-btn eng-plot-mode-btn ${interactionMode === 'zoom' ? 'eng-modebar-active eng-plot-mode-active' : ''}`}
+            onClick={() => setInteractionMode(interactionMode === 'zoom' ? 'inspect' : 'zoom')}
+            title="Box Zoom (drag to zoom)"
+            aria-label="Box Zoom"
+            aria-pressed={interactionMode === 'zoom'}
+          >
+            <ZoomIcon />
+            <span className="eng-modebar-sr">Zoom</span>
+          </button>
+          <button
+            type="button"
+            className={`eng-modebar-btn eng-plot-mode-btn ${interactionMode === 'pan' ? 'eng-modebar-active eng-plot-mode-active' : ''}`}
+            onClick={() => setInteractionMode(interactionMode === 'pan' ? 'inspect' : 'pan')}
+            title="Pan (drag to pan)"
+            aria-label="Pan"
+            aria-pressed={interactionMode === 'pan'}
+          >
+            <PanIcon />
+            <span className="eng-modebar-sr">Pan</span>
+          </button>
+          <button
+            type="button"
+            className="eng-modebar-btn"
+            onClick={handleResetView}
+            title="Reset View (or double-click chart)"
+            aria-label="Reset View"
+          >
+            <ResetIcon />
+            <span className="eng-modebar-sr">Reset View</span>
+          </button>
+          <button
+            type="button"
+            className="eng-modebar-btn"
+            onClick={handleAutoscale}
+            title="Autoscale axes to data"
+            aria-label="Autoscale"
+          >
+            <CrosshairIcon />
+            <span className="eng-modebar-sr">Autoscale</span>
+          </button>
+        </div>
+      )}
+
+      {toolbar === 'minimal' && (
+        <div className="eng-modebar-group eng-plot-mode-group" role="group" aria-label="Interaction mode">
+          <button
+            type="button"
+            className="eng-modebar-btn"
+            onClick={handleResetView}
+            title="Reset View (or double-click chart)"
+            aria-label="Reset View"
+          >
+            <ResetIcon />
+            <span className="eng-modebar-sr">Reset View</span>
+          </button>
+        </div>
+      )}
+
+      <div className="eng-modebar-group eng-plot-settings-group" role="group" aria-label="Plot actions">
+        <button
+          type="button"
+          className={`eng-modebar-btn eng-plot-settings-btn ${showSettings ? 'eng-modebar-active' : ''}`}
+          aria-expanded={showSettings}
+          aria-controls={settingsPanelId}
+          onClick={() => setShowSettings((value) => !value)}
+          title="Graph settings"
+          aria-label="Graph settings"
+        >
+          <SettingsIcon />
+          <span className="eng-modebar-sr">Graph Settings ⚙</span>
+        </button>
+
+        <div className="eng-modebar-export-wrapper" ref={exportMenuRef}>
+          <button
+            type="button"
+            className={`eng-modebar-btn ${showExportMenu ? 'eng-modebar-active' : ''}`}
+            onClick={() => setShowExportMenu((value) => !value)}
+            title="Export options (PNG / CSV)"
+            aria-label="Export options"
+            aria-haspopup="true"
+            aria-expanded={showExportMenu}
+          >
+            <DownloadIcon />
+            <span className="eng-modebar-sr">Export</span>
+          </button>
+
+          {showExportMenu && (
+            <div className="eng-modebar-popover" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                className="eng-popover-item"
+                onClick={() => {
+                  handleExportPng();
+                  setShowExportMenu(false);
+                }}
+                aria-label="Export plot as PNG"
+              >
+                Export PNG
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="eng-popover-item"
+                onClick={() => {
+                  handleExportCsv();
+                  setShowExportMenu(false);
+                }}
+                aria-label="Export data as CSV"
+              >
+                Export CSV
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
       <header className="eng-plot-header">
-        {config.title && <h2 className="eng-plot-title">{renderMathText(config.title)}</h2>}
+        <div className="eng-plot-header-main">
+          {config.title && <h2 className="eng-plot-title">{renderMathText(config.title)}</h2>}
+          {toolbar === 'compact' && renderModebar()}
+        </div>
         <div className="eng-plot-units">
           {renderMathText(config.xAxis.title)}{config.xAxis.unit && config.xAxis.unit !== '-' ? ` [${config.xAxis.unit}]` : ''}&nbsp;·&nbsp;
           {renderMathText(config.yAxis.title)}{config.yAxis.unit && config.yAxis.unit !== '-' ? ` [${config.yAxis.unit}]` : ''}
@@ -1039,70 +1187,20 @@ export function EngineeringPlot({
         {config.description && <p className="eng-plot-description">{renderMathText(config.description)}</p>}
       </header>
 
-      <div className="eng-plot-toolbar">
-        <div className="eng-plot-mode-group">
-          <button
-            type="button"
-            className={`eng-plot-mode-btn ${interactionMode === 'inspect' ? 'eng-plot-mode-active' : ''}`}
-            onClick={() => setInteractionMode('inspect')}
-            aria-label="Inspect points"
-            aria-pressed={interactionMode === 'inspect'}
-          >
-            Inspect
-          </button>
-          <button
-            type="button"
-            className={`eng-plot-mode-btn ${interactionMode === 'zoom' ? 'eng-plot-mode-active' : ''}`}
-            onClick={() => setInteractionMode('zoom')}
-            aria-label="Drag to zoom"
-            aria-pressed={interactionMode === 'zoom'}
-          >
-            Zoom
-          </button>
-          <button
-            type="button"
-            className={`eng-plot-mode-btn ${interactionMode === 'pan' ? 'eng-plot-mode-active' : ''}`}
-            onClick={() => setInteractionMode('pan')}
-            aria-label="Pan"
-            aria-pressed={interactionMode === 'pan'}
-          >
-            Pan
-          </button>
-          <button type="button" onClick={handleResetView} aria-label="Reset zoom and pan to configured limits">
-            Reset View
-          </button>
-          <button type="button" onClick={handleAutoscale} aria-label="Autoscale axes to data">
-            Autoscale
-          </button>
-        </div>
-        <div className="eng-plot-settings-group">
-          <button
-            type="button"
-            aria-expanded={showSettings}
-            aria-controls={settingsPanelId}
-            onClick={() => setShowSettings((value) => !value)}
-            aria-label="Graph settings"
-            className="eng-plot-settings-btn"
-          >
-            Graph Settings ⚙
-          </button>
-          <div className="eng-plot-export-group">
-            <button type="button" onClick={handleExportPng} aria-label="Export plot as PNG">
-              Export PNG
-            </button>
-            <button type="button" onClick={handleExportCsv} aria-label="Export data as CSV">
-              Export CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="eng-plot-viewport" role="region" aria-label={config.title || 'Engineering plot'}>
+      <div
+        className="eng-plot-viewport"
+        role="region"
+        aria-label={config.title || 'Engineering plot'}
+        onDoubleClick={handleResetView}
+        title="Double-click chart to reset view"
+      >
         <div
           ref={containerRef}
+          className="eng-plot-canvas-wrapper"
           style={{ width: '100%', minHeight: height, position: 'relative' }}
           aria-hidden="true"
         />
+        {(toolbar === 'floating' || toolbar === 'minimal') && renderModebar()}
       </div>
 
       {tooltipsEnabled && (

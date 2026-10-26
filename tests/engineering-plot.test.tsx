@@ -414,7 +414,15 @@ describe('EngineeringPlot controls', () => {
     }) as any;
 
     act(() => {
-      const button = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Export CSV');
+      const exportToggle = Array.from(container.querySelectorAll('button')).find(
+        (b) => b.getAttribute('aria-label') === 'Export options',
+      );
+      exportToggle?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    });
+    await flush();
+
+    act(() => {
+      const button = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('Export CSV'));
       button?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     });
     await flush();
@@ -423,6 +431,25 @@ describe('EngineeringPlot controls', () => {
     expect(captured!.download).toContain('.csv');
     expect(captured!.href).toBe('blob:mock-url');
     document.body.appendChild = origAppend;
+  });
+
+  it('double clicking the viewport resets the view', async () => {
+    const { container } = renderPlot();
+    await flush();
+    await waitForChart();
+    const instance = createdInstances[0];
+    const setScaleSpy = vi.spyOn(instance, 'setScale');
+
+    act(() => {
+      const viewport = container.querySelector('.eng-plot-viewport') as HTMLElement;
+      viewport?.dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true }));
+    });
+    await flush();
+
+    const keys = setScaleSpy.mock.calls.map((c) => c[0]);
+    expect(keys).toContain('x');
+    expect(keys).toContain('y');
+    setScaleSpy.mockRestore();
   });
 });
 

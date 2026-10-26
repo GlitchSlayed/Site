@@ -23,6 +23,7 @@ export interface FunctionPlotProps {
   params?: Record<string, number>;
   /** Optional scope ID to reactively bind to ParamSlider components */
   scopeId?: string;
+  toolbar?: 'floating' | 'compact' | 'minimal' | 'none';
   xLabel?: string;
   xUnit?: string;
   xScale?: 'linear' | 'log';
@@ -44,6 +45,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
   samples = 250,
   params: initialParams = {},
   scopeId,
+  toolbar = 'floating',
   xLabel = 'x',
   xUnit = '',
   xScale = 'linear',
@@ -164,7 +166,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
 
   return (
     <div className={`eng-function-plot-container ${className}`}>
-      <EngineeringPlot config={config} height={height} />
+      <EngineeringPlot config={config} height={height} toolbar={toolbar} />
     </div>
   );
 };

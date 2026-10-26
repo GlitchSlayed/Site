@@ -18,6 +18,7 @@ export interface LinePlotProps {
   description?: string;
   x?: number[];
   series: LinePlotSeriesInput[];
+  toolbar?: 'floating' | 'compact' | 'minimal' | 'none';
   xLabel?: string;
   xUnit?: string;
   xScale?: 'linear' | 'log';
@@ -37,6 +38,7 @@ export const LinePlot: React.FC<LinePlotProps> = ({
   description,
   x: sharedX,
   series,
+  toolbar = 'floating',
   xLabel = 'X',
   xUnit = '',
   xScale = 'linear',
@@ -109,7 +111,7 @@ export const LinePlot: React.FC<LinePlotProps> = ({
 
   return (
     <div className={`eng-line-plot-container ${className}`}>
-      <EngineeringPlot config={config} height={height} />
+      <EngineeringPlot config={config} height={height} toolbar={toolbar} />
     </div>
   );
 };

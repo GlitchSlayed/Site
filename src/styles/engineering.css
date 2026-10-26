@@ -411,6 +411,14 @@
   gap: 6px;
 }
 
+.eng-plot-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .eng-plot-title {
   font-size: 17px;
   margin: 0;
@@ -472,108 +480,158 @@
   background: var(--hover);
 }
 
-/* Plot toolbar */
+/* Modern Plot Modebar / Floating Controls */
 
-.eng-plot-toolbar {
+.eng-plot-modebar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
+  gap: 6px;
+  user-select: none;
 }
 
-.eng-plot-mode-group {
-  display: flex;
-  gap: 4px;
+.eng-plot-modebar.eng-modebar-floating,
+.eng-plot-modebar.eng-modebar-minimal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  opacity: 0.35;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(0);
+}
+
+.eng-plot-viewport:hover .eng-plot-modebar.eng-modebar-floating,
+.eng-plot-viewport:hover .eng-plot-modebar.eng-modebar-minimal,
+.eng-plot-modebar:focus-within,
+.eng-plot-modebar.has-open-menu {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .eng-plot-modebar.eng-modebar-floating,
+  .eng-plot-modebar.eng-modebar-minimal {
+    opacity: 0.85;
+  }
+}
+
+.eng-plot-modebar.eng-modebar-compact {
+  margin-left: auto;
+}
+
+.eng-modebar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  background: rgba(18, 21, 28, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 2px;
-  background: var(--background);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-.eng-plot-mode-btn {
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border: none;
+html[data-theme='light'] .eng-modebar-group {
+  background: rgba(245, 245, 247, 0.88);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.eng-modebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
 }
 
-.eng-plot-mode-btn:hover {
+.eng-modebar-btn:hover {
   background: var(--hover);
   color: var(--foreground);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-.eng-plot-mode-btn.eng-plot-mode-active {
+html[data-theme='light'] .eng-modebar-btn:hover {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.eng-modebar-btn.eng-modebar-active {
   background: var(--accent);
   color: #fff;
 }
 
-.eng-plot-toolbar button {
-  font: inherit;
-  font-size: 11px;
-  padding: 5px 12px;
+.eng-modebar-btn.eng-modebar-active:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.eng-modebar-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.eng-modebar-export-wrapper {
+  position: relative;
+}
+
+.eng-modebar-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(20, 22, 30, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--background);
-  color: var(--muted);
-  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 20;
 }
 
-.eng-plot-toolbar button:hover {
-  background: var(--hover);
-  color: var(--foreground);
+html[data-theme='light'] .eng-modebar-popover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
-.eng-plot-settings-group {
+.eng-popover-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.eng-plot-settings-btn {
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--background);
+  width: 100%;
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--foreground);
-  cursor: pointer;
-}
-
-.eng-plot-settings-btn:hover {
-  background: var(--hover);
-}
-
-.eng-plot-export-group {
-  display: flex;
-  gap: 4px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.eng-plot-export-group button {
-  font: inherit;
-  font-size: 11px;
-  padding: 5px 12px;
-  border: none;
   background: transparent;
-  color: var(--muted);
+  border: none;
+  border-radius: 4px;
+  text-align: left;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
 }
 
-.eng-plot-export-group button:hover {
-  background: var(--hover);
-  color: var(--foreground);
+.eng-popover-item:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* Plot viewport */
@@ -587,7 +645,8 @@
 }
 
 /* Force the uPlot wrapper to fill the viewport properly */
-.eng-plot-viewport > div {
+.eng-plot-viewport > .eng-plot-canvas-wrapper,
+.eng-plot-viewport > div:not(.eng-plot-modebar) {
   width: 100% !important;
 }
 

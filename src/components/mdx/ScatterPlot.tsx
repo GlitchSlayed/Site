@@ -23,6 +23,7 @@ export interface ScatterPlotProps {
   description?: string;
   points?: ScatterPoint[];
   series?: ScatterSeriesInput[];
+  toolbar?: 'floating' | 'compact' | 'minimal' | 'none';
   xLabel?: string;
   xUnit?: string;
   xScale?: 'linear' | 'log';
@@ -42,6 +43,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
   description,
   points,
   series: directSeries,
+  toolbar = 'floating',
   xLabel = 'X',
   xUnit = '',
   xScale = 'linear',
@@ -141,7 +143,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
 
   return (
     <div className={`eng-scatter-plot-container ${className}`}>
-      <EngineeringPlot config={config} height={height} />
+      <EngineeringPlot config={config} height={height} toolbar={toolbar} />
     </div>
   );
 };
