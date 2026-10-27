@@ -46,7 +46,8 @@ export const NotebookCell: React.FC<NotebookCellProps> = ({
                 type="button"
                 onClick={() => setIsCodeCollapsed(!isCodeCollapsed)}
                 className="eng-cell-toggle-btn"
-                title={isCodeCollapsed ? 'Show code' : 'Hide code'}
+                data-tooltip={isCodeCollapsed ? 'Expand code block' : 'Collapse code block'}
+                data-tooltip-pos="top"
               >
                 {isCodeCollapsed ? 'Show Code ▾' : 'Hide Code ▴'}
               </button>
@@ -54,7 +55,8 @@ export const NotebookCell: React.FC<NotebookCellProps> = ({
                 type="button"
                 onClick={handleCopy}
                 className="eng-cell-copy-btn"
-                title="Copy code to clipboard"
+                data-tooltip={copied ? 'Copied to clipboard!' : 'Copy code to clipboard'}
+                data-tooltip-pos="top"
               >
                 {copied ? 'Copied!' : 'Copy'}
               </button>

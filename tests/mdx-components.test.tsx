@@ -12,6 +12,7 @@ import { ParamSlider } from '../src/components/mdx/ParamSlider';
 import { ParamPlayground } from '../src/components/mdx/ParamPlayground';
 import { HeatmapPlot } from '../src/components/mdx/HeatmapPlot';
 import { NotebookCell } from '../src/components/mdx/NotebookCell';
+import { Tooltip } from '../src/components/mdx/Tooltip';
 
 // ---------------------------------------------------------------------------
 // jsdom environment setup for MDX component tests
@@ -304,5 +305,31 @@ describe('React MDX Components', () => {
     expect(container.textContent).toContain('Span');
     expect(container.textContent).toContain('Cp');
     expect(container.querySelector('canvas')).toBeTruthy();
+  });
+
+  it('Tooltip renders with data attributes, accessibility, and custom tag', async () => {
+    await act(async () => {
+      root.render(
+        <Tooltip
+          content="Lift-to-drag ratio"
+          subtitle="Aerodynamic efficiency measure"
+          shortcut="L/D"
+          position="bottom"
+          as="abbr"
+        >
+          L/D
+        </Tooltip>
+      );
+    });
+
+    const trigger = container.querySelector('abbr');
+    expect(trigger).not.toBeNull();
+    expect(trigger?.textContent).toBe('L/D');
+    expect(trigger?.getAttribute('data-tooltip')).toBe('Lift-to-drag ratio');
+    expect(trigger?.getAttribute('data-tooltip-subtitle')).toBe('Aerodynamic efficiency measure');
+    expect(trigger?.getAttribute('data-tooltip-shortcut')).toBe('L/D');
+    expect(trigger?.getAttribute('data-tooltip-pos')).toBe('bottom');
+    expect(trigger?.getAttribute('tabindex')).toBe('0');
+    expect(trigger?.classList.contains('mdx-tooltip-trigger')).toBe(true);
   });
 });

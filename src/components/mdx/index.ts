@@ -11,3 +11,4 @@ export * from './MetricGrid';
 export * from './DataTable';
 export * from './HeatmapPlot';
 export * from './NotebookCell';
+export * from './Tooltip';

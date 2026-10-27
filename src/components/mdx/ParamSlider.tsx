@@ -139,7 +139,9 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
               className={`eng-param-play-btn ${isPlaying ? 'playing' : ''}`}
-              title={isPlaying ? 'Pause auto-sweep' : 'Play auto-sweep'}
+              data-tooltip={isPlaying ? 'Pause sweep' : 'Auto sweep'}
+              data-tooltip-subtitle="Continuously oscillate parameter"
+              data-tooltip-pos="top"
               aria-label={isPlaying ? 'Pause sweep' : 'Play sweep'}
             >
               {isPlaying ? '⏸' : '▶'}
@@ -150,7 +152,9 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
               type="button"
               onClick={handleReset}
               className="eng-param-reset-btn"
-              title={`Reset to default (${defaultValue})`}
+              data-tooltip="Reset value"
+              data-tooltip-subtitle={`Default: ${defaultValue}${unit ? ' ' + unit : ''}`}
+              data-tooltip-pos="top"
               aria-label={`Reset ${label} to ${defaultValue}`}
             >
               ↺

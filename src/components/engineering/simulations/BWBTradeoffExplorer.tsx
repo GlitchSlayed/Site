@@ -278,7 +278,9 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
             className={`eng-demo-scenario-btn ${compareAllScenarios ? 'eng-demo-scenario-btn-active' : ''}`}
             onClick={() => setCompareAllScenarios(!compareAllScenarios)}
             aria-pressed={compareAllScenarios}
-            title="Toggle comparing all 3 benchmark situations simultaneously on a single graph"
+            data-tooltip="Multi-Scenario Overlay"
+            data-tooltip-subtitle="Compare all 3 benchmark configurations simultaneously on the graph"
+            data-tooltip-pos="top"
           >
             <span className="eng-demo-scenario-indicator" aria-hidden="true">
               {compareAllScenarios ? '✓ ' : '+ '}

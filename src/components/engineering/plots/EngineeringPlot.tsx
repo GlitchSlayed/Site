@@ -1450,7 +1450,10 @@ export function EngineeringPlot({
             type="button"
             className={`eng-modebar-btn eng-plot-mode-btn ${interactionMode === 'zoom' ? 'eng-modebar-active eng-plot-mode-active' : ''}`}
             onClick={() => setInteractionMode(interactionMode === 'zoom' ? 'inspect' : 'zoom')}
-            title="Box Zoom (drag to zoom)"
+            data-tooltip="Box Zoom"
+            data-tooltip-shortcut="Z"
+            data-tooltip-subtitle="Click and drag to zoom into a region"
+            data-tooltip-pos="bottom"
             aria-label="Box Zoom"
             aria-pressed={interactionMode === 'zoom'}
           >
@@ -1461,7 +1464,10 @@ export function EngineeringPlot({
             type="button"
             className={`eng-modebar-btn eng-plot-mode-btn ${interactionMode === 'pan' ? 'eng-modebar-active eng-plot-mode-active' : ''}`}
             onClick={() => setInteractionMode(interactionMode === 'pan' ? 'inspect' : 'pan')}
-            title="Pan (drag to pan)"
+            data-tooltip="Pan View"
+            data-tooltip-shortcut="P"
+            data-tooltip-subtitle="Click and drag to pan across axes"
+            data-tooltip-pos="bottom"
             aria-label="Pan"
             aria-pressed={interactionMode === 'pan'}
           >
@@ -1472,7 +1478,10 @@ export function EngineeringPlot({
             type="button"
             className="eng-modebar-btn"
             onClick={handleResetView}
-            title="Reset View (or double-click chart)"
+            data-tooltip="Reset View"
+            data-tooltip-shortcut="Dbl-click"
+            data-tooltip-subtitle="Restore default autoscale extent"
+            data-tooltip-pos="bottom"
             aria-label="Reset View"
           >
             <ResetIcon />
@@ -1482,7 +1491,9 @@ export function EngineeringPlot({
             type="button"
             className="eng-modebar-btn"
             onClick={handleAutoscale}
-            title="Autoscale axes to data"
+            data-tooltip="Autoscale"
+            data-tooltip-subtitle="Fit both axes tightly to data"
+            data-tooltip-pos="bottom"
             aria-label="Autoscale"
           >
             <CrosshairIcon />
@@ -1497,7 +1508,10 @@ export function EngineeringPlot({
             type="button"
             className="eng-modebar-btn"
             onClick={handleResetView}
-            title="Reset View (or double-click chart)"
+            data-tooltip="Reset View"
+            data-tooltip-shortcut="Dbl-click"
+            data-tooltip-subtitle="Restore default autoscale extent"
+            data-tooltip-pos="bottom"
             aria-label="Reset View"
           >
             <ResetIcon />
@@ -1513,7 +1527,9 @@ export function EngineeringPlot({
           aria-expanded={showSettings}
           aria-controls={settingsPanelId}
           onClick={() => setShowSettings((value) => !value)}
-          title="Graph settings"
+          data-tooltip="Plot Settings"
+          data-tooltip-subtitle="Grid, lines, markers, glow & precision"
+          data-tooltip-pos="bottom"
           aria-label="Graph settings"
         >
           <SettingsIcon />
@@ -1525,7 +1541,9 @@ export function EngineeringPlot({
             type="button"
             className={`eng-modebar-btn ${showExportMenu ? 'eng-modebar-active' : ''}`}
             onClick={() => setShowExportMenu((value) => !value)}
-            title="Export options (PNG / CSV)"
+            data-tooltip="Export Data"
+            data-tooltip-subtitle="Download high-resolution PNG or CSV"
+            data-tooltip-pos="bottom"
             aria-label="Export options"
             aria-haspopup="true"
             aria-expanded={showExportMenu}

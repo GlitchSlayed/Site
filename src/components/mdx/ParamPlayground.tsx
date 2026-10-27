@@ -63,7 +63,9 @@ export const ParamPlayground: React.FC<ParamPlaygroundProps> = ({
           type="button"
           onClick={handleResetAll}
           className="eng-playground-reset-all"
-          title="Reset all parameters to defaults"
+          data-tooltip="Reset Defaults"
+          data-tooltip-subtitle="Revert all parameters to initial baseline"
+          data-tooltip-pos="top"
         >
           Reset All
         </button>

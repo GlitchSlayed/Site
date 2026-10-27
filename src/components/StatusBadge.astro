@@ -9,9 +9,22 @@ const { status, size = 'normal', class: className = '' } = Astro.props;
 
 // Normalize status key for CSS class, e.g. "in-development"
 const statusKey = (status || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+const statusDescriptions: Record<string, string> = {
+  concept: 'Initial theoretical modeling, governing equations & feasibility analysis',
+  'in-development': 'Active aerodynamic simulation, parameter exploration & code refinement',
+  prototype: 'Computational or hardware prototype undergoing validation against benchmarks',
+  completed: 'Peer-reviewed, validated study with published results & interactive explorer',
+};
 ---
 
-<span class:list={['status-badge', `status-${statusKey}`, `size-${size}`, className]} title={`Project status: ${status}`}>
+<span
+  class:list={['status-badge', `status-${statusKey}`, `size-${size}`, className]}
+  data-tooltip={`Project Status: ${status}`}
+  data-tooltip-subtitle={statusDescriptions[statusKey] || 'Project lifecycle phase'}
+  data-tooltip-pos="top"
+  tabindex="0"
+>
   <span class="status-indicator" aria-hidden="true"></span>
   <span class="status-label">{status}</span>
 </span>

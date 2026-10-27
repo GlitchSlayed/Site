@@ -162,7 +162,9 @@ export const DataTable: React.FC<DataTableProps> = ({
                 type="button"
                 onClick={handleExportCSV}
                 className="eng-table-export-btn"
-                title="Export data as CSV"
+                data-tooltip="Export CSV"
+                data-tooltip-subtitle="Download dataset as a spreadsheet"
+                data-tooltip-pos="top"
               >
                 CSV ⤓
               </button>

@@ -106,7 +106,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       <div className="eng-metric-footer">
         {deltaPercent !== null && (
-          <span className={`eng-metric-delta status-${deltaStatus}`}>
+          <span
+            className={`eng-metric-delta status-${deltaStatus}`}
+            data-tooltip={`Reference Baseline: ${baseline} ${unit}`.trim()}
+            data-tooltip-subtitle={deltaPercent > 0 ? `${deltaPercent.toFixed(1)}% higher than baseline` : `${Math.abs(deltaPercent).toFixed(1)}% lower than baseline`}
+            data-tooltip-pos="top"
+          >
             {deltaPercent > 0 ? '+' : ''}
             {deltaPercent.toFixed(1)}%
             <span className="eng-metric-delta-ref"> vs baseline</span>

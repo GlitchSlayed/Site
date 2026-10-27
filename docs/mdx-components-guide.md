@@ -34,6 +34,7 @@ import {
 | [`<MetricGrid />`](#9-metricgrid) | Layout | Responsive grid container for `<MetricCard />`s | No |
 | [`<DataTable />`](#10-datatable) | Data Table | Sortable, searchable, paginated table with CSV export | No |
 | [`<NotebookCell />`](#11-notebookcell) | Code / Exec | Computational notebook cell (`In [n]:`) with collapsible code | No |
+| [`<Tooltip />`](#12-tooltip) | Overlay / Help | Customizable glassmorphic tooltip for text, abbreviations & terms | No |
 
 ---
 
@@ -585,6 +586,52 @@ print(f"Minimum drag: {cd_sweep.min():.4f}")`}
 
 ---
 
+### 12. Tooltip
+
+An author-facing component to wrap technical jargon, mathematical abbreviations, or UI triggers with an accessible, glassmorphic dark/light tooltip. Features automatic viewport collision flipping, keyboard focusability (`tabIndex={0}`), and optional keyboard shortcut or subtitle notes.
+
+#### Props
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `content` | `string` | **Required** | The primary text displayed in the tooltip. |
+| `subtitle` | `string` | `undefined` | Secondary explanatory note or context. |
+| `shortcut` | `string` | `undefined` | Keyboard badge or acronym abbreviation (e.g. `'$L/D$'`, `'Z'`, `'Ctrl+K'`). |
+| `position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Preferred placement relative to target element. |
+| `as` | `'span' \| 'abbr' \| 'div'` | `'span'` | Underlying HTML tag rendered in markup. |
+| `className` | `string` | `''` | Custom CSS wrapper class. |
+| `children` | `ReactNode` | **Required** | Trigger element or inline text to hover/focus. |
+
+#### MDX Examples
+
+```mdx
+{/* Inline abbreviation with shortcut badge and subtitle */}
+The vehicle achieved maximum 
+<Tooltip
+  content="Lift-to-drag ratio"
+  shortcut="L/D"
+  subtitle="Measure of aerodynamic efficiency in steady flight"
+  position="top"
+  as="abbr"
+>
+  L/D
+</Tooltip>
+at Mach 0.78.
+
+{/* Technical concept definition */}
+At higher speeds, the 
+<Tooltip
+  content="Boundary layer separation"
+  subtitle="Flow detachment resulting in sudden drag rise and loss of lift"
+  position="bottom"
+>
+  separation point
+</Tooltip>
+moves forward along the suction surface.
+```
+
+---
+
 ## 4. Scoped State Architecture (For Tool Builders)
 
 When building graphical editors, AST transformers, or CMS extensions, understanding the **parameter event bus** is essential:
@@ -673,6 +720,21 @@ To integrate these components into a structured visual editor (e.g., TinaCMS, Sa
     { "name": "baseline", "label": "Baseline Value", "type": "number" },
     { "name": "better", "label": "Desirable Trend", "type": "select", "options": ["higher", "lower", "neutral"] },
     { "name": "description", "label": "Footnote", "type": "string" }
+  ]
+}
+```
+
+### D. Tooltip Block Schema
+```json
+{
+  "name": "Tooltip",
+  "label": "Tooltip",
+  "fields": [
+    { "name": "content", "label": "Tooltip Content", "type": "string", "required": true },
+    { "name": "subtitle", "label": "Subtitle Note", "type": "string" },
+    { "name": "shortcut", "label": "Shortcut / Badge", "type": "string" },
+    { "name": "position", "label": "Position", "type": "select", "options": ["top", "bottom", "left", "right"], "default": "top" },
+    { "name": "as", "label": "Tag", "type": "select", "options": ["span", "abbr", "div"], "default": "span" }
   ]
 }
 ```
