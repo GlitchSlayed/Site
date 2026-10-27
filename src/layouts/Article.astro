@@ -1,19 +1,75 @@
 ---
+import type { MarkdownHeading } from 'astro';
 import Base from './Base.astro';
 import BackArrow from '../components/BackArrow.astro';
 import ArrowIcon from '../components/ArrowIcon.astro';
 import SparkIcon from '../components/SparkIcon.astro';
 import StatusBadge from '../components/StatusBadge.astro';
-import {url,dateLabel} from '../config';
+import { url, dateLabel } from '../config';
 import Comments from '../components/Comments.astro';
-const {entry,headings=[],type='writing'}=Astro.props;
-const {data}=entry;
+
+interface Props {
+  entry: any;
+  headings?: MarkdownHeading[];
+  type?: 'writing' | 'projects';
+}
+
+const { entry, headings = [], type = 'writing' } = Astro.props;
+const { data } = entry;
+const h2Headings = headings.filter((h) => h.depth === 2);
 ---
-<Base title={`${data.title} | Vansh`} description={data.description} ogType="article" ogImagePath={`og/${type}/${entry.id}.png`} ogImageAlt={data.title}><div class="shell article-shell"><a class="back-link" href={url(`${type}/`)}><BackArrow/> Back to {type}</a><header class="article-header"><div class="post-meta">
-  {data.category && <span class="project-category">{data.category}</span>}
-  <span class="project-date">{dateLabel(data.date)}</span>
-  {data.status && <StatusBadge status={data.status} size="compact"/>}
-</div><h1>{data.title}</h1><p>{data.description}</p><div class="tag-list">{data.tags.map((tag:string)=><span>{tag}</span>)}</div>{data.sample&&<div class="notice">Sample article included with this site. Illustrative content, not a report of completed work.</div>}</header><div class="article-grid"><article class="prose"><slot/></article>{headings.filter((h:any)=>h.depth===2).length>0&&<aside class="toc"><div class="eyebrow">ON THIS PAGE</div><nav class="toc-nav" aria-label="Article contents"><span class="toc-indicator" aria-hidden="true"></span>{headings.filter((h:any)=>h.depth===2).map((h:any)=><a href={`#${h.slug}`}>{h.text}</a>)}</nav></aside>}</div><Comments/><div class="article-end"><SparkIcon/> Keep asking better questions.<a href={url(`${type}/`)}>More {type} <ArrowIcon/></a></div></div></Base>
+
+<Base
+  title={`${data.title} | Vansh`}
+  description={data.description}
+  ogType="article"
+  ogImagePath={`og/${type}/${entry.id}.png`}
+  ogImageAlt={data.title}
+>
+  <div class="shell article-shell">
+    <a class="back-link" href={url(`${type}/`)}><BackArrow /> Back to {type}</a>
+    <header class="article-header">
+      <div class="post-meta">
+        {data.category && <span class="project-category">{data.category}</span>}
+        <span class="project-date">{dateLabel(data.date)}</span>
+        {data.status && <StatusBadge status={data.status} size="compact" />}
+      </div>
+      <h1>{data.title}</h1>
+      <p>{data.description}</p>
+      <div class="tag-list">
+        {data.tags.map((tag: string) => <span>{tag}</span>)}
+      </div>
+      {
+        data.sample && (
+          <div class="notice">
+            Sample article included with this site. Illustrative content, not a report of completed work.
+          </div>
+        )
+      }
+    </header>
+    <div class="article-grid">
+      <article class="prose"><slot /></article>
+      {
+        h2Headings.length > 0 && (
+          <aside class="toc">
+            <div class="eyebrow">ON THIS PAGE</div>
+            <nav class="toc-nav" aria-label="Article contents">
+              <span class="toc-indicator" aria-hidden="true" />
+              {h2Headings.map((h) => (
+                <a href={`#${h.slug}`}>{h.text}</a>
+              ))}
+            </nav>
+          </aside>
+        )
+      }
+    </div>
+    <Comments />
+    <div class="article-end">
+      <SparkIcon /> Keep asking better questions.
+      <a href={url(`${type}/`)}>More {type} <ArrowIcon /></a>
+    </div>
+  </div>
+</Base>
 
 <script>
   const toc = document.querySelector<HTMLElement>('.toc-nav');

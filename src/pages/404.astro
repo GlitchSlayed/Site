@@ -1,4 +1,15 @@
 ---
-import Base from '../layouts/Base.astro';import ArrowIcon from '../components/ArrowIcon.astro';import {url} from '../config';
+import Base from '../layouts/Base.astro';
+import ArrowIcon from '../components/ArrowIcon.astro';
+import { url } from '../config';
 ---
-<Base title="404 | Off trajectory" ogImagePath="og/404.png" ogImageAlt="Page not found"><section class="shell page-section"><div class="eyebrow">404 / OFF TRAJECTORY</div><h1 class="page-title">A small course<br/>correction.</h1><p class="page-description">That page doesn’t exist. Let’s get you back to familiar ground.</p><a class="button primary" href={url()}>Back home <ArrowIcon/></a></section></Base>
+
+<Base title="404 | Off trajectory" ogImagePath="og/404.png" ogImageAlt="Page not found">
+  <section class="shell page-section">
+    <div class="eyebrow">404 / OFF TRAJECTORY</div>
+    <h1 class="page-title">A small course<br />correction.</h1>
+    <p class="page-description">That page doesn’t exist. Let’s get you back to familiar ground.</p>
+    <a class="button primary" href={url()}>Back home <ArrowIcon /></a>
+  </section>
+</Base>
+

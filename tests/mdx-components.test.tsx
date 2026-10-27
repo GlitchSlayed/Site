@@ -1,4 +1,3 @@
-// @ts-ignore - jsdom ships no type declarations in this project.
 import { JSDOM } from 'jsdom';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
@@ -8,7 +7,6 @@ import { interpolateColormap, getSeriesColor, COLORMAPS } from '../src/lib/engin
 import { setParameter, getParameter, subscribeParameter, clearScope } from '../src/lib/engineering/scopedState';
 import { MetricCard } from '../src/components/mdx/MetricCard';
 import { DataTable } from '../src/components/mdx/DataTable';
-import { ParamSlider } from '../src/components/mdx/ParamSlider';
 import { ParamPlayground } from '../src/components/mdx/ParamPlayground';
 import { HeatmapPlot } from '../src/components/mdx/HeatmapPlot';
 import { NotebookCell } from '../src/components/mdx/NotebookCell';
@@ -36,6 +34,29 @@ globalThis.KeyboardEvent = win.KeyboardEvent;
 Object.defineProperty(globalThis, 'navigator', { value: win.navigator, configurable: true });
 (globalThis as any).URL.createObjectURL = () => 'blob:mock-url';
 (globalThis as any).URL.revokeObjectURL = () => {};
+win.HTMLCanvasElement.prototype.getContext = (() => ({
+  fillRect: () => {},
+  clearRect: () => {},
+  getImageData: () => ({ data: new Uint8ClampedArray(1000) }),
+  putImageData: () => {},
+  createImageData: (w = 100, h = 100) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+  setTransform: () => {},
+  drawImage: () => {},
+  save: () => {},
+  fillText: () => {},
+  restore: () => {},
+  beginPath: () => {},
+  moveTo: () => {},
+  lineTo: () => {},
+  closePath: () => {},
+  stroke: () => {},
+  fill: () => {},
+  arc: () => {},
+  measureText: () => ({ width: 0 }),
+  transform: () => {},
+  rect: () => {},
+  clip: () => {},
+})) as any;
 
 describe('Evaluator & Math Engine', () => {
   it('linspace generates correct range and spacing', () => {
@@ -89,10 +110,10 @@ describe('Colormaps & Multi-Series Palettes', () => {
   it('interpolateColormap clamps at [0, 1] and returns RGB triplet', () => {
     const [r0, g0, b0] = interpolateColormap(-0.5, 'viridis');
     const [r1, g1, b1] = interpolateColormap(1.5, 'viridis');
-    expect(r0).toBeGreaterThanOrEqual(0);
-    expect(r0).toBeLessThanOrEqual(255);
-    expect(r1).toBeGreaterThanOrEqual(0);
-    expect(r1).toBeLessThanOrEqual(255);
+    [r0, g0, b0, r1, g1, b1].forEach((channel) => {
+      expect(channel).toBeGreaterThanOrEqual(0);
+      expect(channel).toBeLessThanOrEqual(255);
+    });
   });
 
   it('getSeriesColor cycles gracefully through palette', () => {

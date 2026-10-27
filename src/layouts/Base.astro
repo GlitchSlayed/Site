@@ -1,31 +1,76 @@
 ---
-import { execSync } from 'node:child_process';
 import '../styles/global.css';
 import '../styles/engineering.css';
 import 'katex/dist/katex.min.css';
 import 'uplot/dist/uPlot.min.css';
 import Rocket from '../components/Rocket.astro';
 import ArrowIcon from '../components/ArrowIcon.astro';
-import {site,url} from '../config';
-const {title=site.title,description=site.description,ogType='website',ogImagePath='og/home.png',ogImageAlt=title}=Astro.props;
-const pathname=Astro.url.pathname;
-const siteBase=Astro.site ? new URL(import.meta.env.BASE_URL,Astro.site) : undefined;
-const basePath=siteBase?.pathname || '/';
-const routePath=pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname.replace(/^\/+/, '');
-const canonical=siteBase ? new URL(routePath,siteBase) : undefined;
-const socialImage=siteBase ? new URL(url(ogImagePath),Astro.site) : undefined;
-const configured=canonical?.hostname!=='example.com';
+import { site, url } from '../config';
+import { getCommitHash } from '../lib/git';
 
-let commitHash = '';
-try {
-  commitHash = execSync('git rev-parse --short HEAD').toString().trim();
-} catch {
-  commitHash = (process.env.PUBLIC_GIT_SHA || process.env.GITHUB_SHA || '').slice(0, 7);
-}
+const {
+  title = site.title,
+  description = site.description,
+  ogType = 'website',
+  ogImagePath = 'og/home.png',
+  ogImageAlt = title,
+} = Astro.props;
+const pathname = Astro.url.pathname;
+const siteBase = Astro.site ? new URL(import.meta.env.BASE_URL, Astro.site) : undefined;
+const basePath = siteBase?.pathname || '/';
+const routePath = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname.replace(/^\/+/, '');
+const canonical = siteBase ? new URL(routePath, siteBase) : undefined;
+const socialImage = siteBase ? new URL(url(ogImagePath), Astro.site) : undefined;
+const configured = canonical?.hostname !== 'example.com';
+const commitHash = getCommitHash();
 ---
-<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="description" content={description}/><meta name="theme-color" content="#0a0a0a"/><title>{title}</title><link rel="icon" href={url('favicon.svg')} type="image/svg+xml"/>{configured && <link rel="canonical" href={canonical}/>}<meta property="og:site_name" content="Vansh's Technical Blog"/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:type" content={ogType}/>{configured && <meta property="og:url" content={canonical}/>}{socialImage && <><meta property="og:image" content={socialImage}/><meta property="og:image:secure_url" content={socialImage}/><meta property="og:image:type" content="image/png"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta property="og:image:alt" content={ogImageAlt}/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content={title}/><meta name="twitter:description" content={description}/><meta name="twitter:image" content={socialImage}/><meta name="twitter:image:alt" content={ogImageAlt}/></>}<link rel="alternate" type="application/rss+xml" title={`${site.name}'s writing`} href={url('rss.xml')}/>
-<script is:inline>try { document.documentElement.dataset.theme=localStorage.getItem('theme') || 'dark'; } catch { document.documentElement.dataset.theme='dark'; }</script>
-</head><body><a class="skip" href="#main">Skip to content</a>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>{title}</title>
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+    {configured && <link rel="canonical" href={canonical} />}
+    <meta property="og:site_name" content="Vansh's Technical Blog" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    {configured && <meta property="og:url" content={canonical} />}
+    {
+      socialImage && (
+        <>
+          <meta property="og:image" content={socialImage} />
+          <meta property="og:image:secure_url" content={socialImage} />
+          <meta property="og:image:type" content="image/png" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={ogImageAlt} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={title} />
+          <meta name="twitter:description" content={description} />
+          <meta name="twitter:image" content={socialImage} />
+          <meta name="twitter:image:alt" content={ogImageAlt} />
+        </>
+      )
+    }
+    <link rel="alternate" type="application/rss+xml" title={`${site.name}'s writing`} href={url('rss.xml')} />
+    <script is:inline>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark';
+      } catch {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+  </head><body><a class="skip" href="#main">Skip to content</a>
 <header class="header"><div class="shell header-inner"><a class="brand" href={url()} aria-label="Vansh's Technical Blog home"><span class="brand-icon"><Rocket/></span><span>Vansh's Technical Blog</span></a><nav aria-label="Main navigation">{[['writing/','Writing'],['projects/','Projects'],['about/','About']].map(([href,label])=><a href={url(href)} aria-current={pathname.startsWith(url(href))?'page':undefined}>{label}</a>)}<button class="theme-button" id="theme-toggle" aria-label="Switch to light theme" data-tooltip="Toggle color theme" data-tooltip-shortcut="T"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button></nav></div></header>
 <main id="main"><slot/></main>
 <footer class="shell footer"><a class="footer-brand" href={url()}><Rocket/> <span>{site.name}<small>Aerospace, engineering & technology.</small></span></a><div class="footer-links"><a href={url('rss.xml')}>RSS <ArrowIcon/></a>{site.github && <a href={site.github}>GitHub <ArrowIcon/></a>}{site.linkedin && <a href={site.linkedin}>LinkedIn <ArrowIcon/></a>}{site.email && <a href={`mailto:${site.email}`}>Email <ArrowIcon/></a>}{commitHash && <a class="footer-commit" href={`https://github.com/GlitchSlayed/Site/commit/${commitHash}`} target="_blank" rel="noopener noreferrer" data-tooltip="View commit on GitHub" data-tooltip-subtitle={`Commit SHA: ${commitHash}`} aria-label={`View commit ${commitHash} on GitHub`}><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M10.5 7.75a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm1.43.75a4.002 4.002 0 0 0-7.86 0H.75a.75.75 0 1 0 0 1.5h3.32a4.002 4.002 0 0 0 7.86 0h3.32a.75.75 0 1 0 0-1.5h-3.32Z"/></svg><code>{commitHash}</code></a>}<span>© {new Date().getFullYear()} Vansh Datta</span></div></footer>

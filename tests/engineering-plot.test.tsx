@@ -1,9 +1,6 @@
 // Render tests for EngineeringPlot with a mocked uPlot. jsdom provides the
 // DOM; uPlot is replaced with a recording fake so we can assert lifecycle,
 // settings, click-to-inspect, autoscale and export behavior without a browser.
-// jsdom is untyped in this project; import it as `any` to avoid the
-// implicit-any error without adding a dev dependency.
-// @ts-ignore - jsdom ships no type declarations in this project.
 import { JSDOM } from 'jsdom';
 import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { act } from 'react';
@@ -113,6 +110,32 @@ const installGlobals = () => {
   });
   (globalThis as any).URL.createObjectURL = () => 'blob:mock-url';
   window.HTMLCanvasElement.prototype.toDataURL = () => 'data:image/png;base64,mock';
+  window.HTMLCanvasElement.prototype.getContext = (() => ({
+    fillRect: () => {},
+    clearRect: () => {},
+    getImageData: () => ({ data: [] }),
+    putImageData: () => {},
+    createImageData: () => [],
+    setTransform: () => {},
+    drawImage: () => {},
+    save: () => {},
+    fillText: () => {},
+    restore: () => {},
+    beginPath: () => {},
+    moveTo: () => {},
+    lineTo: () => {},
+    closePath: () => {},
+    stroke: () => {},
+    fill: () => {},
+    arc: () => {},
+    measureText: () => ({ width: 0 }),
+    transform: () => {},
+    rect: () => {},
+    clip: () => {},
+    createLinearGradient: () => ({
+      addColorStop: () => {},
+    }),
+  })) as any;
 };
 
 const removeGlobals = async () => {
@@ -161,10 +184,14 @@ const renderPlot = (config: EngineeringPlotConfig = baseConfig) => {
   return { container, root, onPointSelect };
 };
 
-const flush = () => act(() => {});
+const flush = async () => {
+  await act(async () => {});
+};
 
 const clickAt = (node: Element, x: number, y: number) => {
-  node.dispatchEvent(new window.MouseEvent('click', { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+  act(() => {
+    node.dispatchEvent(new window.MouseEvent('click', { clientX: x, clientY: y, bubbles: true, cancelable: true }));
+  });
 };
 
 // The click listener is attached to the plot container div inside the viewport.
@@ -276,7 +303,7 @@ describe('EngineeringPlot controls', () => {
   });
 
   it('applies series visibility live via the settings panel', async () => {
-    const { container, root, onPointSelect } = renderPlot();
+    const { container, root } = renderPlot();
     await flush();
     await waitForChart();
     const instance = createdInstances[0];
@@ -333,10 +360,12 @@ describe('EngineeringPlot controls', () => {
       ((_v: number, axis?: string) => (axis === 'x' ? 120 : 15)) as any,
     );
 
-    const event = new window.MouseEvent('click', {
-      clientX: 50, clientY: 50, shiftKey: true, bubbles: true, cancelable: true,
+    act(() => {
+      const event = new window.MouseEvent('click', {
+        clientX: 50, clientY: 50, shiftKey: true, bubbles: true, cancelable: true,
+      });
+      plotContainer(container).dispatchEvent(event);
     });
-    plotContainer(container).dispatchEvent(event);
     await flush();
 
     expect(onPointSelect).toHaveBeenCalledTimes(1);
@@ -392,7 +421,9 @@ describe('EngineeringPlot controls', () => {
 
     const instance = createdInstances[0];
     const data = [[40, 80, 120], [10, 15, 17]];
-    instance.opts.hooks.setCursor[0]({ cursor: { idx: 1 }, data } as any);
+    act(() => {
+      instance.opts.hooks.setCursor[0]({ cursor: { idx: 1 }, data } as any);
+    });
     await flush();
 
     const readout = container.querySelector('.eng-plot-readout');
@@ -509,7 +540,7 @@ describe('EngineeringPlot controls', () => {
         { id: 'v_stall', label: 'V_stall', value: 55, axis: 'x', color: '#ff603b', dash: 'dash' },
       ],
     };
-    const { container } = renderPlot(configWithDecorations);
+    renderPlot(configWithDecorations);
     await flush();
     await waitForChart(1);
     expect(createdInstances.length).toBe(1);
@@ -541,12 +572,12 @@ describe('EngineeringPlot controls', () => {
       settingsBtn!.click();
     });
 
-    const glowLabel = Array.from(container.querySelectorAll('label')).find((l) =>
+    const glowLabel = Array.from(container.querySelectorAll<HTMLLabelElement>('label')).find((l) =>
       l.textContent?.includes('Curve glow effect')
     );
     expect(glowLabel).toBeDefined();
 
-    const shadingLabel = Array.from(container.querySelectorAll('label')).find((l) =>
+    const shadingLabel = Array.from(container.querySelectorAll<HTMLLabelElement>('label')).find((l) =>
       l.textContent?.includes('Area gradient shading')
     );
     expect(shadingLabel).toBeDefined();

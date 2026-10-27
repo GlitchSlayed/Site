@@ -6,7 +6,8 @@ import type { Node, Parent } from 'unist';
 
 export default function rehypeEngineeringAnnotations() {
   return (tree: Node) => {
-    const PERCENT_RE = /(\([+-]?\d+(?:\.\d+)?%\)|\(±\d+(?:\.\d+)?%\))/g;
+    const PERCENT_PATTERN = /\([+-]?\d+(?:\.\d+)?%\)|\(\u00B1\d+(?:\.\d+)?%\)/;
+    const PERCENT_SPLIT_RE = /(\([+-]?\d+(?:\.\d+)?%\)|\(\u00B1\d+(?:\.\d+)?%\))/g;
 
     function walk(node: Node) {
       const el = node as any;
@@ -17,11 +18,11 @@ export default function rehypeEngineeringAnnotations() {
       ) {
         const newChildren: Node[] = [];
         for (const child of el.children) {
-          if (child.type === 'text' && PERCENT_RE.test((child as any).value)) {
-            const parts = (child as any).value.split(PERCENT_RE);
+          if (child.type === 'text' && PERCENT_PATTERN.test((child as any).value)) {
+            const parts = (child as any).value.split(PERCENT_SPLIT_RE);
             for (const part of parts) {
               if (part === '') continue;
-              if (PERCENT_RE.test(part)) {
+              if (PERCENT_PATTERN.test(part)) {
                 newChildren.push({
                   type: 'element',
                   tagName: 'span',
