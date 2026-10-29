@@ -48,7 +48,7 @@ const h2Headings = headings.filter((h) => h.depth === 2);
       }
     </header>
     <div class="article-grid">
-      <article class="prose"><slot /></article>
+      <article class="prose" data-pagefind-body><slot /></article>
       {
         h2Headings.length > 0 && (
           <aside class="toc">

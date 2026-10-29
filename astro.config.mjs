@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeEngineeringAnnotations from './src/lib/rehype/rehypeEngineeringAnnotations';
 import react from '@astrojs/react';
+import pagefind from 'astro-pagefind';
 
 export default defineConfig({
   site: process.env.SITE_URL || 'https://example.com',
@@ -18,6 +19,7 @@ export default defineConfig({
     mdx(),
     ...(process.env.SITE_URL ? [sitemap()] : []),
     react(),
+    pagefind(),
   ],
 
   markdown: {
