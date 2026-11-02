@@ -6,7 +6,7 @@ tags: [Aerospace, Simulation, Manufacturing]
 status: Concept
 art: wing
 featured: false
-draft: true
+draft: false
 sample: false
 ---
 
