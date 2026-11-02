@@ -1,13 +1,11 @@
 ---
-title: "AirDrop on GNOME: Building airdrop-gnome, Still Very WIP"
+title: "I built an AirDrop integration for GNOME Shell"
 description: "Why I am building a GNOME Shell extension for real AirDrop transfers, what owlyd actually does, and the walls I keep hitting, most of them Intel related."
 date: 2026-11-02
 tags: ["Linux", "GNOME", "Rust", "Open Source", "Projects"]
 sample: false
 featured: false
 ---
-
-# AirDrop on GNOME: Building airdrop-gnome, Still Very WIP
 
 ## Why I am building this
 
