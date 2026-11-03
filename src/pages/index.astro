@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Rocket from '../components/Rocket.astro';
 import PostList from '../components/PostList.astro';
-import ProjectCard from '../components/ProjectCard.astro';
+import ProjectCarousel from '../components/ProjectCarousel.astro';
 import ArrowIcon from '../components/ArrowIcon.astro';
 import HeroAtmosphere from '../components/HeroAtmosphere.astro';
 import { getCollection } from 'astro:content';
@@ -11,8 +11,8 @@ import { url } from '../config';
 const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort(
   (a, b) => +b.data.date - +a.data.date
 );
-const projects = (await getCollection('projects', ({ data }) => !data.draft)).filter(
-  (p) => p.data.featured
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+  (a, b) => (Number(b.data.featured) - Number(a.data.featured)) || (+b.data.date - +a.data.date)
 );
 ---
 
@@ -90,9 +90,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).fi
       </div>
       <a class="text-link" href={url('projects/')}>All projects <ArrowIcon /></a>
     </div>
-    <div class="project-grid">
-      {projects.slice(0, 2).map((project) => <ProjectCard project={project} />)}
-    </div>
+    <ProjectCarousel projects={projects} />
     <p class="section-note">These initial project pages are proposed studies, with scope and methods outlined.</p>
   </section>
 

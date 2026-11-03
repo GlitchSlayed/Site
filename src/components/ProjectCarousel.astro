@@ -1,0 +1,477 @@
+---
+import ProjectCard from './ProjectCard.astro';
+
+export interface Props {
+  projects: any[];
+}
+
+const { projects } = Astro.props;
+const totalCount = String(projects.length).padStart(2, '0');
+---
+
+<div class="project-carousel" role="region" aria-roledescription="carousel" aria-label="Projects Showcase">
+  <div class="carousel-header">
+    <div class="carousel-status">
+      <div class="carousel-counter" aria-live="polite">
+        <span class="current-index">01</span>
+        <span class="counter-divider">/</span>
+        <span class="total-count">{totalCount}</span>
+      </div>
+      <div class="carousel-dots" role="tablist" aria-label="Project Slides">
+        {projects.map((project, idx) => (
+          <button
+            type="button"
+            class:list={['carousel-dot', { active: idx === 0 }]}
+            role="tab"
+            aria-selected={idx === 0 ? 'true' : 'false'}
+            aria-label={`Go to slide ${idx + 1}: ${project.data.title}`}
+            data-index={idx}
+            data-tooltip={project.data.title}
+            data-tooltip-pos="top"
+          />
+        ))}
+      </div>
+    </div>
+
+    <div class="carousel-actions">
+      <button
+        type="button"
+        class="carousel-control pause-play-btn"
+        aria-label="Pause automatic rotation"
+        title="Pause rotation"
+        data-action="toggle-play"
+      >
+        <svg class="pause-icon" width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <rect x="3" y="2" width="3.5" height="12" rx="1" />
+          <rect x="9.5" y="2" width="3.5" height="12" rx="1" />
+        </svg>
+        <svg class="play-icon" width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="display: none;">
+          <path d="M4 2.8c0-.7.8-1.2 1.4-.8l9 5.2c.6.4.6 1.3 0 1.6l-9 5.2c-.6.4-1.4 0-1.4-.8V2.8z" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="carousel-control prev-btn"
+        aria-label="Previous project"
+        title="Previous project"
+        data-action="prev"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M10 13L5 8l5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="carousel-control next-btn"
+        aria-label="Next project"
+        title="Next project"
+        data-action="next"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="carousel-track-wrapper">
+    <div class="carousel-track" tabindex="0" aria-label="Projects carousel track">
+      {projects.map((project, idx) => (
+        <div
+          class="carousel-slide"
+          role="group"
+          aria-roledescription="slide"
+          aria-label={`${idx + 1} of ${projects.length}: ${project.data.title}`}
+          data-slide-index={idx}
+        >
+          <ProjectCard project={project} featured={Boolean(project.data.featured)} />
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .project-carousel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 0 2px;
+  }
+
+  .carousel-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .carousel-counter {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .carousel-counter .current-index {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .counter-divider {
+    opacity: 0.5;
+  }
+
+  .carousel-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .carousel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: var(--border);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .carousel-dot:hover {
+    background: var(--muted);
+  }
+
+  .carousel-dot.active {
+    width: 20px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(255, 96, 59, 0.45);
+  }
+
+  :global(html[data-theme='light']) .carousel-dot.active {
+    box-shadow: 0 0 8px rgba(198, 60, 24, 0.35);
+  }
+
+  .carousel-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .carousel-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    padding: 0;
+  }
+
+  .carousel-control:hover {
+    color: var(--foreground);
+    border-color: var(--accent);
+    background: var(--hover);
+  }
+
+  .carousel-control:active {
+    transform: scale(0.96);
+  }
+
+  .carousel-track-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 22px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 8px 4px 16px 4px;
+    margin: -8px -4px -16px -4px;
+    outline: none;
+  }
+
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carousel-track:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
+
+  .carousel-slide {
+    flex: 0 0 calc((100% - 22px) / 2);
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+    display: flex;
+  }
+
+  .carousel-slide > :global(.project-card) {
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (max-width: 850px) {
+    .carousel-slide {
+      flex: 0 0 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel-track {
+      scroll-behavior: auto !important;
+    }
+
+    .carousel-dot,
+    .carousel-control {
+      transition: none !important;
+      transform: none !important;
+    }
+  }
+</style>
+
+<script>
+  function initProjectCarousels() {
+    const carousels = document.querySelectorAll<HTMLElement>('.project-carousel');
+
+    carousels.forEach((carousel) => {
+      // Prevent duplicate attachment
+      if (carousel.dataset.initialized === 'true') return;
+      carousel.dataset.initialized = 'true';
+
+      const track = carousel.querySelector<HTMLElement>('.carousel-track');
+      const slides = Array.from(carousel.querySelectorAll<HTMLElement>('.carousel-slide'));
+      const dots = Array.from(carousel.querySelectorAll<HTMLButtonElement>('.carousel-dot'));
+      const counterCurrent = carousel.querySelector<HTMLElement>('.current-index');
+      const prevBtn = carousel.querySelector<HTMLButtonElement>('.prev-btn');
+      const nextBtn = carousel.querySelector<HTMLButtonElement>('.next-btn');
+      const pausePlayBtn = carousel.querySelector<HTMLButtonElement>('.pause-play-btn');
+      const pauseIcon = pausePlayBtn?.querySelector<HTMLElement>('.pause-icon');
+      const playIcon = pausePlayBtn?.querySelector<HTMLElement>('.play-icon');
+
+      if (!track || slides.length === 0) return;
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let isUserPaused = prefersReducedMotion;
+      let isHovered = false;
+      let isFocused = false;
+      let timer: number | null = null;
+      let currentIndex = 0;
+
+      function updateUI(index: number) {
+        currentIndex = index;
+
+        // Update counter
+        if (counterCurrent) {
+          counterCurrent.textContent = String(index + 1).padStart(2, '0');
+        }
+
+        // Update dots
+        dots.forEach((dot, idx) => {
+          const isActive = idx === index;
+          dot.classList.toggle('active', isActive);
+          dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+      }
+
+      function getActiveSlideIndex(): number {
+        const trackLeft = track!.scrollLeft;
+        let closestIndex = 0;
+        let minDiff = Infinity;
+
+        slides.forEach((slide, idx) => {
+          const diff = Math.abs(slide.offsetLeft - trackLeft);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = idx;
+          }
+        });
+
+        return closestIndex;
+      }
+
+      function scrollToSlide(index: number, smooth = true) {
+        const targetSlide = slides[index];
+        if (!targetSlide || !track) return;
+
+        track.scrollTo({
+          left: targetSlide.offsetLeft,
+          behavior: smooth && !prefersReducedMotion ? 'smooth' : 'auto',
+        });
+        updateUI(index);
+      }
+
+      function goToNext() {
+        const current = getActiveSlideIndex();
+        const isAtEnd =
+          track!.scrollLeft + track!.clientWidth >= track!.scrollWidth - 15 ||
+          current >= slides.length - 1;
+        const next = isAtEnd ? 0 : current + 1;
+        scrollToSlide(next);
+      }
+
+      function goToPrev() {
+        const current = getActiveSlideIndex();
+        const prev = current <= 0 ? slides.length - 1 : current - 1;
+        scrollToSlide(prev);
+      }
+
+      function startTimer() {
+        stopTimer();
+        if (isUserPaused || isHovered || isFocused || prefersReducedMotion) return;
+        timer = window.setInterval(() => {
+          goToNext();
+        }, 5000);
+      }
+
+      function stopTimer() {
+        if (timer !== null) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+
+      function setPaused(paused: boolean) {
+        isUserPaused = paused;
+        if (pauseIcon && playIcon && pausePlayBtn) {
+          if (paused) {
+            pauseIcon.style.display = 'none';
+            playIcon.style.display = 'block';
+            pausePlayBtn.setAttribute('aria-label', 'Resume automatic rotation');
+            pausePlayBtn.setAttribute('title', 'Resume rotation');
+          } else {
+            pauseIcon.style.display = 'block';
+            playIcon.style.display = 'none';
+            pausePlayBtn.setAttribute('aria-label', 'Pause automatic rotation');
+            pausePlayBtn.setAttribute('title', 'Pause rotation');
+          }
+        }
+        if (paused) {
+          stopTimer();
+        } else {
+          startTimer();
+        }
+      }
+
+      // Event Listeners
+      prevBtn?.addEventListener('click', () => {
+        goToPrev();
+        if (!isUserPaused) startTimer();
+      });
+
+      nextBtn?.addEventListener('click', () => {
+        goToNext();
+        if (!isUserPaused) startTimer();
+      });
+
+      pausePlayBtn?.addEventListener('click', () => {
+        setPaused(!isUserPaused);
+      });
+
+      dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+          const index = Number(dot.dataset.index);
+          if (!isNaN(index)) {
+            scrollToSlide(index);
+            if (!isUserPaused) startTimer();
+          }
+        });
+      });
+
+      // Track scroll listener to keep counter and dots in sync
+      let scrollTimeout: number | null = null;
+      track.addEventListener(
+        'scroll',
+        () => {
+          if (scrollTimeout) cancelAnimationFrame(scrollTimeout);
+          scrollTimeout = requestAnimationFrame(() => {
+            const active = getActiveSlideIndex();
+            if (active !== currentIndex) {
+              updateUI(active);
+            }
+          });
+        },
+        { passive: true }
+      );
+
+      // Keyboard navigation
+      track.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          goToPrev();
+          if (!isUserPaused) startTimer();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          goToNext();
+          if (!isUserPaused) startTimer();
+        }
+      });
+
+      // Pause on hover
+      carousel.addEventListener('mouseenter', () => {
+        isHovered = true;
+        stopTimer();
+      });
+
+      carousel.addEventListener('mouseleave', () => {
+        isHovered = false;
+        if (!isUserPaused) startTimer();
+      });
+
+      // Pause on focus
+      carousel.addEventListener('focusin', () => {
+        isFocused = true;
+        stopTimer();
+      });
+
+      carousel.addEventListener('focusout', () => {
+        isFocused = false;
+        if (!isUserPaused) startTimer();
+      });
+
+      // Start initial timer if not prefers-reduced-motion
+      if (prefersReducedMotion) {
+        setPaused(true);
+      } else {
+        startTimer();
+      }
+    });
+  }
+
+  // Run on page load and on Astro page transitions
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initProjectCarousels);
+  } else {
+    initProjectCarousels();
+  }
+  document.addEventListener('astro:page-load', initProjectCarousels);
+</script>

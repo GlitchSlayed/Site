@@ -3,23 +3,140 @@ import Art from './Art.astro';
 import ProjectVisual from './visuals/ProjectVisual.astro';
 import ArrowIcon from './ArrowIcon.astro';
 import StatusBadge from './StatusBadge.astro';
-import {url,dateLabel} from '../config';
-const {project}=Astro.props;
+import SparkIcon from './SparkIcon.astro';
+import { url, dateLabel } from '../config';
+
+export interface Props {
+  project: any;
+  featured?: boolean;
+}
+
+const { project, featured = project.data.featured } = Astro.props;
 ---
-<a class="project-card" href={url(`projects/${project.id}/`)}>{project.data.visual ? (
-  <ProjectVisual
-    variant={project.data.visual}
-    title={project.data.visual === 'screenshot' ? '' : project.data.title}
-    label={project.data.visualLabel || project.data.tags[0]}
-    accent={project.data.visualAccent || '#ff603b'}
-    image={project.data.visualImage}
-    imageAlt={project.data.visualImageAlt || ''}
-    animate={project.data.visualAnimate}
-  />
-) : (
-  <Art kind={project.data.art} />
-)}<div class="card-body"><div class="post-meta">
-  {project.data.category && <span class="project-category">{project.data.category}</span>}
-  <span class="project-date">{dateLabel(project.data.date)}</span>
-  <StatusBadge status={project.data.status} size="compact"/>
-</div><h3>{project.data.title}<span class="card-arrow"><ArrowIcon/></span></h3><p>{project.data.description}</p><div class="tag-list">{project.data.tags.map((tag:string)=><span>{tag}</span>)}</div></div></a>
+
+<a class:list={['project-card', { featured }]} href={url(`projects/${project.id}/`)}>
+  {project.data.visual ? (
+    <ProjectVisual
+      variant={project.data.visual}
+      title={project.data.visual === 'screenshot' ? '' : project.data.title}
+      label={project.data.visualLabel || project.data.tags[0]}
+      accent={project.data.visualAccent || '#ff603b'}
+      image={project.data.visualImage}
+      imageAlt={project.data.visualImageAlt || ''}
+      animate={project.data.visualAnimate}
+    />
+  ) : (
+    <Art kind={project.data.art} />
+  )}
+  <div class="card-body">
+    <div class="post-meta">
+      {featured && (
+        <span class="featured-badge" data-tooltip="Featured Project" data-tooltip-pos="top">
+          <SparkIcon />
+          <span>Featured</span>
+        </span>
+      )}
+      {project.data.category && <span class="project-category">{project.data.category}</span>}
+      <span class="project-date">{dateLabel(project.data.date)}</span>
+      <StatusBadge status={project.data.status} size="compact" />
+    </div>
+    <h3>{project.data.title}<span class="card-arrow"><ArrowIcon /></span></h3>
+    <p>{project.data.description}</p>
+    <div class="tag-list">{project.data.tags.map((tag: string) => <span>{tag}</span>)}</div>
+  </div>
+</a>
+
+<style>
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.18s ease, box-shadow 0.22s ease, transform 0.22s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .project-card:hover {
+    border-color: var(--muted);
+  }
+
+  /* Signature Orange Outline & Glow for Featured Projects */
+  .project-card.featured {
+    border-color: rgba(255, 96, 59, 0.45);
+    box-shadow: 0 0 24px rgba(255, 96, 59, 0.12), inset 0 0 0 1px rgba(255, 96, 59, 0.2);
+    position: relative;
+  }
+
+  .project-card.featured:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 32px rgba(255, 96, 59, 0.26), inset 0 0 0 1px var(--accent);
+    transform: translateY(-2px);
+  }
+
+  :global(html[data-theme='light']) .project-card.featured {
+    border-color: rgba(198, 60, 24, 0.45);
+    box-shadow: 0 0 20px rgba(198, 60, 24, 0.1), inset 0 0 0 1px rgba(198, 60, 24, 0.18);
+  }
+
+  :global(html[data-theme='light']) .project-card.featured:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 28px rgba(198, 60, 24, 0.22), inset 0 0 0 1px var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 24px;
+  }
+
+  .card-body p {
+    flex: 1;
+  }
+
+  /* Featured Identifier Badge */
+  .featured-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: 8.5px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.85px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(255, 96, 59, 0.12);
+    border: 1px solid rgba(255, 96, 59, 0.38);
+    border-radius: 9999px;
+    line-height: 1;
+    box-shadow: 0 0 10px rgba(255, 96, 59, 0.25);
+    flex-shrink: 0;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .featured-badge :global(.spark-icon) {
+    width: 9.5px;
+    height: 9.5px;
+    color: var(--accent);
+  }
+
+  :global(html[data-theme='light']) .featured-badge {
+    background: rgba(198, 60, 24, 0.08);
+    border-color: rgba(198, 60, 24, 0.32);
+    box-shadow: 0 0 8px rgba(198, 60, 24, 0.16);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project-card,
+    .featured-badge {
+      transition: none !important;
+      transform: none !important;
+    }
+  }
+</style>
