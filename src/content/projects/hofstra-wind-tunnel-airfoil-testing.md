@@ -12,11 +12,17 @@ sample: false
 
 I want to use Hofstra's new wind tunnel to investigate how closely a student-built experiment can reproduce the lift characteristics predicted for familiar airfoil shapes. The proposed study compares a symmetric NACA 0012, a cambered NACA 4412, and a flat plate under the same nominal test conditions, using thin airfoil theory and XFOIL as analytical and numerical references.
 
+The tunnel is the custom Engineering Laboratory Design (ELD Inc.) subsonic research tunnel in the Aerodynamics Research Facility, located in the Adams Hall Solarium [5, 6]. Spearheaded and led by Dr. David M. Rooney and Dr. John C. Vaccaro, this is a dedicated research tunnel—distinct from Hofstra's instructional tunnels—with a test section measuring $1.5\text{ ft} \times 1.5\text{ ft}$ ($18\text{ in} \times 18\text{ in}$) [5].
+
 These are well-studied geometries. Their value here is that they give the experiment a clear starting point. By measuring their behavior, I can evaluate the models, mounting arrangement, instrumentation, and data reduction together, then investigate where the measurements and predictions separate.
 
 ## Current status
 
-This project is a theoretical proposal. No models have been manufactured, no simulations have been run, and no wind tunnel measurements have been collected. Access, instrumentation, model dimensions, and the achievable Reynolds number range still need to be confirmed with the lab.
+This project is a theoretical proposal. No models have been manufactured, no simulations have been run, and no wind tunnel measurements have been collected.
+
+Facility specifications move several key items from speculation into confirmed parameters, while operational details remain open:
+- **Confirmed facility parameters:** Custom ELD Inc. subsonic research tunnel in the Aerodynamics Research Facility, Adams Hall Solarium; dedicated research tunnel led by Rooney and Vaccaro, distinct from Hofstra's instructional tunnels; test section dimensions of $1.5\text{ ft} \times 1.5\text{ ft}$ ($18\text{ in} \times 18\text{ in}$) [5, 6].
+- **Still unconfirmed:** Usable speed range and achievable Reynolds number envelope, balance configuration and instrumentation resolution, mounting options, and the formal approval and training process.
 
 This page defines the intended scope and test plan. If the project proceeds, I will update it with the final setup, measured results, and supporting files. Separate blog posts will document the design decisions, testing, and analysis as they happen.
 
@@ -70,9 +76,15 @@ Before manufacturing, I need to establish whether the tunnel supports a suitable
 
 ## Model design and manufacturing
 
-All three models will use the same nominal chord and span. The proposed manufacturing approach is 3D printing with a common material and consistent process settings, followed by a documented finishing procedure. The flat plate thickness and edge treatment will be specified as part of its geometry.
+All three models will share the same nominal chord and span. With the confirmed $18\text{ in} \times 18\text{ in}$ ($1.5\text{ ft} \times 1.5\text{ ft}$) test section cross-section ($324\text{ in}^2$), model sizing can move from open-ended speculation to concrete estimates.
 
-Final dimensions depend on the test section, balance capacity and resolution, mounting hardware, and available speed range. A larger model gives a stronger force signal, but also occupies more of the test section and increases support loads. I plan to target projected frontal blockage below approximately 5% at the highest test angle, subject to the lab's guidance. That target alone does not establish that wall and wake effects are negligible.
+Maintaining aerodynamic blockage below a 5% target at the highest planned test angle ($\alpha \approx 16^\circ$) establishes a projected frontal area budget of approximately $16\text{ in}^2$ ($0.05 \times 324\text{ in}^2 \approx 16.2\text{ in}^2$). At $\alpha = 16^\circ$, the projected frontal height of a 12% thick section is roughly $c \sin(16^\circ) + 0.12 c \cos(16^\circ) \approx 0.39 c$:
+- Sizing for a chord around 4 inches ($c \approx 4\text{ in}$) and a span around 10 to 12 inches ($b \approx 10\text{--}12\text{ in}$) with end plates yields a projected frontal area of roughly $15.6\text{ to }18.7\text{ in}^2$, landing right near that 16-square-inch budget.
+- By comparison, a 6-inch chord ($c \approx 6\text{ in}$) produces a projected frontal height over $2.3\text{ in}$, resulting in $23\text{ to }28\text{ in}^2$ of frontal area (over $7\text{--}8.5\%$ blockage) and clearly exceeding the 5% threshold.
+
+These dimensions are estimates pending the lab's formal guidance on mounting hardware, support rigidity, and wall boundary layers, but establishing a 4-inch chord gives the proposal an initial baseline that balances force signal strength against tunnel blockage.
+
+The proposed manufacturing approach is 3D printing with a common material and consistent process settings, followed by a documented finishing procedure. The flat plate thickness and edge treatment will be specified as part of its geometry.
 
 Before testing, I will inspect the chord, span, section shape, straightness, and mounting alignment. I will also check that the models and supports remain sufficiently rigid under the expected loads. Surface finishing needs particular care around the leading edge, where sanding could alter the intended shape.
 
@@ -134,9 +146,9 @@ The comparison should establish which differences the experiment can resolve. A 
 | Support interference and force coupling | Use baseline measurements and calibration checks, while retaining interaction effects as a limitation |
 | Geometry and surface finish | Inspect the manufactured models and record finishing methods and visible defects |
 | Transition and separation | Examine Reynolds number sensitivity and document XFOIL transition assumptions |
-| Flow quality | Request available turbulence and uniformity measurements; state explicitly if they are unavailable |
+| Flow quality | Request characterization results (pressure, velocity uniformity, and turbulence intensity) planned or underway by Vaccaro, interpreting airfoil measurements directly against baseline findings |
 
-I will not infer flow quality from the tunnel's age or assume that turbulence shifts stall in a particular direction. Published experimental data will be selected for comparable Reynolds numbers, geometry, surface condition, and end conditions. Where those do not match, the reference will be used to discuss trends rather than treated as an exact target.
+I will not infer flow quality from the tunnel's age or assume that turbulence shifts stall in a particular direction. Per Vaccaro, the facility's first research projects will characterize pressure distribution, velocity uniformity, and turbulence intensity in the test section [5]. Characterization work is planned or underway, and I will request those results from the lab so that measured airfoil data can be interpreted against whatever flow quality that characterization establishes. Published experimental data will be selected for comparable Reynolds numbers, geometry, surface condition, and end conditions. Where those do not match, the reference will be used to discuss trends rather than treated as an exact target.
 
 ## Roadmap
 
@@ -159,9 +171,14 @@ Success means producing a repeatable, well-documented comparison whose limits ar
 
 ## Next steps
 
-The immediate task is to review feasibility with the lab. I need to confirm the test section dimensions, usable speed range, balance configuration and resolution, mounting options, and available flow-quality information. I also need to establish who approves student projects, what training is required, and whether testing can be scheduled outside normal classes.
+The immediate task is to review feasibility with the lab. With test section dimensions established at $1.5\text{ ft} \times 1.5\text{ ft}$, the operational questions to resolve are:
+- Usable speed range and achievable dynamic pressures.
+- Balance configuration, axis orientation, capacity, and measurement resolution.
+- Mounting options and provisions for wall mounts or end plates.
+- Approval and training requirements: identifying who approves student projects, required safety training, and scheduling availability outside normal class periods.
+- Coordination on characterization data to incorporate baseline velocity and turbulence intensity readings as they become available.
 
-Those answers will determine the final model dimensions and test matrix. Until then, this remains a proposed investigation with a defined method and open facility requirements.
+Those answers will determine the final model dimensions, mounting fabrication, and test matrix. Until then, this remains a proposed investigation with a defined method and open facility requirements.
 
 ## References
 
@@ -169,3 +186,5 @@ Those answers will determine the final model dimensions and test matrix. Until t
 2. Mark Drela and Harold Youngren. [XFOIL 6.9 User Primer](https://web.mit.edu/drela/Public/web/xfoil/xfoil_doc.txt).
 3. Shigeo Hayashibara, Embry-Riddle Aeronautical University. [D-1: Aerodynamics of Wings (1)](https://eaglepubs.erau.edu/compsimforaero/chapter/d-1/), *Computer Simulations for Aerodynamics*.
 4. Michael S. Selig, Robert W. Deters, and Gregory A. Williamson. [Wind Tunnel Testing Airfoils at Low Reynolds Numbers](https://m-selig.ae.illinois.edu/pubs/SeligDetersWilliamson-2011-AIAA-2011-875-LRN-AirfoilWindTunnelTesting.pdf). AIAA Paper 2011-875, 2011.
+5. Hofstra University. [New Wind Tunnel Expands Research and Hands-On Learning at Hofstra Engineering](https://news.hofstra.edu/2026/05/19/new-wind-tunnel-expands-research-and-hands-on-learning-at-hofstra-engineering/). *Hofstra News*, May 19, 2026.
+6. Hofstra University. [Alumnus Michael Delaney Supports New Aerodynamics Research Facility](https://news.hofstra.edu/2026/10/23/alumnus-michael-delaney-supports-new-aerodynamics-research-facility/). *Hofstra News*, October 23, 2026.
