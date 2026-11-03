@@ -1,8 +1,14 @@
 ---
-title: "Trying to understand the Army's 3D printed heavy fuel rotary engine"
-description: "The Army flew a drone powered by a 3D printed heavy fuel rotary engine in a series hybrid system. Here is my attempt to work through why each of those choices makes sense, and the questions I still have."
-date: 2026-11-02
-tags: ["Aerospace", "Propulsion", "Manufacturing", "3D Printing"]
+title: Trying to understand the Army's 3D printed heavy fuel rotary engine
+description: The Army flew a drone powered by a 3D printed heavy fuel rotary
+  engine in a series hybrid system. Here is my attempt to work through why each
+  of those choices makes sense, and the questions I still have.
+date: 2026-11-03
+tags:
+  - Aerospace
+  - Propulsion
+  - Manufacturing
+  - 3D Printing
 sample: false
 featured: false
 ---
@@ -43,23 +49,29 @@ My 2 cents, from the manufacturing side: printed does not mean finished. Critica
 n
 ## Why a series hybrid
 
-In a series hybrid, the engine never touches the propeller. It runs a generator, the generator feeds electric motors, and the motors fly the aircraft. The engine in this system is paired with a 400 volt motor generator.
+In a series hybrid, the engine has no mechanical connection to the propellers. It drives a generator, and electric motors do the flying. In the Army’s system, the rotary is paired with a 400 volt motor generator.
 
-The advantage is that the engine can sit at its best operating point, the speed and load where it is most efficient and happiest, while the electric side handles everything variable: takeoff, hover, climb, maneuvering. Electric motors are very good at that variable work. Combustion engines mostly are not. For a VTOL drone, which needs a lot of power for a short time at takeoff and much less in cruise, that split makes sense to me. The engine gets sized closer to cruise and generation, and the battery and motors cover the peaks.
+This caught my attention because I drive a 2022 Honda Accord Hybrid, and part of its operation follows the same logic. In Hybrid Drive, the gasoline engine turns a generator that supplies electricity to the motor driving the wheels. But my Accord is not a pure series hybrid. At highway cruising speeds, a clutch can connect the engine directly to the front wheels, bypassing the electrical conversion path when that makes more sense for efficiency. It can also drive on battery power alone for short stretches.
 
-The cost is complexity and conversion losses. Fuel to shaft power to electricity to motor power loses something at every step. A hybrid only wins if the engine's improved operating point and the aircraft level benefits beat those losses. The Army clearly thinks they do for this mission. I would like to see the fuel consumption numbers that prove it, which brings me to the honest part of this post.
+That also differs from the familiar Prius approach. Toyota uses a planetary gearset to divide engine power between a mechanical path to the wheels and an electrical path through a generator and motor. Both cars can use engine and electric power, but they get there differently. My Accord’s Hybrid Drive mode is the closer comparison to the drone’s series layout.
+
+The attraction for an aircraft is that engine speed does not have to follow propeller speed. That gives the engine more freedom to operate near an efficient speed and load while the electric motors respond to changing thrust demands. With a suitably sized battery, a series hybrid can also cover brief power peaks without sizing the engine for the highest demand. For a VTOL drone, where takeoff and hover can demand much more power than wingborne cruise, that possibility makes sense to me. The Army article does not give enough detail to say exactly how VICTOR divides those loads.
+
+The tradeoff is conversion losses and the weight of the electrical hardware. Turning shaft power into electricity and then back into shaft power costs energy. My Accord has a direct mechanical path available; a pure series aircraft does not. The efficiency gains and aircraft design benefits have to justify that cost. The flight demonstration shows the system works, but I would still like to see the fuel consumption numbers that show how well, which brings me to the honest part of this post.
 
 ## My questions, because a flight demo is not a finished engine
 
 - **How many hours does it last?** Rotary durability lives and dies on apex seal wear, and heavy fuel lubrication is not kind. A successful demonstration flight and a 500 hour service life are very different achievements.
 - **What is the actual fuel consumption?** The whole argument for heavy fuel logistics and hybrid operation gets stronger or weaker on specific fuel consumption numbers. None are in the public article.
-- **How does it start cold?** Heavy fuel and cold starts are a known painful combination, and contested environments are not famous for warm hangars.
-- **What did printing do to cost and lead time at small scale?** For a lab, iteration speed is the win. For a fielded system built in the hundreds, the math changes.
+- **How does it start cold?** Heavy fuel is harder to vaporize when it is cold, which makes getting a combustible mixture and reliable ignition more difficult. Once the engine is running and warm, that is one problem. Getting it to fire after sitting outside all night is another. Does it need a preheater, a starting aid, or a particular startup procedure? Contested environments are not famous for warm hangars, so I would like to know what getting this thing airborne on a freezing morning actually involves.
+- **What did printing do to cost and lead time at small scale?** For a lab, iteration speed is the main attraction so 3d printing makes sense. For a fielded system built in the hundreds, I doubt the math ends up being the same.
 
-None of that takes away from the result. Flying the system at all means the integration worked: fuel, sealing, cooling, generation, motors, aircraft. Integration is where programs usually go to die quietly. The follow on work mentioned in the article, including a swarm concept built around VICTOR, suggests the Army thinks the base system is real enough to build on.
+None of that takes away from the result. Flying the system at all means the integration worked: fuel, sealing, cooling, generation, motors, aircraft. Integration is trickier and can kill a design in the later stages. The follow on work mentioned in the article, including a swarm concept built around VICTOR, suggests the Army thinks the base system is real enough to build on.
 
 ## Why I am writing about it at all
 
-Because it sits exactly on the seam between my two interests. Propulsion decides what an aircraft can do. Manufacturing decides whether the propulsion idea survives contact with reality. This program used manufacturing, specifically additive, as a design tool to make a hard propulsion problem tractable. As someone who spent a co-op making fixtures and drawings for parts that had to actually fly, that is the version of 3D printing I believe in. Not printing things because printing is cool. Printing them because the geometry, the cooling, and the iteration cycle demanded it.
+Because it sits exactly on the seam between my interests in propulsion and manufacturing, with a rotary engine to pull in the car enthusiast in me. I have a soft spot for Wankel “Dorito” engines thanks to the car community. One of my dream builds is a late ’90s or early 2000s first generation Honda NSX with a custom billet five rotor Wankel, bridge porting, twin turbos, and a sequential gearbox. Completely unreasonable, probably most definately financially a not so good very bad idea, and something I would love to build given the chance.
+
+That fascination is what got me reading, but the engineering is what kept me interested. Propulsion decides what an aircraft can do. Manufacturing decides whether the propulsion idea survives contact with reality. This program used additive manufacturing as a design tool to tackle a difficult propulsion problem. As someone who spent a co-op making fixtures and drawings for parts that had to actually fly, that is the version of 3D printing I believe in: choosing it because the geometry, cooling requirements, and need for rapid iteration give it a real purpose.
 
 If the journal papers from this program are public, I plan to dig into the combustion and sealing work next. That is where the real story is.
