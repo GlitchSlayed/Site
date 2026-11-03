@@ -43,19 +43,21 @@ The site is a static Astro application. Source content is converted to HTML duri
 | Framework | Astro, subsequently upgraded from the original Astro 5 starter | Follow the current installed version and configuration |
 | Content | Markdown and MDX collections | Most deliverables should be `.md` |
 | Validation | Zod schemas in `src/content.config.ts` | Frontmatter must match the collection |
-| Styling | Plain CSS | Tailwind utility classes are not automatically available |
-| Interactive visuals | React 19 and `@paper-design/shaders-react`, loaded by Astro islands | Used for decorative project and hero shader effects |
+| Styling | Plain CSS + Engineering Design System | Tailwind utility classes are not used |
+| Interactive visuals | React 19, Three.js, uPlot, and `@paper-design/shaders-react` | Used for interactive plots, 3D models, and decorative shader cards |
 | Social previews | Build-generated 1200 × 630 PNGs rendered with Sharp | Each page gets an absolute `og:image` and Twitter card URL |
-| Equations | remark-math + rehype-katex + KaTeX | LaTeX-style math can be rendered at build time |
-| Markdown pipeline | `unified()` from `@astrojs/markdown-remark` | Remark/rehype plugins are configured inside its options |
+| Equations | remark-math + rehype-katex + KaTeX | LaTeX-style math rendered at build time |
+| Markdown pipeline | `unified()` from `@astrojs/markdown-remark` | Math plugins and engineering annotation processors |
 | Syntax highlighting | Shiki | Use fenced code blocks with a language |
-| Search | Small client-side filter | No search server or Pagefind installation is assumed |
-| Hosting | GitHub Pages | Handle the repository URL base path |
-| Build checks | Astro check and build through Actions | Content validation can stop deployment |
-| Sitemap | `@astrojs/sitemap`, enabled when SITE_URL is supplied | Do not hand-author sitemap entries |
+| Search | Pagefind with native `<dialog>` modal | Full-text site search with keyboard navigation (`⌘K`) |
+| Comments | Giscus | GitHub Discussions integration styled for light and dark themes |
+| Hosting | GitHub Pages | Deployed via GitHub Actions under `/Site/` base path |
+| Build checks | Astro check and Vitest test suite | Type checks and 95+ unit/component tests in CI |
+| Sitemap | `@astrojs/sitemap` + `robots.txt` | Automatically generated on every build |
 | Feed | `@astrojs/rss` route | Published writing entries appear in RSS |
+| Path Aliases | TypeScript paths | `@components/*`, `@lib/*`, `@layouts/*`, `@styles/*` |
 
-React is installed for the shader visuals. Tailwind, shadcn, a charting library, Mermaid renderer, CMS, comments service, analytics, newsletter backend, and interactive plotting framework are not installed. If any of these are needed, describe them as separate implementation changes rather than features the article gains by mentioning them.
+React, Three.js, and uPlot are installed for scientific data visualization and interactive models. Tailored MDX components (`LinePlot`, `ScatterPlot`, `FunctionPlot`, `DataTable`, `MetricCard`, `MetricGrid`, `ParamPlayground`, `ParamSlider`, `NotebookCell`, `Tooltip`) are available for `.mdx` pages. Tailwind, CMS engines, or server backends are not used.
 
 ## 4. Repository map
 
@@ -109,8 +111,8 @@ Projects additionally require:
 
 | Field | Type | Required? | Behavior |
 | --- | --- | --- | --- |
-| `status` | string | Yes | Human-readable project state |
-| `art` | enum: `wing`, `orbit`, `code` | Yes | Selects the existing decorative card illustration |
+| `status` | enum: `Concept`, `In Development`, `Prototype`, `Completed` | Yes | Project lifecycle phase matching the StatusBadge system |
+| `art` | enum: `wing`, `orbit`, `code` | Yes | Selects the fallback decorative card illustration |
 
 Projects may also set optional visual presentation fields:
 
@@ -162,7 +164,7 @@ Important validation rules:
 3. Use actual booleans: `draft: true`, not `draft: "true"`.
 4. Use an array: `tags: [Linux, Fedora]`, not `tags: Linux, Fedora`.
 5. Quote titles and descriptions. Escape embedded double quotes, or use correctly escaped single-quoted YAML strings.
-6. `status` is free text, but `art` is not. `art: rocket` is invalid; use `art: orbit` for a rocket/trajectory concept.
+6. `status` must be exactly one of: `Concept`, `In Development`, `Prototype`, or `Completed`. `art` must be one of: `wing`, `orbit`, or `code`. `art: rocket` is invalid; use `art: orbit` for a rocket/trajectory concept.
 7. Do not invent frontmatter fields such as `author`, `heroImage`, `updatedDate`, `github`, `paper`, `layout`, or `cover` and imply that they will appear in the UI. Put links, dates, and images in the body unless the schema and templates are explicitly extended.
 8. The user can keep a stable publication date while adding dated updates in the body. There is no established updated-date UI.
 9. `sample` means demonstration content. A real conceptual project is not a sample just because it is unfinished.

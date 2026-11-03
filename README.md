@@ -71,7 +71,7 @@ Write the article below the metadata. The filename determines its URL.
 
 Project entries also require `status` and `art`. Set `featured: true` to make a project eligible for the homepage. Available artwork values are `wing`, `orbit`, and `code`.
 
-For the full writing workflow, editorial templates, content schema, and project visual options, see [`docs/technical-reference.md`](docs/technical-reference.md) and [`docs/writing-playbook.md`](docs/writing-playbook.md).
+For the full writing workflow, AI editor instructions, content schema, and component guide, see [`docs/editor-reference.md`](docs/editor-reference.md), [`docs/technical-reference.md`](docs/technical-reference.md), and [`docs/writing-playbook.md`](docs/writing-playbook.md).
 
 ## Configuration
 
