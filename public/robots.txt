@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://glitchslayed.github.io/Site/sitemap-index.xml

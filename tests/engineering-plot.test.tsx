@@ -440,7 +440,10 @@ describe('EngineeringPlot controls', () => {
     let captured: { href: string; download: string } | null = null;
     const origAppend = document.body.appendChild.bind(document.body);
     document.body.appendChild = ((node: any) => {
-      if (node?.href && node?.download) captured = { href: node.href, download: node.download };
+      if (node?.href && node?.download) {
+        captured = { href: node.href, download: node.download };
+        node.click = () => {}; // Prevent jsdom document navigation stderr
+      }
       return origAppend(node);
     }) as any;
 

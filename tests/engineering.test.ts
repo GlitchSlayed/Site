@@ -218,6 +218,15 @@ describe('aircraft performance model', () => {
     expect(out.k.value).toBeCloseTo(k, 6);
   });
 
+  it('derives AR dynamically from span and area when span is given', () => {
+    // If span=60 and area=300 without explicit ar: AR = 60^2 / 300 = 12.0
+    const { ar: _, ...withoutAr } = base;
+    const out = aircraftPerformanceModel.compute({ ...withoutAr, span: 60, area: 300 });
+    const expectedAR = (60 * 60) / 300; // 12.0
+    const expectedK = 1 / (Math.PI * 0.8 * expectedAR);
+    expect(out.k.value).toBeCloseTo(expectedK, 6);
+  });
+
   it('structural mass penalty reduces L/D through increased required C_L', () => {
     // Use velocity=60 so required C_L exceeds the L/D-optimal point (~0.67),
     // ensuring added mass reduces L/D.
@@ -441,6 +450,18 @@ describe('format', () => {
       significantFigures: 7,
     });
     expect(out.unit).toBe('MN');
+  });
+
+  it('formatResult fullText includes unit once without duplication', () => {
+    const out = formatResult({
+      value: 50,
+      unit: 'N',
+      label: 'Lift',
+      showUnit: true,
+      showLabel: true,
+    });
+    expect(out.fullText).toBe('Lift: 50 [N]');
+    expect(out.displayText).toBe('Lift: 50 [N]');
   });
 });
 

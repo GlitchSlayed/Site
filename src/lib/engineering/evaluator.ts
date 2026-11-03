@@ -46,17 +46,24 @@ export function compileExpression(expr: string, _paramNames?: string[]): MathFn 
   }
 
   try {
-    // Function constructor with Math scope and params parameter
+    // Extract unique variable names that might come from params (excluding Math & keywords)
+    const idTokens = sanitized.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+    const reserved = new Set(['Math', 'x', 'NaN', 'Infinity', 'true', 'false', 'undefined']);
+    const paramKeys = [...new Set(idTokens.filter((id) => !reserved.has(id) && !(id in Math)))];
+
+    const unpackers = paramKeys
+      .map((k) => `const ${k} = (params && typeof params["${k}"] === "number") ? params["${k}"] : NaN;`)
+      .join('\n');
+
+    // Function constructor without deprecated "with" statements, running under strict mode
     // eslint-disable-next-line @typescript-eslint/no-implied-eval
     const fn = new Function('x', 'params', `
-      with (Math) {
-        with (params || {}) {
-          try {
-            return ${sanitized};
-          } catch (e) {
-            return NaN;
-          }
-        }
+      "use strict";
+      try {
+        ${unpackers}
+        return ${sanitized};
+      } catch (e) {
+        return NaN;
       }
     `);
     return (x: number, params?: Record<string, number>) => {

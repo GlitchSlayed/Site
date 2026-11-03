@@ -166,13 +166,16 @@ export const aircraftPerformanceModel: EngineeringModel = {
       mass = 70000,
       structuralPenalty = 0,
       area = 300,
-      ar = 6.75,
+      span,
+      ar,
       e = 0.8,
       cd0 = 0.02,
       inducedCorrection = 1,
       rho = 1.225,
       velocity = 80,
     } = inputs;
+
+    const effectiveAr = ar !== undefined ? ar : (span !== undefined && area > 0 ? (span * span) / area : 6.75);
 
     const totalMass = mass * (1 + structuralPenalty);
     const weight = totalMass * G;
@@ -181,7 +184,7 @@ export const aircraftPerformanceModel: EngineeringModel = {
     // Guard against division by zero / nonpositive area or density.
     const cl = safeDivide(weight, dynamicPressure * area, 0);
     const lift = safeResult(dynamicPressure * area * cl);
-    const k = safeDivide(inducedCorrection, Math.PI * e * ar, 0);
+    const k = safeDivide(inducedCorrection, Math.PI * e * effectiveAr, 0);
     const cd = cd0 + k * cl * cl;
     const ld = safeDivide(cl, cd, 0);
     const drag = dynamicPressure * area * cd;

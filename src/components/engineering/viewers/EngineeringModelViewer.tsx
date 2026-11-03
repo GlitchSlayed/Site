@@ -79,6 +79,9 @@ export function EngineeringModelViewer({
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
     container.appendChild(renderer.domElement);
 
     const ambient = new three.AmbientLight(0xffffff, 0.6);
@@ -242,12 +245,20 @@ export function EngineeringModelViewer({
   }, [windowResize]);
 
   useEffect(() => {
-    if (!rendererRef.current || !sceneRef.current) return;
-    const currentDark = document.documentElement.dataset.theme === 'dark';
-    sceneRef.current.background = new (threeRef.current!.Color)(
-      currentDark ? 0x0a0a0a : 0xfafafa,
-    );
-  });
+    const updateThemeBackground = () => {
+      if (!rendererRef.current || !sceneRef.current || !threeRef.current) return;
+      const currentDark = document.documentElement.dataset.theme === 'dark';
+      sceneRef.current.background = new threeRef.current.Color(
+        currentDark ? 0x0a0a0a : 0xfafafa,
+      );
+    };
+
+    updateThemeBackground();
+
+    const observer = new MutationObserver(updateThemeBackground);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   if (loadError) {
     return (

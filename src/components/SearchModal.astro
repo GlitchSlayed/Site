@@ -5,8 +5,8 @@ import { url } from '../config';
 const basePath = url();
 ---
 
-<div id="search-overlay" class="search-overlay" aria-hidden="true">
-  <div class="search-dialog" role="dialog" aria-modal="true" aria-label="Search site">
+<dialog id="search-dialog" class="search-modal" aria-label="Search site">
+  <div class="search-dialog-inner">
     <div class="search-header">
       <SearchIcon />
       <input
@@ -17,7 +17,7 @@ const basePath = url();
         spellcheck="false"
         aria-label="Search input"
       />
-      <kbd class="search-kbd" id="search-close-kbd">Esc</kbd>
+      <button type="button" class="search-kbd" id="search-close-kbd" aria-label="Close search">Esc</button>
     </div>
     <div id="search-results" class="search-results" role="region" aria-live="polite" aria-label="Search results">
       <div class="search-initial">Type to start searching…</div>
@@ -28,46 +28,55 @@ const basePath = url();
       <span class="search-hint"><kbd>Esc</kbd> Close</span>
     </div>
   </div>
-</div>
+</dialog>
 
 <style>
-  .search-overlay {
+  dialog.search-modal {
     position: fixed;
     inset: 0;
+    margin: min(15vh, 120px) auto auto;
+    padding: 0;
     z-index: 1000;
-    background: rgba(10, 10, 10, 0.65);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    display: none;
-    align-items: flex-start;
-    justify-content: center;
-    padding: min(15vh, 120px) 16px 24px;
-    animation: fadeIn 0.15s ease-out;
-  }
-
-  html[data-theme='light'] .search-overlay {
-    background: rgba(240, 240, 240, 0.7);
-  }
-
-  .search-overlay.open {
-    display: flex;
-  }
-
-  .search-dialog {
-    width: 100%;
+    width: calc(100% - 32px);
     max-width: 620px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 96, 59, 0.08);
-    display: flex;
-    flex-direction: column;
+    color: var(--foreground);
     overflow: hidden;
     animation: slideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  html[data-theme='light'] .search-dialog {
+  dialog.search-modal:not([open]) {
+    display: none;
+  }
+
+  dialog:modal {
+    overscroll-behavior: contain;
+  }
+
+  dialog::backdrop {
+    background: rgba(10, 10, 10, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    overflow: hidden;
+    overscroll-behavior: contain;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  html[data-theme='light'] dialog::backdrop {
+    background: rgba(240, 240, 240, 0.7);
+  }
+
+  html[data-theme='light'] dialog.search-modal {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .search-dialog-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
   }
 
   @keyframes fadeIn {
@@ -241,8 +250,9 @@ const basePath = url();
   }
 
   @media (max-width: 620px) {
-    .search-overlay {
-      padding-top: 12px;
+    dialog.search-modal {
+      margin-top: 12px;
+      width: calc(100% - 24px);
     }
     .search-footer {
       display: none;
@@ -250,8 +260,8 @@ const basePath = url();
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .search-overlay,
-    .search-dialog {
+    dialog.search-modal,
+    dialog::backdrop {
       animation: none !important;
     }
   }
@@ -263,8 +273,9 @@ const basePath = url();
   let activeIndex = -1;
   let debounceTimeout = null;
   let currentQuery = '';
+  let invokerElement = null;
 
-  const overlay = document.getElementById('search-overlay');
+  const dialog = document.getElementById('search-dialog');
   const input = document.getElementById('search-input');
   const resultsContainer = document.getElementById('search-results');
   const closeKbd = document.getElementById('search-close-kbd');
@@ -285,11 +296,10 @@ const basePath = url();
     }
   }
 
-  function openSearch() {
-    if (!overlay) return;
-    overlay.classList.add('open');
-    overlay.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+  function openSearch(e) {
+    if (!dialog || dialog.open) return;
+    invokerElement = (e && e.target instanceof HTMLElement) ? e.target : document.activeElement;
+    dialog.showModal();
     loadPagefind();
     setTimeout(() => {
       input?.focus();
@@ -298,15 +308,16 @@ const basePath = url();
   }
 
   function closeSearch() {
-    if (!overlay) return;
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    if (!dialog || !dialog.open) return;
+    dialog.close();
     if (input) input.value = '';
     currentQuery = '';
     activeIndex = -1;
     if (resultsContainer) {
       resultsContainer.innerHTML = '<div class="search-initial">Type to start searching…</div>';
+    }
+    if (invokerElement && typeof invokerElement.focus === 'function') {
+      invokerElement.focus();
     }
   }
 
@@ -407,15 +418,15 @@ const basePath = url();
     // ⌘K or Ctrl+K toggle
     if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
       e.preventDefault();
-      if (overlay?.classList.contains('open')) {
+      if (dialog?.open) {
         closeSearch();
       } else {
-        openSearch();
+        openSearch(e);
       }
       return;
     }
 
-    if (!overlay?.classList.contains('open')) return;
+    if (!dialog?.open) return;
 
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -442,11 +453,23 @@ const basePath = url();
     }
   });
 
-  // Overlay click to close
-  overlay?.addEventListener('click', (e) => {
-    if (e.target === overlay) {
+  // Light dismiss on backdrop click
+  dialog?.addEventListener('click', (e) => {
+    const rect = dialog.getBoundingClientRect();
+    const isInDialog =
+      rect.top <= e.clientY &&
+      e.clientY <= rect.top + rect.height &&
+      rect.left <= e.clientX &&
+      e.clientX <= rect.left + rect.width;
+    if (!isInDialog) {
       closeSearch();
     }
+  });
+
+  // Handle native cancel event (Esc)
+  dialog?.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    closeSearch();
   });
 
   closeKbd?.addEventListener('click', closeSearch);

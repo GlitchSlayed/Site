@@ -213,7 +213,7 @@ export function formatResult({
   const valueWithUnit = unitStr ? `${formatted} ${unitStr}` : formatted;
 
   const displayText = showLabel ? `${label}: ${valueWithUnit}` : valueWithUnit;
-  const fullText = label ? `${label}: ${valueWithUnit} ${unitStr}`.trim() : valueWithUnit;
+  const fullText = label ? `${label}: ${valueWithUnit}`.trim() : valueWithUnit;
 
   return {
     label,
