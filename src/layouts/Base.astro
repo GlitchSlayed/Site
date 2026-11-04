@@ -32,14 +32,14 @@ const commitHash = getCommitHash();
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#F8F7F3" id="meta-theme-color" />
     <title>{title}</title>
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;450;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap"
     />
     {configured && <link rel="canonical" href={canonical} />}
     <meta property="og:site_name" content="Vansh's Technical Blog" />
@@ -68,16 +68,88 @@ const commitHash = getCommitHash();
     <script is:inline>
       try {
         const saved = localStorage.getItem('theme');
-        const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        // Light mode is the default for first-time visitors; respect explicit saved preference.
+        const preferred = saved === 'dark' || saved === 'light' ? saved : 'light';
         document.documentElement.dataset.theme = preferred;
+        const metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) {
+          metaTheme.setAttribute('content', preferred === 'dark' ? '#141413' : '#F8F7F3');
+        }
       } catch {
-        document.documentElement.dataset.theme = 'dark';
+        document.documentElement.dataset.theme = 'light';
       }
     </script>
   </head><body><a class="skip" href="#main">Skip to content</a>
-<header class="header" data-pagefind-ignore><div class="shell header-inner"><a class="brand" href={url()} aria-label="Vansh's Technical Blog home"><span class="brand-icon"><Rocket/></span><span>Vansh's Technical Blog</span></a><nav aria-label="Main navigation">{[['writing/','Writing'],['projects/','Projects'],['about/','About']].map(([href,label])=><a href={url(href)} aria-current={pathname.startsWith(url(href))?'page':undefined}>{label}</a>)}<button class="theme-button" id="search-trigger" aria-label="Search site" data-tooltip="Search site" data-tooltip-shortcut="⌘K"><SearchIcon/></button><button class="theme-button" id="theme-toggle" aria-label="Switch to light theme" data-tooltip="Toggle color theme" data-tooltip-shortcut="Shift+T"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button></nav></div></header>
-<main id="main"><slot/></main>
-<footer class="shell footer" data-pagefind-ignore><a class="footer-brand" href={url()}><Rocket/> <span>{site.name}<small>Aerospace, engineering & technology.</small></span></a><div class="footer-links"><a href={url('rss.xml')}>RSS <ArrowIcon/></a>{site.github && <a href={site.github}>GitHub <ArrowIcon/></a>}{site.linkedin && <a href={site.linkedin}>LinkedIn <ArrowIcon/></a>}{site.email && <a href={`mailto:${site.email}`}>Email <ArrowIcon/></a>}{commitHash && <a class="footer-commit" href={`https://github.com/GlitchSlayed/Site/commit/${commitHash}`} target="_blank" rel="noopener noreferrer" data-tooltip="View commit on GitHub" data-tooltip-subtitle={`Commit SHA: ${commitHash}`} aria-label={`View commit ${commitHash} on GitHub`}><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M10.5 7.75a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm1.43.75a4.002 4.002 0 0 0-7.86 0H.75a.75.75 0 1 0 0 1.5h3.32a4.002 4.002 0 0 0 7.86 0h3.32a.75.75 0 1 0 0-1.5h-3.32Z"/></svg><code>{commitHash}</code></a>}<span>© {new Date().getFullYear()} Vansh Datta</span></div></footer>
+<header class="header" data-pagefind-ignore>
+  <div class="shell header-inner">
+    <a class="brand" href={url()} aria-label="Vansh's Technical Blog home">
+      <span class="brand-icon"><Rocket /></span>
+      <span class="brand-text">
+        <span class="brand-name">Vansh Datta</span>
+        <span class="brand-label">TECHNICAL NOTEBOOK</span>
+      </span>
+    </a>
+    <nav aria-label="Main navigation">
+      {
+        [
+          ['writing/', 'Writing'],
+          ['projects/', 'Projects'],
+          ['about/', 'About'],
+        ].map(([href, label]) => (
+          <a href={url(href)} aria-current={pathname.startsWith(url(href)) ? 'page' : undefined}>
+            {label}
+          </a>
+        ))
+      }
+      <button class="theme-button" id="search-trigger" aria-label="Search site" data-tooltip="Search site" data-tooltip-shortcut="⌘K">
+        <SearchIcon />
+      </button>
+      <button class="theme-button" id="theme-toggle" aria-label="Switch theme" data-tooltip="Toggle color theme" data-tooltip-shortcut="Shift+T">
+        <svg class="sun-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.5" />
+          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77" />
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+<main id="main"><slot /></main>
+<footer class="shell footer" data-pagefind-ignore>
+  <div class="footer-colophon">
+    <a class="footer-brand" href={url()}>
+      <Rocket />
+      <span>
+        <strong>Vansh Datta</strong>
+        <small>Aerospace, engineering &amp; technology journal.</small>
+      </span>
+    </a>
+  </div>
+  <div class="footer-links">
+    <a href={url('rss.xml')}>RSS <ArrowIcon /></a>
+    {site.github && <a href={site.github} target="_blank" rel="noopener noreferrer">GitHub <ArrowIcon /></a>}
+    {site.linkedin && <a href={site.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn <ArrowIcon /></a>}
+    {site.email && <a href={`mailto:${site.email}`}>Email <ArrowIcon /></a>}
+    {
+      commitHash && (
+        <a
+          class="footer-commit"
+          href={`https://github.com/GlitchSlayed/Site/commit/${commitHash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-tooltip="View commit on GitHub"
+          data-tooltip-subtitle={`Commit SHA: ${commitHash}`}
+          aria-label={`View commit ${commitHash} on GitHub`}
+        >
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true">
+            <path d="M10.5 7.75a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm1.43.75a4.002 4.002 0 0 0-7.86 0H.75a.75.75 0 1 0 0 1.5h3.32a4.002 4.002 0 0 0 7.86 0h3.32a.75.75 0 1 0 0-1.5h-3.32Z" />
+          </svg>
+          <code>{commitHash}</code>
+        </a>
+      )
+    }
+    <span class="footer-copyright">© {new Date().getFullYear()} Vansh Datta</span>
+  </div>
+</footer>
 <SearchModal />
 <script>
 import { initTooltips } from '../lib/tooltip';
@@ -88,21 +160,37 @@ searchTrigger?.addEventListener('click', (e) => {
   window.dispatchEvent(new CustomEvent('open-search', { detail: { target: e.currentTarget } }));
 });
 
-const button=document.querySelector<HTMLButtonElement>('#theme-toggle');
-function syncLabel(){
+const button = document.querySelector<HTMLButtonElement>('#theme-toggle');
+function syncLabel() {
   const isDark = document.documentElement.dataset.theme === 'dark';
   button?.setAttribute('aria-label', `Switch to ${isDark ? 'light' : 'dark'} theme`);
   button?.setAttribute('data-tooltip', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+  const metaTheme = document.getElementById('meta-theme-color');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', isDark ? '#141413' : '#F8F7F3');
+  }
+  if (button) {
+    button.innerHTML = isDark
+      ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/></svg>`
+      : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  }
 }
-syncLabel();button?.addEventListener('click',()=>{
-  const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';
-  document.documentElement.dataset.theme=theme;
-  try{localStorage.setItem('theme',theme)}catch{}
+syncLabel();
+button?.addEventListener('click', () => {
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem('theme', theme);
+  } catch {}
   syncLabel();
-  const iframe=document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
-  if(iframe?.contentWindow){
-    const giscusTheme=theme==='dark'?'https://glitchslayed.github.io/Site/giscus-dark.css':'https://glitchslayed.github.io/Site/giscus-light.css';
-    iframe.contentWindow.postMessage({giscus:{setConfig:{theme:giscusTheme}}},'https://giscus.app');
+  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
+  const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+  if (iframe?.contentWindow) {
+    const giscusTheme =
+      theme === 'dark'
+        ? 'https://glitchslayed.github.io/Site/giscus-dark.css'
+        : 'https://glitchslayed.github.io/Site/giscus-light.css';
+    iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme } } }, 'https://giscus.app');
   }
 });
 

@@ -40,12 +40,12 @@ const basePath = url();
     width: calc(100% - 32px);
     max-width: 620px;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 96, 59, 0.08);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
     color: var(--foreground);
     overflow: hidden;
-    animation: slideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideDown 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   dialog.search-modal:not([open]) {
@@ -57,20 +57,20 @@ const basePath = url();
   }
 
   dialog::backdrop {
-    background: rgba(10, 10, 10, 0.65);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(30, 29, 26, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     overflow: hidden;
     overscroll-behavior: contain;
     animation: fadeIn 0.15s ease-out;
   }
 
   html[data-theme='light'] dialog::backdrop {
-    background: rgba(240, 240, 240, 0.7);
+    background: rgba(34, 33, 29, 0.35);
   }
 
   html[data-theme='light'] dialog.search-modal {
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
   }
 
   .search-dialog-inner {

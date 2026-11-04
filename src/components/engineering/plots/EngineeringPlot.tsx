@@ -73,20 +73,20 @@ interface EngineeringPlotProps {
 type PlotInstance = InstanceType<typeof uPlot>;
 
 function readTheme(): 'dark' | 'light' {
-  if (typeof document === 'undefined') return 'dark';
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  if (typeof document === 'undefined') return 'light';
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
 function themeText(theme: 'dark' | 'light'): string {
-  return theme === 'dark' ? '#ededed' : '#171717';
+  return theme === 'dark' ? '#ECEAE4' : '#22211D';
 }
 
 function themeGrid(theme: 'dark' | 'light'): string {
-  return theme === 'dark' ? '#252525' : '#dedede';
+  return theme === 'dark' ? '#2B2A26' : '#E2DFD6';
 }
 
 function themeAccent(theme: 'dark' | 'light'): string {
-  return theme === 'dark' ? '#ff603b' : '#c63c18';
+  return theme === 'dark' ? '#E25835' : '#BA3D18';
 }
 
 /** Convert a hex, rgb, or rgba string to an rgba string with a specified alpha. */

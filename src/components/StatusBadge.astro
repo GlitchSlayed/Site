@@ -32,130 +32,122 @@ const statusDescriptions: Record<string, string> = {
   .status-badge {
     display: inline-flex;
     align-items: center;
-    border-radius: 9999px;
+    border-radius: 2px;
     font-family: var(--mono);
     text-transform: uppercase;
-    font-weight: 550;
-    letter-spacing: 0.85px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
     white-space: nowrap;
     border: 1px solid var(--border);
     line-height: 1;
-    transition: border-color 0.18s ease, background-color 0.18s ease;
+    transition: border-color 0.16s ease, background-color 0.16s ease;
     flex-shrink: 0;
   }
 
   .status-indicator {
-    border-radius: 50%;
+    border-radius: 1px;
     flex-shrink: 0;
   }
 
   /* Size variants */
   .size-normal {
-    padding: 5px 11px;
+    padding: 3px 8px;
     font-size: 9.5px;
-    gap: 7px;
+    gap: 6px;
   }
 
   .size-normal .status-indicator {
-    width: 6px;
-    height: 6px;
-  }
-
-  .size-compact {
-    padding: 3px 8px;
-    font-size: 8px;
-    gap: 5px;
-  }
-
-  .size-compact .status-indicator {
     width: 5px;
     height: 5px;
   }
 
-  /* Status Colors */
+  .size-compact {
+    padding: 2px 6px;
+    font-size: 8.5px;
+    gap: 5px;
+  }
 
-  /* 1. CONCEPT (Exploratory Blueprint Lavender/Purple) */
+  .size-compact .status-indicator {
+    width: 4px;
+    height: 4px;
+  }
+
+  /* Status Colors: Clean Editorial Palette (No Glowing Shadows) */
+
+  /* 1. CONCEPT (Slate / Theoretical Monograph) */
   .status-concept {
-    color: #c4b5fd;
-    background: rgba(167, 139, 250, 0.08);
-    border-color: rgba(167, 139, 250, 0.32);
+    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.05);
+    border-color: rgba(79, 70, 229, 0.22);
   }
   .status-concept .status-indicator {
-    background: #a78bfa;
-    box-shadow: 0 0 8px rgba(167, 139, 250, 0.7);
+    background: #4f46e5;
   }
 
-  /* 2. IN DEVELOPMENT (Active Rocket Flare Orange) */
+  /* 2. IN DEVELOPMENT (Rust / Active Engineering) */
   .status-in-development {
-    color: #ff8366;
-    background: rgba(255, 96, 59, 0.1);
-    border-color: rgba(255, 96, 59, 0.38);
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
   }
   .status-in-development .status-indicator {
     background: var(--accent);
-    box-shadow: 0 0 9px rgba(255, 96, 59, 0.8);
   }
 
-  /* 3. PROTOTYPE (Electric Sky Blue) */
+  /* 3. PROTOTYPE (Technical Cyan / Experimental) */
   .status-prototype {
-    color: #7dd3fc;
-    background: rgba(56, 189, 248, 0.08);
-    border-color: rgba(56, 189, 248, 0.35);
+    color: #0e7490;
+    background: rgba(14, 116, 144, 0.05);
+    border-color: rgba(14, 116, 144, 0.24);
   }
   .status-prototype .status-indicator {
-    background: #38bdf8;
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+    background: #0e7490;
   }
 
-  /* 4. COMPLETED (Telemetry Emerald Green) */
+  /* 4. COMPLETED (Forest Sage / Verified Benchmark) */
   .status-completed {
-    color: #86efac;
-    background: rgba(74, 222, 128, 0.08);
-    border-color: rgba(74, 222, 128, 0.35);
+    color: #15803d;
+    background: rgba(21, 128, 61, 0.05);
+    border-color: rgba(21, 128, 61, 0.22);
   }
   .status-completed .status-indicator {
-    background: #4ade80;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.7);
+    background: #15803d;
   }
 
-  /* Light Theme Adjustments */
-  :global(html[data-theme='light']) .status-concept {
-    color: #6d28d9;
-    background: rgba(109, 40, 217, 0.06);
-    border-color: rgba(109, 40, 217, 0.28);
+  /* Dark Theme Adjustments */
+  :global(html[data-theme='dark']) .status-concept {
+    color: #a5b4fc;
+    background: rgba(165, 180, 252, 0.08);
+    border-color: rgba(165, 180, 252, 0.25);
   }
-  :global(html[data-theme='light']) .status-concept .status-indicator {
-    background: #7c3aed;
-    box-shadow: 0 0 6px rgba(124, 58, 237, 0.4);
-  }
-
-  :global(html[data-theme='light']) .status-in-development {
-    color: #c63c18;
-    background: rgba(198, 60, 24, 0.07);
-    border-color: rgba(198, 60, 24, 0.3);
-  }
-  :global(html[data-theme='light']) .status-in-development .status-indicator {
-    background: #c63c18;
-    box-shadow: 0 0 6px rgba(198, 60, 24, 0.4);
+  :global(html[data-theme='dark']) .status-concept .status-indicator {
+    background: #a5b4fc;
   }
 
-  :global(html[data-theme='light']) .status-prototype {
-    color: #0369a1;
-    background: rgba(3, 105, 161, 0.06);
-    border-color: rgba(3, 105, 161, 0.28);
+  :global(html[data-theme='dark']) .status-in-development {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.08);
+    border-color: rgba(248, 113, 113, 0.28);
   }
-  :global(html[data-theme='light']) .status-prototype .status-indicator {
-    background: #0284c7;
-    box-shadow: 0 0 6px rgba(2, 132, 199, 0.4);
+  :global(html[data-theme='dark']) .status-in-development .status-indicator {
+    background: #f87171;
   }
 
-  :global(html[data-theme='light']) .status-completed {
-    color: #15803d;
-    background: rgba(21, 128, 61, 0.06);
-    border-color: rgba(21, 128, 61, 0.28);
+  :global(html[data-theme='dark']) .status-prototype {
+    color: #67e8f9;
+    background: rgba(103, 232, 249, 0.08);
+    border-color: rgba(103, 232, 249, 0.25);
   }
-  :global(html[data-theme='light']) .status-completed .status-indicator {
-    background: #16a34a;
-    box-shadow: 0 0 6px rgba(22, 163, 74, 0.4);
+  :global(html[data-theme='dark']) .status-prototype .status-indicator {
+    background: #67e8f9;
+  }
+
+  :global(html[data-theme='dark']) .status-completed {
+    color: #86efac;
+    background: rgba(134, 239, 172, 0.08);
+    border-color: rgba(134, 239, 172, 0.25);
+  }
+  :global(html[data-theme='dark']) .status-completed .status-indicator {
+    background: #86efac;
   }
 </style>

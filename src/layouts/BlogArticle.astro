@@ -1,0 +1,505 @@
+---
+import type { MarkdownHeading } from 'astro';
+import Base from './Base.astro';
+import BackArrow from '../components/BackArrow.astro';
+import Comments from '../components/Comments.astro';
+import SparkIcon from '../components/SparkIcon.astro';
+import ArrowIcon from '../components/ArrowIcon.astro';
+import { url, dateLabel } from '../config';
+import '../styles/newspaper.css';
+
+interface Props {
+  entry: any;
+  headings?: MarkdownHeading[];
+}
+
+const { entry, headings = [] } = Astro.props;
+const { data } = entry;
+const h2Headings = headings.filter((h) => h.depth === 2);
+const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering';
+---
+
+<Base
+  title={`${data.title} | The Technical Chronicle`}
+  description={data.description}
+  ogType="article"
+  ogImagePath={`og/writing/${entry.id}.png`}
+  ogImageAlt={data.title}
+>
+  <div class="newspaper-workspace mode-spread" id="newspaper-container">
+    <!-- Top Index & Edition Bar -->
+    <div class="newspaper-back-bar">
+      <a class="newspaper-back-link" href={url('writing/')}>
+        <BackArrow /> Return to Dispatch Index
+      </a>
+      <span class="newspaper-back-edition">
+        HOFSTRA UNIVERSITY · AEROSPACE DISPATCHES · VOL. 2026
+      </span>
+    </div>
+
+    <!-- Interactive Reading Controls Toolbar -->
+    <aside class="newspaper-toolbar" aria-label="Newspaper reading controls">
+      <div class="toolbar-group">
+        <button
+          type="button"
+          class="toolbar-btn"
+          id="btn-prev-page"
+          aria-label="Previous facing spread"
+          title="Previous spread (Left arrow)"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 13L5 8l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Prev</span>
+        </button>
+
+        <span class="toolbar-page-label" id="toolbar-page-display">Pages 1–2</span>
+
+        <button
+          type="button"
+          class="toolbar-btn"
+          id="btn-next-page"
+          aria-label="Next facing spread"
+          title="Next spread (Right arrow)"
+        >
+          <span>Next</span>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <!-- Table of Contents Dropdown -->
+        {h2Headings.length > 0 && (
+          <div class="newspaper-toc-dropdown">
+            <button
+              type="button"
+              class="toolbar-btn"
+              id="btn-toc-toggle"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <span>Sections ▾</span>
+            </button>
+            <div class="newspaper-toc-menu" id="newspaper-toc-menu" role="menu">
+              <div class="toc-title">Article Sections</div>
+              {h2Headings.map((h) => (
+                <a class="newspaper-toc-item" href={`#${h.slug}`} data-slug={h.slug} role="menuitem">
+                  {h.text}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div class="toolbar-divider" aria-hidden="true"></div>
+
+        <!-- Mode Toggle: Facing Pages vs Continuous -->
+        <button
+          type="button"
+          class="toolbar-btn"
+          id="btn-mode-toggle"
+          aria-label="Switch reading layout"
+          title="Toggle between facing pages and continuous scroll"
+        >
+          <span class="mode-label-facing">📜 Continuous</span>
+          <span class="mode-label-continuous" style="display:none;">📖 Facing Pages</span>
+        </button>
+
+        <div class="toolbar-divider" aria-hidden="true"></div>
+
+        <!-- Type Scale Controls -->
+        <button
+          type="button"
+          class="toolbar-btn"
+          id="btn-font-smaller"
+          aria-label="Decrease text size"
+          title="Decrease font size"
+        >
+          A-
+        </button>
+        <button
+          type="button"
+          class="toolbar-btn"
+          id="btn-font-larger"
+          aria-label="Increase text size"
+          title="Increase font size"
+        >
+          A+
+        </button>
+      </div>
+
+      <div class="reading-progress-track" aria-hidden="true">
+        <div class="reading-progress-bar" id="reading-progress-bar"></div>
+      </div>
+    </aside>
+
+    <!-- Desktop Open Newspaper: Two Facing Pages -->
+    <div class="newspaper-spread" id="newspaper-spread-view" aria-label="Facing newspaper pages">
+      <!-- Left Page -->
+      <article class="newspaper-page newspaper-page-left" id="page-container-left">
+        <header class="page-running-head">
+          <span class="running-head-brand">THE TECHNICAL CHRONICLE</span>
+          <span class="running-head-title" id="left-running-title">{data.title}</span>
+        </header>
+
+        <div class="page-content-area" id="left-page-body">
+          <!-- Dynamically populated page content -->
+        </div>
+
+        <footer class="page-folio">
+          <span class="page-folio-meta">VANSH DATTA · DISPATCHES</span>
+          <span class="page-folio-num" id="left-page-num">— PAGE 1 —</span>
+        </footer>
+      </article>
+
+      <!-- Right Page -->
+      <article class="newspaper-page newspaper-page-right" id="page-container-right">
+        <header class="page-running-head">
+          <span class="running-head-section" id="right-running-section">{category}</span>
+          <span class="running-head-date">{dateLabel(data.date)}</span>
+        </header>
+
+        <div class="page-content-area" id="right-page-body">
+          <!-- Dynamically populated page content -->
+        </div>
+
+        <footer class="page-folio">
+          <span class="page-folio-meta">HOFSTRA UNIVERSITY</span>
+          <span class="page-folio-num" id="right-page-num">— PAGE 2 —</span>
+        </footer>
+      </article>
+    </div>
+
+    <!-- Continuous Reading View (Mobile & Optional Single-Column Mode) -->
+    <article class="newspaper-continuous" id="newspaper-continuous-view">
+      <!-- Masthead on Top -->
+      <header class="newspaper-masthead">
+        <div class="masthead-pre">
+          <span>VOL. I · NO. 2026</span>
+          <span>HOFSTRA UNIVERSITY · AEROSPACE &amp; SYSTEMS</span>
+          <span>VANSH DATTA, EDITOR</span>
+        </div>
+        <div class="masthead-nameplate">THE TECHNICAL CHRONICLE</div>
+        <div class="masthead-tagline">AN INDEPENDENT JOURNAL OF ENGINEERING, EXPERIMENTATION &amp; OPEN SYSTEMS</div>
+        <div class="masthead-meta-bar">
+          <span>PUBLISHED: {dateLabel(data.date)}</span>
+          <span>CATEGORY: {category}</span>
+          <span id="continuous-read-time">EST. READ: ~4 MIN</span>
+          <span>EDITION: FIRST IMPRESSION</span>
+        </div>
+      </header>
+
+      <!-- Headline Block -->
+      <div class="newspaper-headline-block">
+        <h1 class="newspaper-article-title">{data.title}</h1>
+        {data.description && <p class="newspaper-deck">{data.description}</p>}
+      </div>
+
+      <!-- Article Body with Drop Cap -->
+      <div class="newspaper-article-body drop-cap-lead" id="continuous-body" data-pagefind-body>
+        <slot />
+      </div>
+    </article>
+
+    <!-- Source Container (Hidden when paginated; preserved for SEO & indexing) -->
+    <div id="newspaper-source-data" style="display: none;" aria-hidden="true">
+      <slot />
+    </div>
+
+    <!-- Article Discussion Section -->
+    <div class="newspaper-footer-section">
+      <Comments />
+      <div class="article-end">
+        <SparkIcon />
+        <span>End of dispatch. Keep asking better questions.</span>
+        <a href={url('writing/')}>More Dispatches <ArrowIcon /></a>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script is:inline>
+(function() {
+  const container = document.getElementById('newspaper-container');
+  const sourceData = document.getElementById('newspaper-source-data');
+  const leftPageBody = document.getElementById('left-page-body');
+  const rightPageBody = document.getElementById('right-page-body');
+  const leftPageNum = document.getElementById('left-page-num');
+  const rightPageNum = document.getElementById('right-page-num');
+  const pageDisplay = document.getElementById('toolbar-page-display');
+  const progressBar = document.getElementById('reading-progress-bar');
+  const btnPrev = document.getElementById('btn-prev-page');
+  const btnNext = document.getElementById('btn-next-page');
+  const btnMode = document.getElementById('btn-mode-toggle');
+  const modeFacingLabel = btnMode ? btnMode.querySelector('.mode-label-facing') : null;
+  const modeContinuousLabel = btnMode ? btnMode.querySelector('.mode-label-continuous') : null;
+  const btnToc = document.getElementById('btn-toc-toggle');
+  const tocMenu = document.getElementById('newspaper-toc-menu');
+  const btnFontSmaller = document.getElementById('btn-font-smaller');
+  const btnFontLarger = document.getElementById('btn-font-larger');
+  const readTimeSpan = document.getElementById('continuous-read-time');
+
+  if (!container || !sourceData || !leftPageBody || !rightPageBody) return;
+
+  // Calculate reading time
+  const wordCount = (sourceData.textContent || '').trim().split(/\s+/).length;
+  const readTimeMin = Math.max(1, Math.round(wordCount / 210));
+  if (readTimeSpan) {
+    readTimeSpan.textContent = `EST. READ: ~${readTimeMin} MIN`;
+  }
+
+  // Reading mode state: 'spread' or 'continuous'
+  let currentMode = window.innerWidth >= 1100 ? 'spread' : 'continuous';
+  container.className = `newspaper-workspace mode-${currentMode}`;
+
+  // Font scale state
+  let fontScale = 15.5;
+
+  // Pagination data
+  let pages = [];
+  let currentSpread = 0;
+
+  // Element height estimator
+  function estimateHeight(el) {
+    const text = el.textContent || '';
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'h1') return 80;
+    if (tag === 'h2') return 60;
+    if (tag === 'h3') return 45;
+    if (tag === 'pre') return Math.max(90, Math.min(300, (text.split('\n').length * 20) + 40));
+    if (tag === 'table') return 180;
+    if (tag === 'img' || el.querySelector('img')) return 240;
+    if (tag === 'blockquote') return 90;
+    // Estimate paragraphs: ~65 chars per line, ~26px line height
+    const lines = Math.max(1, Math.ceil(text.length / 65));
+    return lines * 26 + 18;
+  }
+
+  // Segment source elements into virtual pages
+  function paginateContent() {
+    pages = [];
+    const elements = Array.from(sourceData.children);
+    if (elements.length === 0) return;
+
+    // Page 1 includes the masthead and headline block
+    const p1Budget = 360; // Shorter budget on Page 1 due to masthead
+    const stdBudget = 620; // Standard page budget
+
+    let currentPageNodes = [];
+    let currentHeight = 0;
+    let budget = p1Budget;
+
+    for (let i = 0; i < elements.length; i++) {
+      const el = elements[i];
+      const h = estimateHeight(el);
+      const isHeading = /^H[1-4]$/i.test(el.tagName);
+
+      // Rule: Keep heading with next paragraph
+      let totalNeeded = h;
+      if (isHeading && i + 1 < elements.length) {
+        totalNeeded += estimateHeight(elements[i + 1]);
+      }
+
+      if (currentHeight + totalNeeded > budget && currentPageNodes.length > 0) {
+        // Finalize current page and start next
+        pages.push(currentPageNodes);
+        currentPageNodes = [];
+        currentHeight = 0;
+        budget = stdBudget;
+      }
+
+      currentPageNodes.push(el.cloneNode(true));
+      currentHeight += h;
+    }
+
+    if (currentPageNodes.length > 0) {
+      pages.push(currentPageNodes);
+    }
+  }
+
+  // Render a specific spread (left page = 2*index, right page = 2*index + 1)
+  function renderSpread(index) {
+    currentSpread = index;
+    const leftIdx = index * 2;
+    const rightIdx = index * 2 + 1;
+    const totalPages = pages.length;
+    const totalSpreads = Math.ceil(totalPages / 2);
+
+    // Populate Left Page
+    leftPageBody.innerHTML = '';
+    if (leftIdx === 0) {
+      // Prepend masthead and headline block to Page 1
+      const masthead = document.querySelector('.newspaper-masthead');
+      const headline = document.querySelector('.newspaper-headline-block');
+      if (masthead) leftPageBody.appendChild(masthead.cloneNode(true));
+      if (headline) leftPageBody.appendChild(headline.cloneNode(true));
+    }
+
+    const leftContent = document.createElement('div');
+    leftContent.className = 'newspaper-article-body';
+    if (leftIdx === 0) leftContent.classList.add('drop-cap-lead');
+
+    if (pages[leftIdx]) {
+      pages[leftIdx].forEach((node) => leftContent.appendChild(node.cloneNode(true)));
+    }
+    leftPageBody.appendChild(leftContent);
+    leftPageNum.textContent = `— PAGE ${leftIdx + 1} —`;
+
+    // Populate Right Page
+    rightPageBody.innerHTML = '';
+    const rightContent = document.createElement('div');
+    rightContent.className = 'newspaper-article-body';
+
+    if (rightIdx < totalPages && pages[rightIdx]) {
+      pages[rightIdx].forEach((node) => rightContent.appendChild(node.cloneNode(true)));
+      rightPageNum.textContent = `— PAGE ${rightIdx + 1} —`;
+    } else {
+      // Final blank / colophon page if odd number of pages
+      const colophon = document.createElement('div');
+      colophon.style.padding = '40px 20px';
+      colophon.style.textAlign = 'center';
+      colophon.style.fontFamily = 'var(--mono)';
+      colophon.style.fontSize = '10px';
+      colophon.style.color = 'var(--newspaper-muted)';
+      colophon.innerHTML = '✦<br><br>VANSH’S TECHNICAL CHRONICLE<br>DISPATCH COMPLETED · HOFSTRA UNIVERSITY';
+      rightContent.appendChild(colophon);
+      rightPageNum.textContent = '— END —';
+    }
+    rightPageBody.appendChild(rightContent);
+
+    // Update Toolbar Display
+    const displayEnd = Math.min(rightIdx + 1, totalPages);
+    pageDisplay.textContent = `Pages ${leftIdx + 1}–${displayEnd} of ${totalPages}`;
+    btnPrev.disabled = index === 0;
+    btnNext.disabled = index >= totalSpreads - 1;
+
+    // Update Progress Bar
+    const pct = Math.round(((index + 1) / totalSpreads) * 100);
+    progressBar.style.width = `${pct}%`;
+  }
+
+  // Initialize pagination
+  paginateContent();
+  if (currentMode === 'spread') {
+    renderSpread(0);
+  }
+
+  // Toolbar Handlers
+  btnPrev?.addEventListener('click', () => {
+    if (currentSpread > 0) {
+      renderSpread(currentSpread - 1);
+      window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+    }
+  });
+
+  btnNext?.addEventListener('click', () => {
+    const totalSpreads = Math.ceil(pages.length / 2);
+    if (currentSpread < totalSpreads - 1) {
+      renderSpread(currentSpread + 1);
+      window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+    }
+  });
+
+  // Mode Toggle (Facing Pages vs Continuous)
+  btnMode?.addEventListener('click', () => {
+    currentMode = currentMode === 'spread' ? 'continuous' : 'spread';
+    container.className = `newspaper-workspace mode-${currentMode}`;
+    if (modeFacingLabel && modeContinuousLabel) {
+      modeFacingLabel.style.display = currentMode === 'spread' ? 'inline' : 'none';
+      modeContinuousLabel.style.display = currentMode === 'continuous' ? 'inline' : 'none';
+    }
+    if (currentMode === 'spread') {
+      renderSpread(currentSpread);
+    }
+  });
+
+  // Font Size Adjusters
+  btnFontSmaller?.addEventListener('click', () => {
+    if (fontScale > 13.5) {
+      fontScale -= 1;
+      document.documentElement.style.setProperty('--newspaper-font-size', `${fontScale}px`);
+      paginateContent();
+      renderSpread(Math.min(currentSpread, Math.ceil(pages.length / 2) - 1));
+    }
+  });
+
+  btnFontLarger?.addEventListener('click', () => {
+    if (fontScale < 19.5) {
+      fontScale += 1;
+      document.documentElement.style.setProperty('--newspaper-font-size', `${fontScale}px`);
+      paginateContent();
+      renderSpread(Math.min(currentSpread, Math.ceil(pages.length / 2) - 1));
+    }
+  });
+
+  // Table of Contents Toggle
+  btnToc?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    tocMenu?.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.newspaper-toc-dropdown')) {
+      tocMenu?.classList.remove('open');
+    }
+  });
+
+  // Jump to Heading in Spread Mode
+  document.querySelectorAll('.newspaper-toc-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      const slug = item.dataset.slug;
+      if (!slug) return;
+      tocMenu?.classList.remove('open');
+
+      if (currentMode === 'spread') {
+        e.preventDefault();
+        // Locate which page contains this heading
+        let targetPage = 0;
+        for (let p = 0; p < pages.length; p++) {
+          const hasHeading = pages[p].some((node) => {
+            return node.id === slug || (node.querySelector && node.querySelector(`#${slug}`));
+          });
+          if (hasHeading) {
+            targetPage = p;
+            break;
+          }
+        }
+        renderSpread(Math.floor(targetPage / 2));
+        window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Keyboard Navigation: Left & Right arrows
+  window.addEventListener('keydown', (e) => {
+    const active = document.activeElement ? document.activeElement.tagName : '';
+    if (active === 'INPUT' || active === 'TEXTAREA') return;
+
+    if (currentMode === 'spread') {
+      if (e.key === 'ArrowLeft' && currentSpread > 0) {
+        btnPrev?.click();
+      } else if (e.key === 'ArrowRight' && currentSpread < Math.ceil(pages.length / 2) - 1) {
+        btnNext?.click();
+      }
+    }
+  });
+
+  // Responsive Resizing Check
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (window.innerWidth < 1100 && currentMode === 'spread') {
+        currentMode = 'continuous';
+        container.className = 'newspaper-workspace mode-continuous';
+        if (modeFacingLabel && modeContinuousLabel) {
+          modeFacingLabel.style.display = 'none';
+          modeContinuousLabel.style.display = 'inline';
+        }
+      }
+    }, 150);
+  });
+})();
+</script>

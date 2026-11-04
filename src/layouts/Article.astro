@@ -27,22 +27,23 @@ const h2Headings = headings.filter((h) => h.depth === 2);
   ogImageAlt={data.title}
 >
   <div class="shell article-shell">
-    <a class="back-link" href={url(`${type}/`)}><BackArrow /> Back to {type}</a>
+    <a class="back-link" href={url(`${type}/`)}><BackArrow /> Back to {type === 'writing' ? 'Field Notes' : 'Investigations'}</a>
     <header class="article-header">
       <div class="post-meta">
+        <span class="paper-kicker">{type === 'projects' ? 'PROJECT MONOGRAPH' : 'TECHNICAL DISPATCH'}</span>
         {data.category && <span class="project-category">{data.category}</span>}
         <span class="project-date">{dateLabel(data.date)}</span>
         {data.status && <StatusBadge status={data.status} size="compact" />}
       </div>
       <h1>{data.title}</h1>
-      <p>{data.description}</p>
+      <p class="article-abstract">{data.description}</p>
       <div class="tag-list">
         {data.tags.map((tag: string) => <span>{tag}</span>)}
       </div>
       {
         data.sample && (
           <div class="notice">
-            Sample article included with this site. Illustrative content, not a report of completed work.
+            <strong>Editorial Note:</strong> Sample article included with this site. Illustrative content, not a report of completed work.
           </div>
         )
       }
