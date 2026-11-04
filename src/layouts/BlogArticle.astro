@@ -40,36 +40,6 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
     <!-- Interactive Reading Controls Toolbar -->
     <aside class="newspaper-toolbar" aria-label="Newspaper reading controls">
       <div class="toolbar-group">
-        <button
-          type="button"
-          class="toolbar-btn"
-          id="btn-prev-page"
-          aria-label="Previous facing spread"
-          title="Previous spread (Left arrow)"
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M10 13L5 8l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span>Prev</span>
-        </button>
-
-        <span class="toolbar-page-label" id="toolbar-page-display">Pages 1–2</span>
-
-        <button
-          type="button"
-          class="toolbar-btn"
-          id="btn-next-page"
-          aria-label="Next facing spread"
-          title="Next spread (Right arrow)"
-        >
-          <span>Next</span>
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="toolbar-group">
         <!-- Table of Contents Dropdown -->
         {h2Headings.length > 0 && (
           <div class="newspaper-toc-dropdown">
@@ -93,8 +63,10 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
           </div>
         )}
 
-        <div class="toolbar-divider" aria-hidden="true"></div>
+        <span class="toolbar-page-label" id="continuous-read-time">EST. READ: ~4 MIN</span>
+      </div>
 
+      <div class="toolbar-group">
         <!-- Mode Toggle: Facing Pages vs Continuous -->
         <button
           type="button"
@@ -172,6 +144,41 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
       </article>
     </div>
 
+    <!-- Dedicated Bottom Page Navigation & Tracker -->
+    <nav class="newspaper-bottom-nav" id="newspaper-bottom-nav" aria-label="Page navigation">
+      <button
+        type="button"
+        class="bottom-nav-btn prev-btn"
+        id="btn-bottom-prev"
+        aria-label="Previous spread"
+        title="Previous spread (Left arrow)"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M10 13L5 8l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Previous Page</span>
+      </button>
+
+      <div class="bottom-nav-center">
+        <span class="bottom-page-label" id="bottom-page-display">Pages 1–2 of 4</span>
+        <div class="bottom-spread-dots" id="bottom-page-dots" aria-label="Spread pagination dots"></div>
+        <span class="bottom-nav-hint">Use ← and → arrow keys to flip</span>
+      </div>
+
+      <button
+        type="button"
+        class="bottom-nav-btn next-btn"
+        id="btn-bottom-next"
+        aria-label="Next spread"
+        title="Next spread (Right arrow)"
+      >
+        <span>Next Page</span>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </nav>
+
     <!-- Continuous Reading View (Mobile & Optional Single-Column Mode) -->
     <article class="newspaper-continuous" id="newspaper-continuous-view">
       <!-- Masthead on Top -->
@@ -228,10 +235,11 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
   const rightPageBody = document.getElementById('right-page-body');
   const leftPageNum = document.getElementById('left-page-num');
   const rightPageNum = document.getElementById('right-page-num');
-  const pageDisplay = document.getElementById('toolbar-page-display');
+  const bottomDisplay = document.getElementById('bottom-page-display');
+  const bottomDots = document.getElementById('bottom-page-dots');
+  const btnBottomPrev = document.getElementById('btn-bottom-prev');
+  const btnBottomNext = document.getElementById('btn-bottom-next');
   const progressBar = document.getElementById('reading-progress-bar');
-  const btnPrev = document.getElementById('btn-prev-page');
-  const btnNext = document.getElementById('btn-next-page');
   const btnMode = document.getElementById('btn-mode-toggle');
   const modeFacingLabel = btnMode ? btnMode.querySelector('.mode-label-facing') : null;
   const modeContinuousLabel = btnMode ? btnMode.querySelector('.mode-label-continuous') : null;
@@ -255,7 +263,7 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
   container.className = `newspaper-workspace mode-${currentMode}`;
 
   // Font scale state
-  let fontScale = 15.5;
+  let fontScale = 16;
 
   // Pagination data
   let pages = [];
@@ -269,7 +277,9 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
     const style = window.getComputedStyle(clone);
     const marginTop = parseFloat(style.marginTop) || 0;
     const marginBottom = parseFloat(style.marginBottom) || 0;
-    const total = rect.height + marginTop + marginBottom;
+    const hasImg = clone.tagName === 'IMG' || clone.querySelector('img');
+    const measuredHeight = hasImg ? Math.max(220, rect.height) : rect.height;
+    const total = measuredHeight + marginTop + marginBottom;
     probe.removeChild(clone);
     return Math.max(18, total);
   }
@@ -277,11 +287,19 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
   // Segment source elements into virtual pages with real measurement
   function paginateContent() {
     pages = [];
-    const elements = Array.from(sourceData.children);
-    if (elements.length === 0) return;
+    let rawElements = Array.from(sourceData.children);
+    if (rawElements.length === 0) return;
+
+    // Filter out redundant leading H1 that matches article title
+    if (rawElements.length > 0 && rawElements[0].tagName.toLowerCase() === 'h1') {
+      rawElements = rawElements.slice(1);
+    }
 
     // Create an invisible measurement probe styled identical to page content
-    const colWidth = leftPageBody.clientWidth || 500;
+    const colWidth = leftPageBody.clientWidth > 100
+      ? leftPageBody.clientWidth
+      : Math.max(480, Math.min(640, Math.floor((container.clientWidth - 120) / 2)));
+
     const probe = document.createElement('div');
     probe.className = 'newspaper-article-body';
     probe.style.cssText =
@@ -297,25 +315,67 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
     if (masthead) headerHeight += measureElement(masthead, probe);
     if (headline) headerHeight += measureElement(headline, probe);
 
-    const stdBudget = 580; // Standard page content height budget
-    const p1Budget = Math.max(160, stdBudget - headerHeight);
+    const stdBudget = 800; // Generous broadsheet page height budget
+    const p1Budget = Math.max(500, stdBudget - headerHeight);
 
     let currentPageNodes = [];
     let currentHeight = 0;
     let budget = p1Budget;
 
-    for (let i = 0; i < elements.length; i++) {
-      const el = elements[i];
+    for (let i = 0; i < rawElements.length; i++) {
+      const el = rawElements[i];
+      const tag = el.tagName.toLowerCase();
       const h = measureElement(el, probe);
-      const isHeading = /^H[1-4]$/i.test(el.tagName);
+      const isHeading = /^h[1-4]$/i.test(tag);
 
       // Rule: Keep heading with next paragraph
       let totalNeeded = h;
-      if (isHeading && i + 1 < elements.length) {
-        totalNeeded += measureElement(elements[i + 1], probe);
+      if (isHeading && i + 1 < rawElements.length) {
+        totalNeeded += measureElement(rawElements[i + 1], probe);
       }
 
-      if (currentHeight + totalNeeded > budget && currentPageNodes.length > 0) {
+      // Allow 8% soft overflow for text elements to prevent early awkward breaks
+      const softBudget = isHeading ? budget : budget * 1.08;
+
+      if (currentHeight + totalNeeded > softBudget && currentPageNodes.length > 0) {
+        // Attempt clean split for multi-item lists (ul / ol)
+        if ((tag === 'ul' || tag === 'ol') && el.children.length > 1 && currentHeight < budget * 0.8) {
+          const items = Array.from(el.children);
+          const firstList = document.createElement(tag);
+          const secondList = document.createElement(tag);
+          const initialStart = tag === 'ol' ? (parseInt(el.getAttribute('start') || '1', 10) || 1) : 1;
+          if (tag === 'ol') firstList.setAttribute('start', String(initialStart));
+
+          let splitIdx = 0;
+          let listAccumHeight = 0;
+          for (let j = 0; j < items.length; j++) {
+            const itemH = measureElement(items[j], probe);
+            if (currentHeight + listAccumHeight + itemH <= budget) {
+              firstList.appendChild(items[j].cloneNode(true));
+              listAccumHeight += itemH;
+              splitIdx = j + 1;
+            } else {
+              break;
+            }
+          }
+
+          if (splitIdx > 0 && splitIdx < items.length) {
+            currentPageNodes.push(firstList);
+            pages.push(currentPageNodes);
+            currentPageNodes = [];
+            currentHeight = 0;
+            budget = stdBudget;
+
+            for (let j = splitIdx; j < items.length; j++) {
+              secondList.appendChild(items[j].cloneNode(true));
+            }
+            if (tag === 'ol') secondList.setAttribute('start', String(initialStart + splitIdx));
+            currentPageNodes.push(secondList);
+            currentHeight = measureElement(secondList, probe);
+            continue;
+          }
+        }
+
         // Finalize current page and start next
         pages.push(currentPageNodes);
         currentPageNodes = [];
@@ -371,29 +431,60 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
     if (rightIdx < totalPages && pages[rightIdx]) {
       pages[rightIdx].forEach((node) => rightContent.appendChild(node.cloneNode(true)));
       rightPageNum.textContent = `— PAGE ${rightIdx + 1} —`;
+
+      // End ornament if dispatch completes on this page
+      if (rightIdx === totalPages - 1) {
+        const endOrnament = document.createElement('div');
+        endOrnament.className = 'article-end-ornament';
+        endOrnament.innerHTML = '<span>✦ ✦ ✦</span><small>END OF DISPATCH</small>';
+        rightContent.appendChild(endOrnament);
+      }
     } else {
-      // Final blank / colophon page if odd number of pages
+      // Dignified editorial colophon for final odd spread
       const colophon = document.createElement('div');
-      colophon.style.padding = '40px 20px';
-      colophon.style.textAlign = 'center';
-      colophon.style.fontFamily = 'var(--mono)';
-      colophon.style.fontSize = '10px';
-      colophon.style.color = 'var(--newspaper-muted)';
-      colophon.innerHTML = '✦<br><br>VANSH’S TECHNICAL CHRONICLE<br>DISPATCH COMPLETED · HOFSTRA UNIVERSITY';
+      colophon.className = 'article-end-colophon';
+      colophon.innerHTML = `
+        <div class="colophon-inner">
+          <div class="colophon-mark">✦</div>
+          <div class="colophon-title">THE TECHNICAL CHRONICLE</div>
+          <div class="colophon-sub">DISPATCH COMPLETED · HOFSTRA UNIVERSITY</div>
+          <div class="colophon-rule"></div>
+          <div class="colophon-desc">Written by Vansh Datta. Documenting aerospace engineering, manufacturing tooling, and open-source software projects.</div>
+        </div>
+      `;
       rightContent.appendChild(colophon);
       rightPageNum.textContent = '— END —';
     }
     rightPageBody.appendChild(rightContent);
 
-    // Update Toolbar Display
+    // Update Bottom Navigation & Tracker
     const displayEnd = Math.min(rightIdx + 1, totalPages);
-    pageDisplay.textContent = `Pages ${leftIdx + 1}–${displayEnd} of ${totalPages}`;
-    btnPrev.disabled = index === 0;
-    btnNext.disabled = index >= totalSpreads - 1;
+    if (bottomDisplay) {
+      bottomDisplay.textContent = `Pages ${leftIdx + 1}–${displayEnd} of ${totalPages}`;
+    }
+
+    // Render clickable spread dots in bottom nav
+    if (bottomDots) {
+      bottomDots.innerHTML = '';
+      for (let s = 0; s < totalSpreads; s++) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = `spread-dot ${s === index ? 'active' : ''}`;
+        dot.setAttribute('aria-label', `Go to spread ${s + 1}`);
+        dot.addEventListener('click', () => {
+          renderSpread(s);
+          window.scrollTo({ top: container.offsetTop - 70, behavior: 'smooth' });
+        });
+        bottomDots.appendChild(dot);
+      }
+    }
+
+    if (btnBottomPrev) btnBottomPrev.disabled = index === 0;
+    if (btnBottomNext) btnBottomNext.disabled = index >= totalSpreads - 1;
 
     // Update Progress Bar
     const pct = Math.round(((index + 1) / totalSpreads) * 100);
-    progressBar.style.width = `${pct}%`;
+    if (progressBar) progressBar.style.width = `${pct}%`;
   }
 
   // Initialize pagination
@@ -402,19 +493,19 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
     renderSpread(0);
   }
 
-  // Toolbar Handlers
-  btnPrev?.addEventListener('click', () => {
+  // Bottom Navigation Handlers
+  btnBottomPrev?.addEventListener('click', () => {
     if (currentSpread > 0) {
       renderSpread(currentSpread - 1);
-      window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+      window.scrollTo({ top: container.offsetTop - 70, behavior: 'smooth' });
     }
   });
 
-  btnNext?.addEventListener('click', () => {
+  btnBottomNext?.addEventListener('click', () => {
     const totalSpreads = Math.ceil(pages.length / 2);
     if (currentSpread < totalSpreads - 1) {
       renderSpread(currentSpread + 1);
-      window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+      window.scrollTo({ top: container.offsetTop - 70, behavior: 'smooth' });
     }
   });
 
@@ -433,7 +524,7 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
 
   // Font Size Adjusters
   btnFontSmaller?.addEventListener('click', () => {
-    if (fontScale > 13.5) {
+    if (fontScale > 14) {
       fontScale -= 1;
       document.documentElement.style.setProperty('--newspaper-font-size', `${fontScale}px`);
       paginateContent();
@@ -442,7 +533,7 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
   });
 
   btnFontLarger?.addEventListener('click', () => {
-    if (fontScale < 19.5) {
+    if (fontScale < 20) {
       fontScale += 1;
       document.documentElement.style.setProperty('--newspaper-font-size', `${fontScale}px`);
       paginateContent();
@@ -483,7 +574,7 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
           }
         }
         renderSpread(Math.floor(targetPage / 2));
-        window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+        window.scrollTo({ top: container.offsetTop - 70, behavior: 'smooth' });
       }
     });
   });
@@ -495,9 +586,9 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
 
     if (currentMode === 'spread') {
       if (e.key === 'ArrowLeft' && currentSpread > 0) {
-        btnPrev?.click();
+        btnBottomPrev?.click();
       } else if (e.key === 'ArrowRight' && currentSpread < Math.ceil(pages.length / 2) - 1) {
-        btnNext?.click();
+        btnBottomNext?.click();
       }
     }
   });

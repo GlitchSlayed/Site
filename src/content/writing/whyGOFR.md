@@ -6,7 +6,6 @@ tags: ["Linux", "Fedora", "Open Source", "Projects"]
 sample: false
 featured: true
 ---
-# GOFR: Why I'm Planning My Own Fedora Remix
 
 I've been using Fedora as my primary Linux distribution for a while now, and overall, I've grown to really appreciate it. It's modern, relatively up to date, stable enough for everyday use, and generally strikes a good balance between adopting new Linux technologies and maintaining a reliable desktop experience.
 

@@ -14,8 +14,8 @@
   --newspaper-rule-strong: #1C1B18;
   --newspaper-crease: #DDD8CB;
   --newspaper-accent: #BA3D18;
-  --newspaper-font-size: 15.5px;
-  --newspaper-line-height: 1.72;
+  --newspaper-font-size: 16px;
+  --newspaper-line-height: 1.75;
 }
 
 html[data-theme='dark'] {
@@ -35,7 +35,7 @@ html[data-theme='dark'] {
    ========================================================================== */
 
 .newspaper-workspace {
-  max-width: 1320px;
+  max-width: 1420px;
   margin: 0 auto;
   padding: 24px 24px 64px;
 }
@@ -224,11 +224,11 @@ html[data-theme='dark'] {
    ========================================================================== */
 
 .newspaper-masthead {
-  padding: 14px 0 18px;
-  margin-bottom: 24px;
+  padding: 10px 0 14px;
+  margin-bottom: 16px;
   text-align: center;
-  border-top: 2.5px solid var(--newspaper-rule-strong);
-  border-bottom: 2.5px solid var(--newspaper-rule-strong);
+  border-top: 2px solid var(--newspaper-rule-strong);
+  border-bottom: 2px solid var(--newspaper-rule-strong);
   position: relative;
 }
 
@@ -237,7 +237,7 @@ html[data-theme='dark'] {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -5px;
+  bottom: -4px;
   height: 1px;
   background: var(--newspaper-rule-strong);
 }
@@ -247,33 +247,33 @@ html[data-theme='dark'] {
   justify-content: space-between;
   align-items: center;
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 8px;
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--newspaper-muted);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--newspaper-rule);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .masthead-nameplate {
   font-family: var(--serif);
-  font-size: clamp(28px, 4.2vw, 46px);
+  font-size: clamp(24px, 3.2vw, 36px);
   font-weight: 600;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
   line-height: 1.05;
   color: var(--newspaper-ink);
   text-transform: uppercase;
-  margin: 4px 0 8px;
+  margin: 2px 0 6px;
 }
 
 .masthead-tagline {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 1.4px;
+  font-size: 8.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--newspaper-muted);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .masthead-meta-bar {
@@ -282,10 +282,10 @@ html[data-theme='dark'] {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding-top: 8px;
+  padding-top: 6px;
   border-top: 1px solid var(--newspaper-rule);
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 8px;
   letter-spacing: 0.8px;
   color: var(--newspaper-muted);
   text-transform: uppercase;
@@ -302,26 +302,26 @@ html[data-theme='dark'] {
    ========================================================================== */
 
 .newspaper-headline-block {
-  margin-bottom: 22px;
-  padding-bottom: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--newspaper-rule);
 }
 
 .newspaper-article-title {
   font-family: var(--serif);
-  font-size: clamp(26px, 3.4vw, 38px);
+  font-size: clamp(24px, 2.8vw, 34px);
   font-weight: 500;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.5px;
   line-height: 1.15;
   color: var(--newspaper-ink);
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 .newspaper-deck {
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 16px;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.45;
   color: var(--newspaper-muted);
   margin: 0;
   max-width: 680px;
@@ -339,7 +339,7 @@ html[data-theme='dark'] {
   border-radius: 4px;
   box-shadow: 0 6px 28px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
   position: relative;
-  min-height: 720px;
+  min-height: 780px;
 }
 
 /* Center Gutter Fold Effect */
@@ -361,9 +361,10 @@ html[data-theme='dark'] .newspaper-page-right {
 }
 
 .newspaper-page {
-  padding: 32px 36px 36px;
+  padding: 34px 44px 28px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   height: 100%;
   box-sizing: border-box;
 }
@@ -375,7 +376,7 @@ html[data-theme='dark'] .newspaper-page-right {
   align-items: center;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--newspaper-rule);
-  margin-bottom: 22px;
+  margin-bottom: 20px;
   font-family: var(--mono);
   font-size: 8.5px;
   letter-spacing: 0.9px;
@@ -395,7 +396,6 @@ html[data-theme='dark'] .newspaper-page-right {
   font-size: var(--newspaper-font-size);
   line-height: var(--newspaper-line-height);
   color: var(--newspaper-ink);
-  min-height: 480px;
 }
 
 /* Page Folio (Bottom Number) */
@@ -569,8 +569,188 @@ html[data-theme='dark'] .newspaper-page-right {
   display: none;
 }
 
-.mode-continuous .newspaper-spread {
+.mode-continuous .newspaper-spread,
+.mode-continuous .newspaper-bottom-nav {
   display: none;
+}
+
+/* ==========================================================================
+   Bottom Page Navigation Bar & Tracker
+   ========================================================================== */
+
+.newspaper-bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 12px 24px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.bottom-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--newspaper-paper);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 9px 18px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.bottom-nav-btn:hover:not(:disabled) {
+  background: var(--hover);
+  border-color: var(--border-strong);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.bottom-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bottom-nav-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.bottom-page-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: var(--foreground);
+}
+
+.bottom-spread-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.spread-dot {
+  width: 20px;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.spread-dot:hover {
+  background: var(--muted);
+}
+
+.spread-dot.active {
+  width: 34px;
+  background: var(--accent);
+}
+
+.bottom-nav-hint {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--subtle);
+  letter-spacing: 0.4px;
+}
+
+/* ==========================================================================
+   Editorial End-of-Article Ornaments & Colophon
+   ========================================================================== */
+
+.article-end-ornament {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--newspaper-rule);
+  text-align: center;
+  font-family: var(--mono);
+}
+
+.article-end-ornament span {
+  display: block;
+  font-size: 13px;
+  color: var(--newspaper-accent);
+  letter-spacing: 6px;
+  margin-bottom: 4px;
+}
+
+.article-end-ornament small {
+  font-size: 8.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--newspaper-muted);
+}
+
+.article-end-colophon {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.colophon-inner {
+  border: 1px solid var(--newspaper-rule);
+  padding: 32px 28px;
+  text-align: center;
+  background: var(--newspaper-paper-alt);
+  border-radius: 4px;
+  max-width: 380px;
+}
+
+.colophon-mark {
+  font-size: 18px;
+  color: var(--newspaper-accent);
+  margin-bottom: 12px;
+}
+
+.colophon-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--newspaper-ink);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.colophon-sub {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  color: var(--newspaper-muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.colophon-rule {
+  width: 48px;
+  height: 1px;
+  background: var(--newspaper-rule-strong);
+  margin: 0 auto 16px;
+}
+
+.colophon-desc {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--newspaper-muted);
+  font-style: italic;
 }
 
 /* ==========================================================================
