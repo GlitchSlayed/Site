@@ -4,12 +4,94 @@ import ArrowIcon from '../components/ArrowIcon.astro';
 import { url } from '../config';
 ---
 
-<Base title="404 | Off trajectory" ogImagePath="og/404.png" ogImageAlt="Page not found">
-  <section class="shell page-section">
-    <div class="eyebrow">404 / OFF TRAJECTORY</div>
-    <h1 class="page-title">A small course<br />correction.</h1>
-    <p class="page-description">That page doesn’t exist. Let’s get you back to familiar ground.</p>
-    <a class="button primary" href={url()}>Back home <ArrowIcon /></a>
+<Base title="404 | Trajectory Off Course" ogImagePath="og/404.png" ogImageAlt="Page not found">
+  <section class="shell page-section error-section">
+    <div class="error-container">
+      <div class="eyebrow">
+        <span class="status-dot"></span>
+        <span>TELEMETRY ERROR // 404 DEVIATION</span>
+      </div>
+
+      <h1 class="page-title error-title">
+        Trajectory deviated from <br />
+        <span class="accent-word"><em>charted airspace.</em></span>
+      </h1>
+
+      <p class="page-description">
+        The requested coordinate or document does not exist in the engineering archives or field dispatches. Let's recalculate your vector and return to familiar coordinates.
+      </p>
+
+      <div class="error-telemetry-box">
+        <div class="telemetry-row">
+          <span>VECTOR STATUS:</span>
+          <span class="telemetry-warn">UNRESOLVED COORDINATE</span>
+        </div>
+        <div class="telemetry-row">
+          <span>RECOMMENDED ACTION:</span>
+          <span>RETURN TO BASE TRAJECTORY</span>
+        </div>
+      </div>
+
+      <div class="error-actions">
+        <a class="button primary" href={url()}>
+          Return Home <ArrowIcon />
+        </a>
+        <a class="button" href={url('projects/')}>
+          Engineering Monographs <ArrowIcon />
+        </a>
+        <a class="text-link" href={url('writing/')}>
+          Field Dispatches <ArrowIcon />
+        </a>
+      </div>
+    </div>
   </section>
 </Base>
 
+<style>
+  .error-section {
+    padding: 60px 0 80px;
+    max-width: 680px;
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .error-title {
+    margin: 16px 0 20px;
+  }
+
+  .error-telemetry-box {
+    margin: 28px 0 32px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .telemetry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--muted);
+  }
+
+  .telemetry-warn {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .error-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+</style>

@@ -46,8 +46,9 @@
 }
 
 .eng-demo h1 {
-  font-family: var(--serif);
+  font-family: var(--serif-display);
   font-size: 26px;
+  font-weight: 550;
   letter-spacing: -0.5px;
   margin: 0 0 8px 0;
 }
@@ -481,9 +482,9 @@
 }
 
 .eng-plot-title {
-  font-family: var(--serif);
+  font-family: var(--serif-display);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 550;
   margin: 0;
   letter-spacing: -0.3px;
 }

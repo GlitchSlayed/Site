@@ -2,40 +2,298 @@
 import Base from '../../layouts/Base.astro';
 import ArrowIcon from '../../components/ArrowIcon.astro';
 import SearchIcon from '../../components/SearchIcon.astro';
-import {getCollection} from 'astro:content';
-import {url,dateLabel} from '../../config';
-const posts=(await getCollection('writing',({data})=>!data.draft)).sort((a,b)=>+b.data.date-+a.data.date);
-const tags=[...new Set(posts.flatMap(p=>p.data.tags))];
+import SparkIcon from '../../components/SparkIcon.astro';
+import { getCollection } from 'astro:content';
+import { url, dateLabel } from '../../config';
+
+const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort(
+  (a, b) => +b.data.date - +a.data.date
+);
+
+const featuredPost = posts[0];
+const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
 ---
-<Base title="Writing | Vansh" ogImagePath="og/writing.png" ogImageAlt="Writing by Vansh"><section class="shell page-section"><div class="eyebrow">THE NOTEBOOK</div><h1 class="page-title">Writing.</h1><p class="page-description">Notes on aerospace, engineering, and the tools that help us understand them.</p><div class="writing-tools"><button type="button" class="search-box search-box-trigger" id="open-global-search" aria-label="Search all writing and projects"><SearchIcon/><span>Search writing & projects…</span><kbd class="search-box-kbd">⌘K</kbd></button><div class="filter-list" aria-label="Filter by topic"><button class="filter active" data-tag="all" aria-pressed="true">All</button>{tags.map(tag=><button class="filter" data-tag={tag} aria-pressed="false">{tag}</button>)}</div></div><p id="result-count" class="result-count" aria-live="polite">{posts.length} articles</p><div class="post-list">{posts.map(post=><article class="search-item" data-tags={JSON.stringify(post.data.tags)}><a class="post-row" href={url(`writing/${post.id}/`)}><div><div class="post-meta"><span>{post.data.tags.join(' / ')}</span><span>{dateLabel(post.data.date)}</span>{post.data.sample && <span class="sample-label">Sample</span>}</div><h2>{post.data.title}</h2><p>{post.data.description}</p></div><span class="row-arrow"><ArrowIcon/></span></a></article>)}</div><p id="empty" hidden>No articles match this topic.</p></section></Base>
+
+<Base title="Writing & Field Notes | Vansh" ogImagePath="og/writing.png" ogImageAlt="Writing by Vansh">
+  <section class="shell page-section">
+    <!-- Header with Archival / Technical Eyebrow -->
+    <div class="writing-header">
+      <div class="eyebrow">
+        <span class="status-dot"></span>
+        <span>FIELD DISPATCHES // VOL. 2026 · ESSAYS &amp; NOTES</span>
+      </div>
+      <h1 class="page-title">
+        Writing on flight, fabrication, <br />
+        <span class="accent-word"><em>and computing.</em></span>
+      </h1>
+      <p class="page-description">
+        Notes on aerodynamic principles, manufacturing shop-floor insights, software craftsmanship, and Linux workflows. Articles feature an interactive newspaper reader with two facing pages.
+      </p>
+    </div>
+
+    <!-- Search Box and Filter Controls -->
+    <div class="writing-tools-strip">
+      <button
+        type="button"
+        class="search-box search-box-trigger"
+        id="open-global-search"
+        aria-label="Search all writing and projects"
+      >
+        <SearchIcon />
+        <span>Search dispatches &amp; projects…</span>
+        <kbd class="search-box-kbd">⌘K</kbd>
+      </button>
+
+      <div class="filter-list" aria-label="Filter dispatches by topic">
+        <button class="filter active" data-tag="all" aria-pressed="true">
+          All ({posts.length})
+        </button>
+        {tags.map((tag) => (
+          <button class="filter" data-tag={tag} aria-pressed="false">
+            {tag}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="dispatch-count-bar">
+      <span id="result-count" class="result-count" aria-live="polite">
+        Showing all {posts.length} dispatches
+      </span>
+      <span class="reader-tip">
+        <SparkIcon /> Blog posts open in newspaper broadsheet mode on desktop
+      </span>
+    </div>
+
+    <!-- Featured Lead Story (Magazine Style) -->
+    {featuredPost && (
+      <div class="lead-dispatch-card search-item" data-tags={JSON.stringify(featuredPost.data.tags)}>
+        <div class="lead-dispatch-badge">
+          <span>FEATURED DISPATCH // LATEST ISSUE</span>
+        </div>
+        <div class="lead-dispatch-body">
+          <div class="post-meta">
+            <span class="project-category">{featuredPost.data.tags[0]}</span>
+            <span class="project-date">{dateLabel(featuredPost.data.date)}</span>
+            {featuredPost.data.sample && <span class="sample-label">Sample</span>}
+          </div>
+          <h2>
+            <a href={url(`writing/${featuredPost.id}/`)}>
+              {featuredPost.data.title}
+            </a>
+          </h2>
+          <p class="lead-dispatch-excerpt">
+            {featuredPost.data.description}
+          </p>
+          <div class="lead-dispatch-footer">
+            <span class="author-byline">By Vansh Datta · Hofstra Aerospace</span>
+            <a class="button primary" href={url(`writing/${featuredPost.id}/`)}>
+              Read Article <ArrowIcon />
+            </a>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Editorial Story Archive List -->
+    <div class="archive-list-heading">
+      <div class="eyebrow">CHRONOLOGICAL DISPATCH ARCHIVE</div>
+    </div>
+
+    <div class="post-list" id="dispatch-archive">
+      {posts.map((post) => (
+        <article class="search-item" data-tags={JSON.stringify(post.data.tags)}>
+          <a class="post-row" href={url(`writing/${post.id}/`)}>
+            <div class="post-content">
+              <div class="post-meta">
+                <span class="project-category">{post.data.tags[0]}</span>
+                {post.data.tags.length > 1 && <span>/ {post.data.tags.slice(1).join(' · ')}</span>}
+                <span class="project-date">{dateLabel(post.data.date)}</span>
+                {post.data.sample && <span class="sample-label">Sample</span>}
+              </div>
+              <h3>{post.data.title}</h3>
+              <p>{post.data.description}</p>
+            </div>
+            <span class="row-arrow"><ArrowIcon /></span>
+          </a>
+        </article>
+      ))}
+    </div>
+
+    <p id="empty" class="empty-state" hidden>No dispatches match this topic filter.</p>
+  </section>
+</Base>
+
+<style>
+  .writing-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .writing-tools-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .dispatch-count-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .result-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .reader-tip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  /* Featured Lead Dispatch */
+  .lead-dispatch-card {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    position: relative;
+    margin-bottom: 40px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  }
+
+  .lead-dispatch-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+
+  .lead-dispatch-badge {
+    padding: 8px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .lead-dispatch-body {
+    padding: 32px;
+  }
+
+  .lead-dispatch-body h2 {
+    font-family: var(--serif-display);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 550;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin: 8px 0 14px;
+  }
+
+  .lead-dispatch-body h2 a {
+    text-decoration: none;
+    color: var(--foreground);
+    transition: color 0.16s ease;
+  }
+
+  .lead-dispatch-body h2 a:hover {
+    color: var(--accent);
+  }
+
+  .lead-dispatch-excerpt {
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 800px;
+    margin-bottom: 24px;
+  }
+
+  .lead-dispatch-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .author-byline {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--subtle);
+  }
+
+  .archive-list-heading {
+    margin: 36px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .post-content {
+    flex: 1;
+  }
+
+  @media (max-width: 860px) {
+    .lead-dispatch-body {
+      padding: 22px 18px;
+    }
+  }
+</style>
+
 <script>
-let selected='all';
-const buttons=document.querySelectorAll<HTMLButtonElement>('[data-tag]');
-const searchTrigger=document.querySelector<HTMLButtonElement>('#open-global-search');
+  let selected = 'all';
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-tag]');
+  const searchTrigger = document.querySelector<HTMLButtonElement>('#open-global-search');
 
-searchTrigger?.addEventListener('click', () => {
-  window.dispatchEvent(new CustomEvent('open-search'));
-});
-
-function filter(){
-  let count=0;
-  document.querySelectorAll<HTMLElement>('.search-item').forEach(item=>{
-    const matches = (selected==='all' || JSON.parse(item.dataset.tags||'[]').includes(selected));
-    item.hidden=!matches;
-    if(matches) count++;
+  searchTrigger?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('open-search'));
   });
-  const label=document.querySelector('#result-count');
-  if(label) label.textContent=`${count} article${count===1?'':'s'}`;
-  const empty=document.querySelector<HTMLElement>('#empty');
-  if(empty) empty.hidden=count>0;
-}
 
-buttons.forEach(button=>button.addEventListener('click',()=>{
-  selected=button.dataset.tag||'all';
-  buttons.forEach(b=>{
-    b.classList.toggle('active',b===button);
-    b.setAttribute('aria-pressed',String(b===button));
-  });
-  filter();
-}));
+  function filter() {
+    let count = 0;
+    document.querySelectorAll<HTMLElement>('.search-item').forEach((item) => {
+      const tags: string[] = JSON.parse(item.dataset.tags || '[]');
+      const matches = selected === 'all' || tags.includes(selected);
+      item.hidden = !matches;
+      if (matches) count++;
+    });
+    const label = document.querySelector('#result-count');
+    if (label) label.textContent = `Showing ${count} dispatch${count === 1 ? '' : 'es'}`;
+    const empty = document.querySelector<HTMLElement>('#empty');
+    if (empty) empty.hidden = count > 0;
+  }
+
+  buttons.forEach((button) =>
+    button.addEventListener('click', () => {
+      selected = button.dataset.tag || 'all';
+      buttons.forEach((b) => {
+        const active = b === button;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      filter();
+    })
+  );
 </script>

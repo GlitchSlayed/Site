@@ -94,7 +94,7 @@ const secondaryProjects = projects.filter((p) => p.id !== featuredProject.id);
     </div>
   </div>
 
-  <!-- Section 01: Selected Investigations (Asymmetrical Editorial Layout) -->
+  <!-- Section 01: Selected Investigations (Asymmetrical Editorial Showcase) -->
   <section class="shell section">
     <div class="section-heading">
       <div>
@@ -129,15 +129,70 @@ const secondaryProjects = projects.filter((p) => p.id !== featuredProject.id);
       </div>
     </div>
     <p class="section-note">
-      * Project pages include aerospace engineering studies, aerodynamic models, and open-source hobby software projects.
+      * Engineering projects include aerodynamic studies, manufacturing tooling, and open-source hobby software utilities.
     </p>
   </section>
 
-  <!-- Section 02: Recent Field Notes & Writing -->
+  <!-- Section 02: Active Workbench Investigations -->
+  <section class="shell section workbench-section">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow"><span class="section-num">§ 02</span> THE WORKBENCH</div>
+        <h2>Active Investigations &amp; Methods</h2>
+      </div>
+      <span class="eyebrow-tag">LAB STATUS: OPERATIONAL</span>
+    </div>
+
+    <div class="workbench-grid">
+      <div class="workbench-card">
+        <div class="workbench-num">INV-01</div>
+        <div class="workbench-tag">AERODYNAMICS</div>
+        <h3>Blended-Wing Body Circulation</h3>
+        <p>
+          Investigating spanwise circulation distributions on low-sweep blended-wing configurations. Balancing lift-to-drag optimization against pitch stability and high-angle stall margin using vortex-lattice and lifting-line methods.
+        </p>
+        <div class="workbench-specs">
+          <span>MODEL: BWB-60</span>
+          <span>AR: 7.2</span>
+          <span>METHOD: VLM / XFLR5</span>
+        </div>
+      </div>
+
+      <div class="workbench-card">
+        <div class="workbench-num">INV-02</div>
+        <div class="workbench-tag">FABRICATION &amp; TOOLING</div>
+        <h3>Shop-Floor Precision &amp; Tolerancing</h3>
+        <p>
+          Applying lessons from aerospace hydraulic actuator manufacturing: designing modular workholding fixtures, custom inspection gages, and rigid test jigs where deflection and repeatability dictate test validity.
+        </p>
+        <div class="workbench-specs">
+          <span>TOLERANCE: ±0.0005 in</span>
+          <span>FOCUS: CNC FIXTURING</span>
+          <span>CAD: SOLIDWORKS</span>
+        </div>
+      </div>
+
+      <div class="workbench-card">
+        <div class="workbench-num">INV-03</div>
+        <div class="workbench-tag">HOBBY SOFTWARE</div>
+        <h3>Linux Workflows &amp; Tooling</h3>
+        <p>
+          Building fast, self-contained desktop utilities and simulation pipelines on Fedora Linux. Emphasizing clean terminal ergonomics, scriptable data processing with NumPy/SciPy, and local-first software.
+        </p>
+        <div class="workbench-specs">
+          <span>OS: FEDORA LINUX</span>
+          <span>STACK: PYTHON / C / RUST</span>
+          <span>TOOLING: CLI FIRST</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 03: Recent Field Notes & Writing -->
   <section class="shell section writing-section">
     <div class="section-heading">
       <div>
-        <div class="eyebrow"><span class="section-num">§ 02</span> TECHNICAL WRITING</div>
+        <div class="eyebrow"><span class="section-num">§ 03</span> TECHNICAL WRITING</div>
         <h2>Field Notes &amp; Dispatches</h2>
       </div>
       <a class="text-link" href={url('writing/')}>All writing ({posts.length}) <ArrowIcon /></a>
@@ -145,12 +200,12 @@ const secondaryProjects = projects.filter((p) => p.id !== featuredProject.id);
     <PostList posts={posts.slice(0, 3)} />
   </section>
 
-  <!-- Section 03: Background & About Strip -->
+  <!-- Section 04: Perspective & Background Strip -->
   <section class="shell about-strip">
-    <div class="eyebrow"><span class="section-num">§ 03</span> BACKGROUND</div>
-    <h2>Connecting theory to things you can actually build.</h2>
+    <div class="eyebrow"><span class="section-num">§ 04</span> PERSPECTIVE</div>
+    <h2>Built on first principles. Grounded on the shop floor.</h2>
     <p class="hero-description">
-      I’m a mechanical engineering student concentrating in aerospace at Hofstra. Working on manufacturing tooling for aerospace actuators showed me how much detail goes into turning a CAD model into a working, measurable part. Outside of class and the shop, I build hobby software projects and tinker with Linux systems.
+      Whether analyzing lifting-line circulation or designing CNC workholding fixtures, good engineering requires respecting both the governing equations and the realities of physical fabrication. Outside of class and the shop, I build hobby software projects and tinker with Linux systems.
     </p>
     <a class="text-link" href={url('about/')}>More about my background and projects <ArrowIcon /></a>
   </section>
