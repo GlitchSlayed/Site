@@ -457,18 +457,17 @@ html[data-theme='dark'] .newspaper-page-right {
   color: var(--newspaper-ink);
 }
 
-/* Classic Drop Cap */
-.drop-cap-lead > p:first-of-type::first-letter,
-.newspaper-article-body > p:first-of-type::first-letter {
+/* Editorial Opening Initial Cap (Strictly Page 1 Lead Paragraph Only) */
+.drop-cap-lead > p:first-of-type::first-letter {
   float: left;
   font-family: var(--serif);
-  font-size: 3.4em;
-  line-height: 0.82;
-  padding-top: 4px;
-  padding-right: 9px;
+  font-size: 2.1em;
+  line-height: 0.88;
+  padding-top: 2px;
+  padding-right: 6px;
   padding-bottom: 0;
-  color: var(--newspaper-accent);
-  font-weight: 600;
+  color: var(--newspaper-ink);
+  font-weight: 500;
 }
 
 /* Newspaper Pullquote */
