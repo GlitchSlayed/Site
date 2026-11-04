@@ -46,7 +46,7 @@ The quote in the article is that 3D metal printing let the team rapidly redesign
 Air cooling through printed passages is a good example. You can print internal shapes and fin arrangements that would be expensive or impossible to cast and machine conventionally. You can also print a part, test it, change it, and print it again in days. On a research program where the design is still moving, that cycle time matters more than unit cost.
 
 My 2 cents, from the manufacturing side: printed does not mean finished. Critical surfaces on an engine, sealing faces, bearing seats, anything with a real tolerance and finish requirement, almost certainly still saw machining and inspection after printing. That is normal and it is not a criticism. The honest way to describe a part like this is designed for additive, finished by machining, which is how most serious metal printing work actually goes. I would love to see the technical papers break out which components are printed and what post processing they needed.
-n
+
 ## Why a series hybrid
 
 In a series hybrid, the engine has no mechanical connection to the propellers. It drives a generator, and electric motors do the flying. In the Army’s system, the rotary is paired with a 400 volt motor generator.
