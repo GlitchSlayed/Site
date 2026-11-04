@@ -27,7 +27,7 @@ const configured = canonical?.hostname !== 'example.com';
 const commitHash = getCommitHash();
 ---
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -104,10 +104,9 @@ const commitHash = getCommitHash();
       <button class="theme-button" id="search-trigger" aria-label="Search site" data-tooltip="Search site" data-tooltip-shortcut="⌘K">
         <SearchIcon />
       </button>
-      <button class="theme-button" id="theme-toggle" aria-label="Switch theme" data-tooltip="Toggle color theme" data-tooltip-shortcut="Shift+T">
-        <svg class="sun-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.5" />
-          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77" />
+      <button class="theme-button" id="theme-toggle" aria-label="Switch to dark theme" data-tooltip="Switch to dark theme" data-tooltip-shortcut="Shift+T">
+        <svg class="moon-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       </button>
     </nav>
@@ -120,7 +119,7 @@ const commitHash = getCommitHash();
       <Rocket />
       <span>
         <strong>Vansh Datta</strong>
-        <small>Aerospace, engineering &amp; technology journal.</small>
+        <small>Aerospace, engineering &amp; software projects.</small>
       </span>
     </a>
   </div>

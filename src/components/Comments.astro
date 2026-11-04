@@ -16,18 +16,18 @@
     data-reactions-enabled="1"
     data-emit-metadata="0"
     data-input-position="top"
-    data-theme="https://glitchslayed.github.io/Site/giscus-dark.css"
+    data-theme="https://glitchslayed.github.io/Site/giscus-light.css"
     data-lang="en"
     crossorigin="anonymous"
     async
   ></script>
   <script is:inline>
-    // Ensure initial theme matches current mode before iframe initializes
+    // Ensure initial theme matches current mode before iframe initializes (default light)
     try {
-      const currentTheme = document.documentElement.dataset.theme || localStorage.getItem('theme') || 'dark';
+      const currentTheme = document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light';
       const script = document.querySelector('script[src="https://giscus.app/client.js"]');
-      if (script && currentTheme === 'light') {
-        script.setAttribute('data-theme', 'https://glitchslayed.github.io/Site/giscus-light.css');
+      if (script && currentTheme === 'dark') {
+        script.setAttribute('data-theme', 'https://glitchslayed.github.io/Site/giscus-dark.css');
       }
     } catch {}
   </script>
@@ -36,7 +36,7 @@
 <style>
   .comments-section {
     max-width: 740px;
-    margin-top: 48px;
+    margin: 48px auto 0;
     padding-top: 36px;
     border-top: 1px solid var(--border);
   }

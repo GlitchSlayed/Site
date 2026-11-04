@@ -261,31 +261,44 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
   let pages = [];
   let currentSpread = 0;
 
-  // Element height estimator
-  function estimateHeight(el) {
-    const text = el.textContent || '';
-    const tag = el.tagName.toLowerCase();
-    if (tag === 'h1') return 80;
-    if (tag === 'h2') return 60;
-    if (tag === 'h3') return 45;
-    if (tag === 'pre') return Math.max(90, Math.min(300, (text.split('\n').length * 20) + 40));
-    if (tag === 'table') return 180;
-    if (tag === 'img' || el.querySelector('img')) return 240;
-    if (tag === 'blockquote') return 90;
-    // Estimate paragraphs: ~65 chars per line, ~26px line height
-    const lines = Math.max(1, Math.ceil(text.length / 65));
-    return lines * 26 + 18;
+  // Accurate DOM measurement probe
+  function measureElement(el, probe) {
+    const clone = el.cloneNode(true);
+    probe.appendChild(clone);
+    const rect = clone.getBoundingClientRect();
+    const style = window.getComputedStyle(clone);
+    const marginTop = parseFloat(style.marginTop) || 0;
+    const marginBottom = parseFloat(style.marginBottom) || 0;
+    const total = rect.height + marginTop + marginBottom;
+    probe.removeChild(clone);
+    return Math.max(18, total);
   }
 
-  // Segment source elements into virtual pages
+  // Segment source elements into virtual pages with real measurement
   function paginateContent() {
     pages = [];
     const elements = Array.from(sourceData.children);
     if (elements.length === 0) return;
 
-    // Page 1 includes the masthead and headline block
-    const p1Budget = 360; // Shorter budget on Page 1 due to masthead
-    const stdBudget = 620; // Standard page budget
+    // Create an invisible measurement probe styled identical to page content
+    const colWidth = leftPageBody.clientWidth || 500;
+    const probe = document.createElement('div');
+    probe.className = 'newspaper-article-body';
+    probe.style.cssText =
+      'position:absolute;left:-9999px;top:0;width:' +
+      colWidth +
+      'px;visibility:hidden;pointer-events:none;font-family:var(--serif);font-size:var(--newspaper-font-size);line-height:var(--newspaper-line-height);';
+    document.body.appendChild(probe);
+
+    // Measure masthead + headline height for Page 1
+    const masthead = document.querySelector('.newspaper-masthead');
+    const headline = document.querySelector('.newspaper-headline-block');
+    let headerHeight = 0;
+    if (masthead) headerHeight += measureElement(masthead, probe);
+    if (headline) headerHeight += measureElement(headline, probe);
+
+    const stdBudget = 580; // Standard page content height budget
+    const p1Budget = Math.max(160, stdBudget - headerHeight);
 
     let currentPageNodes = [];
     let currentHeight = 0;
@@ -293,13 +306,13 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
 
     for (let i = 0; i < elements.length; i++) {
       const el = elements[i];
-      const h = estimateHeight(el);
+      const h = measureElement(el, probe);
       const isHeading = /^H[1-4]$/i.test(el.tagName);
 
       // Rule: Keep heading with next paragraph
       let totalNeeded = h;
       if (isHeading && i + 1 < elements.length) {
-        totalNeeded += estimateHeight(elements[i + 1]);
+        totalNeeded += measureElement(elements[i + 1], probe);
       }
 
       if (currentHeight + totalNeeded > budget && currentPageNodes.length > 0) {
@@ -317,6 +330,9 @@ const category = data.tags && data.tags.length > 0 ? data.tags[0] : 'Engineering
     if (currentPageNodes.length > 0) {
       pages.push(currentPageNodes);
     }
+
+    // Clean up probe
+    document.body.removeChild(probe);
   }
 
   // Render a specific spread (left page = 2*index, right page = 2*index + 1)
