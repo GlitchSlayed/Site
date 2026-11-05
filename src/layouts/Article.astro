@@ -5,13 +5,13 @@ import BackArrow from '../components/BackArrow.astro';
 import ArrowIcon from '../components/ArrowIcon.astro';
 import SparkIcon from '../components/SparkIcon.astro';
 import StatusBadge from '../components/StatusBadge.astro';
-import { url, dateLabel } from '../config';
-import Comments from '../components/Comments.astro';
 import EngineeringBrief from '../components/EngineeringBrief.astro';
 import TechnicalPlate from '../components/drawings/TechnicalPlate.astro';
 import SourceShelf from '../components/SourceShelf.astro';
+import { url, dateLabel } from '../config';
+import { readingMinutes } from '../lib/editorial';
+import Comments from '../components/Comments.astro';
 import { getCollection } from 'astro:content';
-import { statusNotes, readingMinutes } from '../lib/editorial';
 
 interface Props {
   entry: any;
@@ -22,20 +22,34 @@ interface Props {
 const { entry, headings = [], type = 'projects' } = Astro.props;
 const { data } = entry;
 const h2Headings = headings.filter((h) => h.depth === 2);
-const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sample)).filter(p => p.data.tags.some((t:string) => data.tags.includes(t))).sort((a,b) => +b.data.date-+a.data.date).slice(0,2);
+const related = (await getCollection('writing', ({data: d}) => !d.draft && !d.sample))
+  .filter(p => p.data.tags.some((tag: string) => data.tags.includes(tag)))
+  .slice(0, 2);
+
+const statusNotes: Record<string, string> = {
+  'Design & Sizing Study': 'Exploring the geometry, aerodynamic balance, and sizing trade-offs.',
+  'Experimental Verification': 'Comparing physical airfoil wind-tunnel measurements against 2D potential theory.',
+  'System Architecture': 'Building and testing a reproducible local Fedora ostree deployment.',
+  'Prototype / CLI Tool': 'Initial functional implementation with automated testing.',
+};
 ---
 
 <Base
-  title={`${data.title} | Project notes`}
+  title={`${data.title} | Engineering Monograph`}
   description={data.description}
   ogType="article"
   ogImagePath={`og/${type}/${entry.id}.png`}
   ogImageAlt={data.title}
 >
+  <!-- Hairline Monograph Reading Progress Bar -->
+  <div class="monograph-progress-track" aria-hidden="true">
+    <div class="monograph-progress-fill" id="monograph-progress-bar"></div>
+  </div>
+
   <div class="shell article-shell">
     <div class="monograph-nav-bar">
       <a class="back-link" href={url(`${type}/`)}>
-        <BackArrow /> Back to {type === 'writing' ? 'Field Notes' : 'Projects'}
+        <BackArrow /> Back to {type === 'writing' ? 'Field Notes' : 'Monographs & Investigations'}
       </a>
       <div class="doc-code">
         DOC // {entry.id.toUpperCase()}
@@ -46,7 +60,7 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
     <header class="monograph-header">
       <div class="monograph-doc-banner">
         <div class="banner-left">
-          <span class="classification-badge">PROJECT NOTEBOOK</span>
+          <span class="classification-badge">ENGINEERING RESEARCH MONOGRAPH</span>
           <span class="report-num">REF: {entry.id.replace(/-/g, '_').toUpperCase()}</span>
         </div>
         <div class="banner-right">
@@ -60,11 +74,11 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
       <!-- Framed Scientific Abstract Box -->
       <div class="monograph-abstract-box">
         <div class="abstract-label">
-          <span>The question & scope</span>
+          <span>§ ABSTRACT // SCOPE OF INVESTIGATION</span>
         </div>
         <p class="abstract-text">{data.description}</p>
         <div class="abstract-keywords">
-          <span class="keywords-label">Topics:</span>
+          <span class="keywords-label">KEYWORDS:</span>
           {data.tags.map((tag: string) => <span class="keyword-tag">{tag}</span>)}
         </div>
       </div>
@@ -72,7 +86,7 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
       <!-- Technical Metadata Spec Grid -->
       <div class="monograph-meta-grid">
         <div class="meta-cell">
-          <span class="meta-label">AUTHOR</span>
+          <span class="meta-label">INVESTIGATOR</span>
           <span class="meta-val">Vansh Datta</span>
         </div>
         <div class="meta-cell">
@@ -81,7 +95,7 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
         </div>
         <div class="meta-cell">
           <span class="meta-label">DISCIPLINE</span>
-          <span class="meta-val">{data.category || data.tags[0] || 'Project'}</span>
+          <span class="meta-val">{data.category || 'Aerospace Engineering'}</span>
         </div>
         <div class="meta-cell">
           <span class="meta-label">STATUS</span>
@@ -101,26 +115,72 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
     {data.engineering && <EngineeringBrief brief={data.engineering} />}
     {data.drawing && <details class="project-drawing-detail"><summary>Open the project drawing <span>Illustrative schematic</span></summary><TechnicalPlate kind={data.drawing} /></details>}
     <aside class="project-state-context"><strong>{data.status}</strong><p>{statusNotes[data.status] || 'See the notes below for the current scope.'}</p><span class="small-label">{readingMinutes(entry.body)} min read · Published {dateLabel(data.date)}</span></aside>
-    {h2Headings.length > 0 && <details class="project-mobile-contents"><summary>In this project</summary><nav>{h2Headings.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav></details>}
+
     <div class="article-grid">
-      <article class="prose monograph-prose" data-pagefind-body>
+      <article class="prose monograph-prose" id="monograph-article-body" data-pagefind-body>
         <slot />
       </article>
 
       {
         h2Headings.length > 0 && (
-          <aside class="toc monograph-toc">
-            <div class="eyebrow">CONTENTS // ON THIS PAGE</div>
-            <nav class="toc-nav" aria-label="Project sections">
+          <aside class="toc monograph-toc" aria-label="Table of contents">
+            <div class="toc-header">
+              <span class="toc-eyebrow">§ OUTLINE</span>
+              <span class="toc-progress-val" id="toc-progress-text">0% read</span>
+            </div>
+            <nav class="toc-nav" aria-label="Project sections" id="project-toc-nav">
               <span class="toc-indicator" aria-hidden="true" />
-              {h2Headings.map((h) => (
-                <a href={`#${h.slug}`}>{h.text}</a>
+              {h2Headings.map((h, i) => (
+                <a href={`#${h.slug}`} class="toc-link" data-index={i}>
+                  <span class="toc-num">{String(i + 1).padStart(2, '0')}.</span>
+                  <span class="toc-text">{h.text}</span>
+                </a>
               ))}
             </nav>
+            <div class="toc-actions">
+              <button type="button" class="toc-top-btn" id="btn-toc-top" title="Scroll back to top of monograph">
+                <span aria-hidden="true">↑</span>
+                <span>Top of document</span>
+              </button>
+            </div>
           </aside>
         )
       }
     </div>
+
+    <!-- Mobile Floating Quick-Nav Scroller Bar (< 992px) -->
+    {
+      h2Headings.length > 0 && (
+        <div class="mobile-toc-bar" id="mobile-toc-bar">
+          <button
+            type="button"
+            class="mobile-toc-toggle"
+            id="mobile-toc-btn"
+            aria-expanded="false"
+            aria-controls="mobile-toc-drawer"
+          >
+            <span class="toc-badge">§</span>
+            <span class="mobile-toc-current" id="mobile-toc-label">{h2Headings[0]?.text || 'Outline'}</span>
+            <span class="mobile-toc-pct" id="mobile-toc-pct">0%</span>
+            <span class="mobile-toc-arrow" aria-hidden="true">▾</span>
+          </button>
+          <div class="mobile-toc-drawer" id="mobile-toc-drawer" hidden>
+            <div class="mobile-toc-drawer-head">
+              <span>PROJECT MONOGRAPH OUTLINE</span>
+              <button type="button" class="mobile-toc-close" id="mobile-toc-close" aria-label="Close outline">✕</button>
+            </div>
+            <nav class="mobile-toc-nav">
+              {h2Headings.map((h, i) => (
+                <a href={`#${h.slug}`} class="mobile-toc-link" data-index={i}>
+                  <span class="toc-num">{String(i + 1).padStart(2, '0')}.</span>
+                  <span class="toc-text">{h.text}</span>
+                </a>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )
+    }
 
     {related.length > 0 && <section class="related-stories"><p class="small-label">Related notes from the blog</p><div class="story-grid">{related.map(p => <article><h2><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h2><p>{p.data.description}</p></article>)}</div></section>}
     <SourceShelf body={entry.body} />
@@ -146,6 +206,24 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
 </Base>
 
 <style>
+  /* Reading Progress Track across the top */
+  .monograph-progress-track {
+    position: sticky;
+    top: 68px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--border);
+    z-index: 38;
+  }
+
+  .monograph-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.1s ease-out;
+  }
+
   .monograph-nav-bar {
     display: flex;
     justify-content: space-between;
@@ -242,7 +320,6 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
     line-height: 1.7;
     color: var(--foreground);
     margin: 0 0 16px;
-    font-style: italic;
   }
 
   .abstract-keywords {
@@ -303,6 +380,249 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
     color: var(--foreground);
   }
 
+  /* Headings scroll margin for smooth jump offsets */
+  .monograph-prose :global(h2),
+  .monograph-prose :global(h3) {
+    scroll-margin-top: 100px;
+  }
+
+  /* Improved Sticky On-This-Page Content Scroller */
+  .monograph-toc {
+    position: sticky;
+    top: 92px;
+    max-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  }
+
+  .toc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .toc-eyebrow {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .toc-progress-val {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .toc-nav {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    border-left: 2px solid var(--border);
+    padding-left: 10px;
+  }
+
+  .toc-link {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--muted);
+    padding: 6px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .toc-link:hover {
+    color: var(--foreground);
+    background: var(--hover);
+  }
+
+  .toc-link[aria-current='location'] {
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 550;
+  }
+
+  .toc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--subtle);
+    flex-shrink: 0;
+  }
+
+  .toc-link[aria-current='location'] .toc-num {
+    color: var(--accent);
+  }
+
+  .toc-indicator {
+    position: absolute;
+    left: -2px;
+    width: 2px;
+    background: var(--accent);
+    transition: transform 0.16s ease, height 0.16s ease;
+    border-radius: 1px;
+  }
+
+  .toc-actions {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .toc-top-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .toc-top-btn:hover {
+    color: var(--foreground);
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+  }
+
+  /* Mobile Quick-Nav Scroller Pill & Drawer (< 992px) */
+  .mobile-toc-bar {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    width: calc(100% - 36px);
+    max-width: 420px;
+  }
+
+  .mobile-toc-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 28px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    color: var(--foreground);
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .mobile-toc-toggle .toc-badge {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .mobile-toc-current {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+
+  .mobile-toc-pct {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .mobile-toc-drawer {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
+    padding: 16px;
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+
+  .mobile-toc-drawer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--muted);
+    letter-spacing: 0.8px;
+  }
+
+  .mobile-toc-close {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .mobile-toc-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-toc-link {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.14s ease;
+  }
+
+  .mobile-toc-link[aria-current='location'] {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 550;
+  }
+
   .monograph-comments-container {
     margin-top: 48px;
     padding-top: 32px;
@@ -350,6 +670,15 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
     margin: 0;
   }
 
+  @media (max-width: 992px) {
+    .monograph-toc {
+      display: none;
+    }
+    .mobile-toc-bar {
+      display: block;
+    }
+  }
+
   @media (max-width: 860px) {
     .monograph-meta-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -362,50 +691,143 @@ const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sam
 </style>
 
 <script>
-  const toc = document.querySelector<HTMLElement>('.toc-nav');
-  const article = document.querySelector<HTMLElement>('.prose');
+  const tocNav = document.querySelector<HTMLElement>('#project-toc-nav');
+  const article = document.querySelector<HTMLElement>('#monograph-article-body');
+  const progressFill = document.querySelector<HTMLElement>('#monograph-progress-bar');
+  const progressText = document.querySelector<HTMLElement>('#toc-progress-text');
+  const topBtn = document.querySelector<HTMLButtonElement>('#btn-toc-top');
 
-  if (toc && article) {
-    const links = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
-    const indicator = toc.querySelector<HTMLElement>('.toc-indicator');
-    const headings = links
+  // Mobile elements
+  const mobileToggle = document.querySelector<HTMLButtonElement>('#mobile-toc-btn');
+  const mobileDrawer = document.querySelector<HTMLElement>('#mobile-toc-drawer');
+  const mobileClose = document.querySelector<HTMLButtonElement>('#mobile-toc-close');
+  const mobileLabel = document.querySelector<HTMLElement>('#mobile-toc-label');
+  const mobilePct = document.querySelector<HTMLElement>('#mobile-toc-pct');
+  const mobileLinks = [...document.querySelectorAll<HTMLAnchorElement>('.mobile-toc-link')];
+
+  if (article) {
+    const desktopLinks = tocNav ? [...tocNav.querySelectorAll<HTMLAnchorElement>('.toc-link')] : [];
+    const indicator = tocNav ? tocNav.querySelector<HTMLElement>('.toc-indicator') : null;
+    
+    // Find headings referenced by TOC
+    const allLinks = desktopLinks.length > 0 ? desktopLinks : mobileLinks;
+    const headings = allLinks
       .map((link) => article.querySelector<HTMLElement>(`#${CSS.escape(decodeURIComponent(link.hash.slice(1)))}`))
       .filter((heading): heading is HTMLElement => heading !== null);
+
     let activeIndex = -1;
     let frame = 0;
 
     const setActive = (index: number) => {
-      if (index === activeIndex || !links[index] || !indicator) return;
+      if (index < 0 || index >= headings.length || index === activeIndex) return;
       activeIndex = index;
-      links.forEach((link, linkIndex) => {
+
+      // Update Desktop TOC
+      if (desktopLinks.length > 0 && indicator) {
+        desktopLinks.forEach((link, linkIndex) => {
+          if (linkIndex === index) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+        const currentLink = desktopLinks[index];
+        indicator.style.transform = `translateY(${currentLink.offsetTop}px)`;
+        indicator.style.height = `${currentLink.offsetHeight}px`;
+
+        // Keep active TOC link within visible TOC scroll boundary
+        if (tocNav) {
+          const navRect = tocNav.getBoundingClientRect();
+          const linkRect = currentLink.getBoundingClientRect();
+          if (linkRect.bottom > navRect.bottom || linkRect.top < navRect.top) {
+            currentLink.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        }
+      }
+
+      // Update Mobile Drawer
+      mobileLinks.forEach((link, linkIndex) => {
         if (linkIndex === index) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
       });
-      const link = links[index];
-      indicator.style.transform = `translateY(${link.offsetTop}px)`;
-      indicator.style.height = `${link.offsetHeight}px`;
+
+      if (mobileLabel && headings[index]) {
+        mobileLabel.textContent = `0${index + 1}. ${headings[index].textContent?.trim() || ''}`;
+      }
     };
 
-    const syncActiveSection = () => {
+    const updateScrollProgress = () => {
       frame = 0;
-      const activationLine = Math.min(window.innerHeight * 0.28, 220);
+      const articleRect = article.getBoundingClientRect();
+      const articleTop = window.scrollY + articleRect.top;
+      const articleHeight = articleRect.height;
+      const windowHeight = window.innerHeight;
+      
+      const scrolled = window.scrollY - articleTop + 140;
+      const total = articleHeight - (windowHeight * 0.4);
+      const pct = Math.max(0, Math.min(100, Math.round((scrolled / total) * 100)));
+
+      if (progressFill) progressFill.style.width = `${pct}%`;
+      if (progressText) progressText.textContent = `${pct}% read`;
+      if (mobilePct) mobilePct.textContent = `${pct}%`;
+
+      // Determine active heading
+      const activationLine = Math.min(windowHeight * 0.32, 240);
       let current = 0;
-      headings.forEach((heading, index) => {
-        if (heading.getBoundingClientRect().top <= activationLine) current = index;
+      headings.forEach((heading, idx) => {
+        if (heading.getBoundingClientRect().top <= activationLine) {
+          current = idx;
+        }
       });
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10) {
         current = headings.length - 1;
       }
       setActive(current);
     };
 
     const requestSync = () => {
-      if (!frame) frame = requestAnimationFrame(syncActiveSection);
+      if (!frame) frame = requestAnimationFrame(updateScrollProgress);
     };
 
     window.addEventListener('scroll', requestSync, { passive: true });
     window.addEventListener('resize', requestSync);
-    window.addEventListener('hashchange', requestSync);
-    requestSync();
+    updateScrollProgress();
+
+    // Smooth navigation click handlers
+    const attachSmoothClick = (link: HTMLAnchorElement) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = decodeURIComponent(link.hash.slice(1));
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.pushState(null, '', link.hash);
+        }
+        if (mobileDrawer) {
+          mobileDrawer.hidden = true;
+          mobileToggle?.setAttribute('aria-expanded', 'false');
+        }
+      });
+    };
+
+    desktopLinks.forEach(attachSmoothClick);
+    mobileLinks.forEach(attachSmoothClick);
+
+    // Top button
+    topBtn?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Mobile drawer toggle
+    mobileToggle?.addEventListener('click', () => {
+      if (!mobileDrawer) return;
+      const isHidden = mobileDrawer.hidden;
+      mobileDrawer.hidden = !isHidden;
+      mobileToggle.setAttribute('aria-expanded', String(isHidden));
+    });
+
+    mobileClose?.addEventListener('click', () => {
+      if (mobileDrawer) {
+        mobileDrawer.hidden = true;
+        mobileToggle?.setAttribute('aria-expanded', 'false');
+      }
+    });
   }
 </script>

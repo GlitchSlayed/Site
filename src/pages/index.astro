@@ -31,6 +31,8 @@ const lead = projects[0];
   <a href={url('writing/')}><span>02 / The thinking</span><strong>Notes &amp; longer reads</strong><p>Decisions, rabbit holes, and things I’m figuring out.</p></a>
   <a href={url('about/')}><span>03 / The person</span><strong>Beyond the project list</strong><p>Manufacturing, aerospace, Linux, and a few other interests.</p></a>
 </section>
+
+<!-- 1. Main Projects Section -->
 <section class="shell section">
   <div class="section-heading"><div><p class="small-label">Selected work</p><h2>On my workbench</h2></div><a href={url('projects/')} class="text-link">All {projects.length} projects →</a></div>
   <div class="personal-projects">
@@ -39,9 +41,42 @@ const lead = projects[0];
   </div>
   {!projects.length && <p>The first project write-up is on its way.</p>}
 </section>
-<section class="shell question-board" aria-labelledby="open-questions"><div class="section-heading"><div><p class="small-label">The questions behind the work</p><h2 id="open-questions">What needs checking next?</h2></div></div><div>{projects.filter(p=>p.data.engineering).map(p=><article><span class="small-label">{p.data.title.split(':')[0]}</span><h3><a href={url(`projects/${p.id}/`)}>{p.data.engineering!.question}</a></h3><p><span>Next check</span> {p.data.engineering!.nextCheck}</p></article>)}</div></section>
-<section class="shell personal-letter"><p class="small-label">What the shop taught me</p><h2>A drawing still has to become a part.</h2><p>During my six-month co-op at Arkwin Industries, I worked on fixtures, workholding, cutting tools, drawings, and manufacturing instructions. That experience is a big part of why I care about how a design gets made and measured.</p><a class="text-link" href={url('about/#experience')}>More about that experience →</a></section>
-<section class="shell section"><div class="section-heading"><div><p class="small-label">From the blog</p><h2>Things I’ve been thinking about</h2></div><a class="text-link" href={url('writing/')}>All writing →</a></div><div class="story-grid">{posts.slice(0,3).map(p => <article><p class="small-label"><time datetime={p.data.date.toISOString()}>{dateLabel(p.data.date)}</time> · {readingMinutes(p.body)} min</p><h3><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h3><p>{p.data.description}</p><a class="text-link" href={url(`writing/${p.id}/`)}>Keep reading →</a></article>)}</div></section>
-<section class="shell personal-signoff"><h2>Still learning. Writing it down.</h2><p>Some of these ideas are proposals. Some are prototypes. I’m keeping the reasoning here along with the work.</p><a href={url('rss.xml')} class="text-link">Follow the notebook with RSS ↗</a></section>
+
+<!-- 2. Blogs Section (Right under main projects) -->
+<section class="shell section">
+  <div class="section-heading"><div><p class="small-label">From the blog</p><h2>Things I’ve been thinking about</h2></div><a class="text-link" href={url('writing/')}>All writing →</a></div>
+  <div class="story-grid">
+    {posts.slice(0,3).map(p => <article><p class="small-label"><time datetime={p.data.date.toISOString()}>{dateLabel(p.data.date)}</time> · {readingMinutes(p.body)} min</p><h3><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h3><p>{p.data.description}</p><a class="text-link" href={url(`writing/${p.id}/`)}>Keep reading →</a></article>)}
+  </div>
+</section>
+
+<!-- 3. What Needs Checking Next (Moved down) -->
+<section class="shell question-board" aria-labelledby="open-questions">
+  <div class="section-heading"><div><p class="small-label">The questions behind the work</p><h2 id="open-questions">What needs checking next?</h2></div></div>
+  <div>
+    {projects.filter(p=>p.data.engineering).map(p=><article><span class="small-label">{p.data.title.split(':')[0]}</span><h3><a href={url(`projects/${p.id}/`)}>{p.data.engineering!.question}</a></h3><p><span>Next check</span> {p.data.engineering!.nextCheck}</p></article>)}
+  </div>
+</section>
+
+<!-- 4. Combined About Me + Drawing + RSS Signoff Section (Moved down & combined) -->
+<section class="shell personal-combined-about">
+  <div class="combined-copy">
+    <p class="small-label">What the shop taught me</p>
+    <h2>A drawing still has to become a part.</h2>
+    <p>During my six-month co-op at Arkwin Industries, I worked on fixtures, workholding, cutting tools, drawings, and manufacturing instructions. That experience is a big part of why I care about how a design gets made and measured.</p>
+    <div class="inline-links">
+      <a class="text-link" href={url('about/#experience')}>More about that experience →</a>
+    </div>
+    <div class="combined-signoff">
+      <h3>Still learning. Writing it down.</h3>
+      <p>Some of these ideas are proposals. Some are prototypes. I’m keeping the reasoning here along with the work.</p>
+      <a href={url('rss.xml')} class="text-link">Follow the notebook with RSS ↗</a>
+    </div>
+  </div>
+  <aside class="combined-drawing">
+    <TechnicalPlate kind="airfoils" />
+    <p class="drawing-marginalia">From governing equations to physical tooling on the shop floor.</p>
+  </aside>
+</section>
 </div>
 </Base>
