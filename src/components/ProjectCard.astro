@@ -1,5 +1,5 @@
 ---
-import Art from './Art.astro';
+import TechnicalPlate from './drawings/TechnicalPlate.astro';
 import ProjectVisual from './visuals/ProjectVisual.astro';
 import ArrowIcon from './ArrowIcon.astro';
 import StatusBadge from './StatusBadge.astro';
@@ -15,7 +15,7 @@ const { project, featured = project.data.featured } = Astro.props;
 ---
 
 <a class:list={['project-card', { featured }]} href={url(`projects/${project.id}/`)}>
-  {project.data.visual ? (
+  {project.data.visualImage && ['asset','screenshot'].includes(project.data.visual) ? (
     <ProjectVisual
       variant={project.data.visual}
       title={project.data.visual === 'screenshot' ? '' : project.data.title}
@@ -26,22 +26,24 @@ const { project, featured = project.data.featured } = Astro.props;
       animate={project.data.visualAnimate}
     />
   ) : (
-    <Art kind={project.data.art} />
+    <TechnicalPlate kind={project.data.drawing || project.data.art} />
   )}
   <div class="card-body">
     <div class="post-meta">
       {featured && (
         <span class="featured-badge" data-tooltip="Featured Project" data-tooltip-pos="top">
           <SparkIcon />
-          <span>Featured</span>
+          <span>Selected work</span>
         </span>
       )}
       {project.data.category && <span class="project-category">{project.data.category}</span>}
-      <span class="project-date">{dateLabel(project.data.date)}</span>
+      <time class="project-date" datetime={project.data.date.toISOString()}>{dateLabel(project.data.date)}</time>
       <StatusBadge status={project.data.status} size="compact" />
     </div>
     <h3>{project.data.title}<span class="card-arrow"><ArrowIcon /></span></h3>
     <p>{project.data.description}</p>
+    {project.data.engineering && <div class="card-next-check"><span class="small-label">Next check</span><p>{project.data.engineering.nextCheck}</p></div>}
+    {project.data.sample && <span class="sample-label">Sample project</span>}
     <div class="tag-list">{project.data.tags.map((tag: string) => <span>{tag}</span>)}</div>
   </div>
 </a>
@@ -62,7 +64,7 @@ const { project, featured = project.data.featured } = Astro.props;
 
   .project-card:hover {
     border-color: var(--border-strong);
-    transform: translateY(-2px);
+    transform: none;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   }
 

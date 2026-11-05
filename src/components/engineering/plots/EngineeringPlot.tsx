@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useRef, useState, useId } from 'react';
 import type uPlot from 'uplot';
 import type { EngineeringPlotConfig, PlotSeries } from '../../../lib/engineering/types';
+import { axisExtent, panRange, zoomRange } from '../../../lib/engineering/plotScales';
 import { isFiniteNumber } from '../../../lib/engineering/validation';
 import { formatNumber } from '../../../lib/engineering/format';
 import { EngineeringPointInspector } from '../shared/EngineeringPointInspector';
@@ -146,27 +147,16 @@ function measureTextWidth(text: string, fontSize: number): number {
 /** Compute the [min, max] extent of X and all finite Y values across series.
  *  Used as the autoscale target so both axes fit the data (uPlot only
  *  autoscales X on construction). */
-function computeDataExtent(series: PlotSeries[]): { x: [number, number]; y: [number, number] } {
-  const xs = series[0]?.x ?? [];
-  const xFinite = xs.filter(isFiniteNumber);
-  const xExtent: [number, number] = xFinite.length
-    ? [Math.min(...xFinite), Math.max(...xFinite)]
-    : [0, 1];
-
-  const allY = series.flatMap((s) => s.y.filter(isFiniteNumber));
-  const yExtent: [number, number] = allY.length
-    ? [Math.min(...allY), Math.max(...allY)]
-    : [0, 1];
-
-  return { x: xExtent, y: yExtent };
+function computeDataExtent(series: PlotSeries[], xType: 'linear' | 'log' = 'linear', yType: 'linear' | 'log' = 'linear'): { x: [number, number]; y: [number, number] } {
+  return { x: axisExtent(series[0]?.x ?? [], xType), y: axisExtent(series.flatMap(s => s.y), yType) };
 }
 
 /** Set both X and Y scales to the data extent (true autoscale).
  *  uPlot only autoscales X on construction / setData, so Y must be set
  *  explicitly here. */
-function applyAutoscale(inst: PlotInstance, series: PlotSeries[]): void {
+function applyAutoscale(inst: PlotInstance, series: PlotSeries[], xType: 'linear' | 'log', yType: 'linear' | 'log'): void {
   if (!inst || !inst.setScale) return;
-  const { x: dataX, y: dataY } = computeDataExtent(series);
+  const { x: dataX, y: dataY } = computeDataExtent(series, xType, yType);
   inst.setScale('x', { min: dataX[0], max: dataX[1] });
   inst.setScale('y', { min: dataY[0], max: dataY[1] });
 }
@@ -215,6 +205,7 @@ export function EngineeringPlot({
   // State (all hooks unconditional, before any early return).
   // -----------------------------------------------------------------------
   const [loaded, setLoaded] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [initError, setInitError] = useState<Error | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>(readTheme);
@@ -240,14 +231,17 @@ export function EngineeringPlot({
   const [inspection, setInspection] = useState<InspectionState>({ primary: null, comparison: null });
   const [showSettings, setShowSettings] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
-  const [yScaleType, setYScaleType] = useState<'linear' | 'log'>('linear');
-  const [xMin, setXMin] = useState<number | null>(null);
-  const [xMax, setXMax] = useState<number | null>(null);
-  const [yMin, setYMin] = useState<number | null>(null);
-  const [yMax, setYMax] = useState<number | null>(null);
-  const [showMarkers, setShowMarkers] = useState(false);
+  const [yScaleType, setYScaleType] = useState<'linear' | 'log'>(config.yAxis.type ?? 'linear');
+  const xScaleType = config.xAxis.type ?? 'linear';
+  useEffect(() => { setYScaleType(config.yAxis.type ?? 'linear'); setYMin(config.yAxis.range?.[0] ?? null); setYMax(config.yAxis.range?.[1] ?? null); }, [config.yAxis.type, config.yAxis.range?.[0], config.yAxis.range?.[1]]);
+  useEffect(() => { setXMin(config.xAxis.range?.[0] ?? null); setXMax(config.xAxis.range?.[1] ?? null); }, [config.xAxis.type, config.xAxis.range?.[0], config.xAxis.range?.[1]]);
+  const [xMin, setXMin] = useState<number | null>(config.xAxis.range?.[0] ?? null);
+  const [xMax, setXMax] = useState<number | null>(config.xAxis.range?.[1] ?? null);
+  const [yMin, setYMin] = useState<number | null>(config.yAxis.range?.[0] ?? null);
+  const [yMax, setYMax] = useState<number | null>(config.yAxis.range?.[1] ?? null);
+  const [showMarkers, setShowMarkers] = useState(config.series.some(s => s.mode === 'lines+markers'));
   const [lineWidth, setLineWidth] = useState(2);
-  const [showLegend, setShowLegend] = useState(true);
+  const [showLegend, setShowLegend] = useState(config.legend !== false);
   const [enableGlow, setEnableGlow] = useState(true);
   const [showAreaShading, setShowAreaShading] = useState(true);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('inspect');
@@ -289,7 +283,7 @@ export function EngineeringPlot({
   // Derived data validation.
   // -----------------------------------------------------------------------
   const validateData = useCallback(
-    (series: PlotSeries[]): { valid: boolean; data: number[][]; error: string | null } => {
+    (series: PlotSeries[]): { valid: boolean; data: uPlot.AlignedData; error: string | null } => {
       if (!series.length) {
         return { valid: false, data: [], error: 'No data series configured.' };
       }
@@ -310,22 +304,17 @@ export function EngineeringPlot({
         }
       }
 
-      const pairs = x.map((xi, i) => ({ x: xi, i }));
-      pairs.sort((a, b) => a.x - b.x);
-      const sortedIndices = pairs.map((p) => p.i);
-
-      const data: number[][] = [x];
-      for (const s of series) {
-        const ySanitized: number[] = [];
-        for (const idx of sortedIndices) {
-          ySanitized.push(isFiniteNumber(s.y[idx]) ? s.y[idx] : NaN);
-        }
-        data.push(ySanitized);
+      if (x.some((value, index) => !isFiniteNumber(value) || (index > 0 && value <= x[index - 1]))) {
+        return { valid: false, data: [], error: 'X values must be finite and strictly increasing.' };
       }
+      if (xScaleType === 'log' && x.some(value => value <= 0)) return { valid: false, data: [], error: 'Logarithmic X axes require positive values.' };
+      if (yScaleType === 'log' && series.some(s => s.y.some(value => isFiniteNumber(value) && value <= 0))) return { valid: false, data: [], error: 'Logarithmic Y axes require positive values.' };
+      if (series.some(s => s.y.length !== x.length)) return { valid: false, data: [], error: 'Each series must have one Y value per X value.' };
+      const data = [x, ...series.map(s => s.y.map(value => isFiniteNumber(value) ? value : null))] as uPlot.AlignedData;
 
       return { valid: true, data, error: null };
     },
-    [],
+    [xScaleType, yScaleType],
   );
 
   // -----------------------------------------------------------------------
@@ -339,7 +328,7 @@ export function EngineeringPlot({
       series: config.series.map((s) => ({ id: s.id, label: s.label, mode: s.mode, color: s.color, fill: s.fill })),
       scaleX: config.xAxis.range,
       scaleY: config.yAxis.range,
-      distr: yScaleType,
+      distr: [xScaleType, yScaleType],
       showLegend,
       sigFigs,
       theme,
@@ -358,6 +347,7 @@ export function EngineeringPlot({
     config.series,
     config.shadedRegions,
     config.referenceLines,
+    xScaleType,
     yScaleType,
     showLegend,
     sigFigs,
@@ -374,7 +364,7 @@ export function EngineeringPlot({
     const series: any[] = [{}];
     const theme = themeRef.current;
     for (const s of configRef.current.series) {
-      const visible = seriesVisibility[s.id] !== false;
+      const visible = seriesVisibility[s.id] ?? (s.visible !== false);
       const strokeColor = s.color || themeAccent(theme);
       // Area fill: enabled if showAreaShading is true and (fill is explicitly true/string, or fill is undefined on a line series)
       const isLineMode = (s.mode ?? 'lines').includes('lines');
@@ -418,10 +408,10 @@ export function EngineeringPlot({
       series.push({
         label: s.label,
         stroke: strokeColor,
-        fill: fillValue,
-        width: lineWidth,
+        fill: s.mode === 'markers' ? undefined : fillValue,
+        width: s.mode === 'markers' ? 0 : lineWidth,
         points: {
-          show: showMarkers && (s.mode === 'markers' || s.mode === 'lines+markers'),
+          show: s.mode === 'markers' || showMarkers,
           size: 5,
           width: 1.5,
           stroke: '#ffffff',
@@ -484,24 +474,24 @@ export function EngineeringPlot({
       const cfg = configRef.current;
 
       cfg.series.forEach((series, index) => {
-        const visible = seriesVisibility[series.id] !== false;
+        const visible = seriesVisibility[series.id] ?? (series.visible !== false);
         inst.setSeries(index + 1, { show: visible });
       });
 
       if (inst.scales) {
         const xScale = inst.scales.x;
         const yScale = inst.scales.y;
-        if (xScale && (xMin != null || xMax != null)) {
+        if (xScale && (xMin != null || xMax != null) && (xScaleType !== 'log' || [xMin, xMax].every(v => v == null || v > 0))) {
           inst.setScale('x', { min: xMin ?? xScale.min ?? 0, max: xMax ?? xScale.max ?? 0 });
         }
-        if (yScale && (yMin != null || yMax != null)) {
+        if (yScale && (yMin != null || yMax != null) && (yScaleType !== 'log' || [yMin, yMax].every(v => v == null || v > 0))) {
           inst.setScale('y', { min: yMin ?? yScale.min ?? 0, max: yMax ?? yScale.max ?? 0 });
         }
       }
     } catch (e) {
       console.warn('[EngineeringPlot] applySettings partial failure:', e);
     }
-  }, [config.series, seriesVisibility, xMin, xMax, yMin, yMax]);
+  }, [config.series, seriesVisibility, xMin, xMax, yMin, yMax, xScaleType, yScaleType]);
 
   const initChart = useCallback(() => {
     const uPlot = uPlotConstructorRef.current;
@@ -518,11 +508,14 @@ export function EngineeringPlot({
     const width = container.clientWidth;
     if (width <= 0) {
       // Container hasn't laid out yet (common during Astro hydration).
-      // Retry after a frame so the browser has time to compute layout.
-      requestAnimationFrame(() => initChart());
+      // ResizeObserver will initialize once this container has a positive width.
       return;
     }
 
+    if ((xScaleType === 'log' && [xMin, xMax].some(value => value != null && value <= 0)) || (yScaleType === 'log' && [yMin, yMax].some(value => value != null && value <= 0))) {
+      setInitError(new Error('Logarithmic axis bounds must be positive.'));
+      return;
+    }
     const inst = chartInstanceRef.current;
     const structureKey = getStructureKey();
 
@@ -531,11 +524,11 @@ export function EngineeringPlot({
       try {
         inst.setData(validation.data as unknown as uPlot.AlignedData, false);
         applySettings(inst);
+        chartStructureRef.current = structureKey;
+        return;
       } catch {
         // Fall through to full reinitialization below.
       }
-      chartStructureRef.current = structureKey;
-      return;
     }
 
     // Different structure (or no instance): destroy and recreate.
@@ -547,7 +540,7 @@ export function EngineeringPlot({
 
     // Autoscale both axes to the data by default (uPlot only autoscales X on
     // construction). Manual axis bounds from settings override autoscale.
-    const { x: dataX, y: dataY } = computeDataExtent(config.series);
+    const { x: dataX, y: dataY } = computeDataExtent(config.series, xScaleType, yScaleType);
 
     const opts: any = {
       width,
@@ -558,6 +551,7 @@ export function EngineeringPlot({
       scales: {
         x: {
           time: false,
+          distr: xScaleType === 'log' ? DISTR_LOGARITHMIC : DISTR_LINEAR,
           min: xMin ?? dataX[0],
           max: xMax ?? dataX[1],
         },
@@ -622,7 +616,7 @@ export function EngineeringPlot({
               setXMax(newMax);
               u.setScale('x', { min: newMin, max: newMax });
             }
-            if (sel.height >= 8 && yScaleType === 'linear') {
+            if (sel.height >= 8) {
               const valY1 = u.posToVal(sel.top, 'y');
               const valY2 = u.posToVal(sel.top + sel.height, 'y');
               if (Number.isFinite(valY1) && Number.isFinite(valY2) && valY1 !== valY2) {
@@ -840,14 +834,6 @@ export function EngineeringPlot({
       },
     };
 
-    if (config.xAxis.range) {
-      // config.range documents the author-intended span but autoscale wins by
-      // default. Manual limits set via settings take precedence.
-    }
-    if (config.yAxis.range) {
-      // same as above
-    }
-
     try {
       const newInst = new uPlot(opts, validation.data as unknown as uPlot.AlignedData, container);
       chartInstanceRef.current = newInst;
@@ -904,10 +890,11 @@ export function EngineeringPlot({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const retryLoad = useCallback(() => {
     setLoadError(null);
+    setLoadAttempt(value => value + 1);
   }, []);
 
   // -----------------------------------------------------------------------
@@ -945,19 +932,16 @@ export function EngineeringPlot({
   // -----------------------------------------------------------------------
   // Effect 4: resize, input listeners, and teardown.
   // -----------------------------------------------------------------------
+  const initChartRef = useRef(initChart);
+  initChartRef.current = initChart;
+  const resizeHeightRef = useRef(height);
+  resizeHeightRef.current = height;
   const onResize = () => {
     const inst = chartInstanceRef.current;
     const box = containerRef.current;
-    if (!box) return;
-    if (!inst) {
-      if (box.clientWidth > 0 && loaded) {
-        initChart();
-      }
-      return;
-    }
-    if (inst.setSize) {
-      inst.setSize({ width: box.clientWidth || 600, height });
-    }
+    if (!box || box.clientWidth <= 0) return;
+    if (!inst) { initChartRef.current(); return; }
+    inst.setSize?.({ width: box.clientWidth, height: resizeHeightRef.current });
   };
 
   const handleContainerClick = useCallback(
@@ -1083,25 +1067,19 @@ export function EngineeringPlot({
 
       const plotWidth = inst.bbox?.width ?? ((containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current);
       const plotHeight = inst.bbox?.height ?? (height - xAxisSizeRef.current);
-      const xRange = state.startXMax - state.startXMin;
-      const xShift = (dx / plotWidth) * xRange;
-      const newXMin = state.startXMin - xShift;
-      const newXMax = state.startXMax - xShift;
+      const [newXMin, newXMax] = panRange(state.startXMin, state.startXMax, -dx / plotWidth, xScaleType);
       setXMin(newXMin);
       setXMax(newXMax);
       inst.setScale('x', { min: newXMin, max: newXMax });
 
-      if (yScaleType === 'linear') {
-        const yRange = state.startYMax - state.startYMin;
-        const yShift = (dy / plotHeight) * yRange;
-        const newYMin = state.startYMin + yShift;
-        const newYMax = state.startYMax + yShift;
+      {
+        const [newYMin, newYMax] = panRange(state.startYMin, state.startYMax, dy / plotHeight, yScaleType);
         setYMin(newYMin);
         setYMax(newYMax);
         inst.setScale('y', { min: newYMin, max: newYMax });
       }
     },
-    [height, yScaleType],
+    [height, xScaleType, yScaleType],
   );
 
   const handlePanUp = useCallback(() => {
@@ -1151,25 +1129,19 @@ export function EngineeringPlot({
 
       const plotWidth = inst.bbox?.width ?? ((containerRef.current?.clientWidth ?? 600) - yAxisSizeRef.current);
       const plotHeight = inst.bbox?.height ?? (height - xAxisSizeRef.current);
-      const xRange = state.startXMax - state.startXMin;
-      const xShift = (dx / plotWidth) * xRange;
-      const newXMin = state.startXMin - xShift;
-      const newXMax = state.startXMax - xShift;
+      const [newXMin, newXMax] = panRange(state.startXMin, state.startXMax, -dx / plotWidth, xScaleType);
       setXMin(newXMin);
       setXMax(newXMax);
       inst.setScale('x', { min: newXMin, max: newXMax });
 
-      if (yScaleType === 'linear') {
-        const yRange = state.startYMax - state.startYMin;
-        const yShift = (dy / plotHeight) * yRange;
-        const newYMin = state.startYMin + yShift;
-        const newYMax = state.startYMax + yShift;
+      {
+        const [newYMin, newYMax] = panRange(state.startYMin, state.startYMax, dy / plotHeight, yScaleType);
         setYMin(newYMin);
         setYMax(newYMax);
         inst.setScale('y', { min: newYMin, max: newYMax });
       }
     },
-    [height, yScaleType],
+    [height, xScaleType, yScaleType],
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -1209,8 +1181,7 @@ export function EngineeringPlot({
 
       const currentXMin = xScale.min;
       const currentXMax = xScale.max;
-      const newXMin = cursorXVal - (cursorXVal - currentXMin) * zoomFactor;
-      const newXMax = cursorXVal + (currentXMax - cursorXVal) * zoomFactor;
+      const [newXMin, newXMax] = zoomRange(currentXMin, currentXMax, cursorXVal, zoomFactor, xScaleType);
 
       if (Number.isFinite(newXMin) && Number.isFinite(newXMax) && newXMin < newXMax) {
         setXMin(newXMin);
@@ -1218,11 +1189,10 @@ export function EngineeringPlot({
         inst.setScale('x', { min: newXMin, max: newXMax });
       }
 
-      if (yScaleType === 'linear' && yScale && yScale.min != null && yScale.max != null && Number.isFinite(cursorYVal)) {
+      if (yScale && yScale.min != null && yScale.max != null && Number.isFinite(cursorYVal)) {
         const currentYMin = yScale.min;
         const currentYMax = yScale.max;
-        const newYMin = cursorYVal - (cursorYVal - currentYMin) * zoomFactor;
-        const newYMax = cursorYVal + (currentYMax - cursorYVal) * zoomFactor;
+        const [newYMin, newYMax] = zoomRange(currentYMin, currentYMax, cursorYVal, zoomFactor, yScaleType);
 
         if (Number.isFinite(newYMin) && Number.isFinite(newYMax) && newYMin < newYMax) {
           setYMin(newYMin);
@@ -1231,7 +1201,7 @@ export function EngineeringPlot({
         }
       }
     },
-    [height, yScaleType],
+    [height, xScaleType, yScaleType],
   );
 
   const addListener = useCallback(
@@ -1311,13 +1281,13 @@ export function EngineeringPlot({
       setXMax(null);
       setYMin(null);
       setYMax(null);
-      applyAutoscale(inst, config.series);
+      applyAutoscale(inst, config.series, xScaleType, yScaleType);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to reset view');
       console.error('[EngineeringPlot] Reset view failed:', err);
       setInitError(err);
     }
-  }, [validateData, config.series]);
+  }, [validateData, config.series, xScaleType, yScaleType]);
 
   const handleAutoscale = useCallback(() => {
     const inst = chartInstanceRef.current;
@@ -1329,17 +1299,17 @@ export function EngineeringPlot({
       setXMax(null);
       setYMin(null);
       setYMax(null);
-      applyAutoscale(inst, config.series);
+      applyAutoscale(inst, config.series, xScaleType, yScaleType);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to autoscale');
       console.error('[EngineeringPlot] Autoscale failed:', err);
       setInitError(err);
     }
-  }, [validateData, config.series]);
+  }, [validateData, config.series, xScaleType, yScaleType]);
 
   const handleResetSettings = useCallback(() => {
     setShowGrid(true);
-    setYScaleType('linear');
+    setYScaleType(config.yAxis.type ?? 'linear');
     setXMin(null);
     setXMax(null);
     setYMin(null);
@@ -1352,7 +1322,7 @@ export function EngineeringPlot({
     setSeriesVisibility({});
     setSigFigs(4);
     setCursorReadoutEnabled(config.tooltips !== false);
-  }, [config.tooltips]);
+  }, [config.tooltips, config.yAxis.type]);
 
   const handleExportPng = useCallback(() => {
     const inst = chartInstanceRef.current;
@@ -1395,13 +1365,9 @@ export function EngineeringPlot({
     URL.revokeObjectURL(url);
   }, [config.series, config.title]);
 
+  const extent = computeDataExtent(config.series, xScaleType, yScaleType);
   const datasetRange = config.series.length
-    ? {
-        xMin: Math.min(...config.series[0].x),
-        xMax: Math.max(...config.series[0].x),
-        yMin: Math.min(...config.series.flatMap((s) => s.y.filter(isFiniteNumber))),
-        yMax: Math.max(...config.series.flatMap((s) => s.y.filter(isFiniteNumber))),
-      }
+    ? { xMin: extent.x[0], xMax: extent.x[1], yMin: extent.y[0], yMax: extent.y[1] }
     : null;
 
   if (loadError) {
@@ -1420,18 +1386,6 @@ export function EngineeringPlot({
     return (
       <div className={`eng-plot eng-plot-loading ${className || ''}`} style={{ height }} aria-label="Plot loading">
         <p>Loading plot…</p>
-      </div>
-    );
-  }
-
-  if (initError) {
-    return (
-      <div className={`eng-plot eng-plot-error ${className || ''}`} role="alert" aria-live="polite">
-        <p>Unable to render the interactive plot.</p>
-        <p className="eng-plot-error-detail">{initError.message}</p>
-        <button type="button" onClick={initChart} aria-label="Retry rendering plot">
-          Retry
-        </button>
       </div>
     );
   }
@@ -1587,6 +1541,11 @@ export function EngineeringPlot({
 
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
+      {initError && <div className="eng-plot-error" role="alert">
+        <p>Unable to render the interactive plot. {initError.message}</p>
+        <button type="button" onClick={initChart}>Retry rendering plot</button>
+        <button type="button" onClick={handleResetSettings}>Reset settings</button>
+      </div>}
       <header className="eng-plot-header">
         <div className="eng-plot-header-main">
           {config.title && <h2 className="eng-plot-title">{renderMathText(config.title)}</h2>}
@@ -1609,7 +1568,7 @@ export function EngineeringPlot({
         <div
           ref={containerRef}
           className="eng-plot-canvas-wrapper"
-          style={{ width: '100%', minHeight: height, position: 'relative' }}
+          style={{ width: '100%', minHeight: height, position: 'relative', visibility: initError ? 'hidden' : 'visible' }}
           aria-hidden="true"
         />
         {(toolbar === 'floating' || toolbar === 'minimal') && renderModebar()}

@@ -1,0 +1,56 @@
+/* Authoring blocks share the site's paper, ink and type tokens. */
+.mdx-note, .mdx-equation, .mdx-measurement {
+  margin: 1.6rem 0;
+  padding: clamp(1rem, 3vw, 1.6rem);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  min-width: 0;
+}
+.mdx-note { border-left: 3px solid var(--accent); }
+.mdx-note-limitation { border-left-style: double; border-left-width: 5px; }
+.mdx-block-label { font: 500 .72rem/1.6 var(--mono); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 .6rem; }
+.mdx-note h4 { font: 400 1.45rem/1.3 var(--serif-display); margin: 0 0 .8rem; }
+.mdx-note > div > :last-child { margin-bottom: 0; }
+.mdx-equation-math { overflow-x: auto; padding-block: 1rem; font-size: 1.3em; }
+.mdx-equation figcaption { font: 1rem/1.6 var(--serif); }
+.mdx-equation dl { display: grid; gap: .7rem; margin-bottom: 0; }
+.mdx-equation dl > div { display: grid; grid-template-columns: minmax(5rem, 1fr) minmax(0, 3fr); gap: 1rem; }
+.mdx-equation dd { margin: 0; }
+.mdx-measurement-value { font: 400 clamp(1.5rem, 4vw, 2.2rem)/1.4 var(--mono); overflow-wrap: anywhere; }
+.mdx-measurement-value span { font-size: .6em; color: var(--muted); }
+.eng-metric-grid { display: grid; gap: .875rem; margin: 1.25rem 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.eng-metric-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.eng-metric-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.eng-table-sort { border: 0; padding: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: inherit; }
+.eng-table-sort:disabled { opacity: 1; cursor: default; }
+.mdx-heatmap-readout { font: .75rem/1.6 var(--mono); color: var(--muted); min-height: 2.5em; }
+.eng-heatmap-canvas { background: repeating-conic-gradient(var(--surface-2) 0% 25%,var(--surface) 0% 50%) 0 / 12px 12px; }
+:is(.eng-table-sort,.eng-heatmap-canvas,.mdx-tooltip-trigger):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 700px) {
+  .eng-metric-grid.cols-3, .eng-metric-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .eng-metric-grid[class] { grid-template-columns: minmax(0, 1fr); }
+  .mdx-equation dl > div { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+}
+@media print {
+  .mdx-note, .mdx-equation, .mdx-measurement { break-inside: avoid; }
+  .eng-cell-code-container[hidden] { display: block !important; }
+}
+
+.eng-metric-card, .eng-metric-body { min-width: 0; }
+.eng-metric-val { overflow-wrap: anywhere; }
+.eng-heatmap-canvas-wrapper { min-width: 0; }
+
+.mdx-tooltip-description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

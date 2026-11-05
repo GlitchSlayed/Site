@@ -1,47 +1,45 @@
 ---
+import { url } from '../config';
+interface Props {
+  /** Keep title mapping for existing discussions; use number to pin a migrated thread. */
+  mapping?: 'title' | 'pathname' | 'specific' | 'number';
+  term?: string;
+  discussionNumber?: number;
+}
+const { mapping = 'title', term, discussionNumber } = Astro.props;
+const themeRoot = new URL(url(''), Astro.site || Astro.url.origin);
+const discussionUrl = discussionNumber
+  ? `https://github.com/GlitchSlayed/Site/discussions/${discussionNumber}`
+  : 'https://github.com/GlitchSlayed/Site/discussions';
 ---
-<section class="comments-section" aria-label="Comments">
-  <div class="comments-header">
-    <div class="eyebrow">DISCUSSION</div>
-  </div>
-  <div class="giscus"></div>
-  <script
-    src="https://giscus.app/client.js"
-    data-repo="GlitchSlayed/Site"
-    data-repo-id="R_kgDOVWOW8Q"
-    data-category="General"
-    data-category-id="DIC_kwDOVWOW8c4DJjhG"
-    data-mapping="title"
-    data-strict="0"
-    data-reactions-enabled="1"
-    data-emit-metadata="0"
-    data-input-position="top"
-    data-theme="https://glitchslayed.github.io/Site/giscus-light.css"
-    data-lang="en"
-    crossorigin="anonymous"
-    async
-  ></script>
-  <script is:inline>
-    // Ensure initial theme matches current mode before iframe initializes (default light)
-    try {
-      const currentTheme = document.documentElement.dataset.theme || localStorage.getItem('theme') || 'light';
-      const script = document.querySelector('script[src="https://giscus.app/client.js"]');
-      if (script && currentTheme === 'dark') {
-        script.setAttribute('data-theme', 'https://glitchslayed.github.io/Site/giscus-dark.css');
-      }
-    } catch {}
-  </script>
+<section class="comments-section" aria-labelledby="discussion-heading" data-comments
+  data-mapping={discussionNumber ? 'number' : mapping} data-term={discussionNumber ? String(discussionNumber) : term}
+  data-light-theme={new URL('giscus-light.css', themeRoot).href}
+  data-dark-theme={new URL('giscus-dark.css', themeRoot).href}>
+  <header class="comments-header">
+    <p class="small-label">Notes in the margin</p>
+    <h2 id="discussion-heading">Continue the discussion</h2>
+    <p>Spot a mistake, have a different approach, or tried something similar? Leave a note. Technical corrections are welcome.</p>
+  </header>
+  <div class="comments-meta"><span>Comments use GitHub sign-in.</span><a href={discussionUrl} data-discussion-link>Open on GitHub ↗</a></div>
+  <p class="comments-status" data-comments-status role="status">Discussion loads when you reach this section.</p>
+  <button type="button" class="comments-load" data-comments-load hidden>Load discussion</button>
+  <div class="giscus" data-comments-host></div>
+  <noscript><p>Read or join the <a href={discussionUrl}>discussion on GitHub</a>.</p></noscript>
 </section>
-
+<script>
+  import { initComments } from '../lib/comments';
+  initComments();
+</script>
 <style>
-  .comments-section {
-    max-width: 740px;
-    margin: 48px auto 0;
-    padding-top: 36px;
-    border-top: 1px solid var(--border);
-  }
-
-  .comments-header {
-    margin-bottom: 24px;
-  }
+  .comments-section { max-width: 72ch; margin: 3rem auto 0; padding-top: 1.5rem; border-top: 3px double var(--border-strong); font-family: var(--sans); }
+  .comments-header h2 { font: 400 clamp(1.7rem, 4vw, 2.4rem)/1.2 var(--serif-display); letter-spacing: -.025em; margin: .5rem 0 1rem; }
+  .comments-header > p:last-child { font: 1.1rem/1.65 var(--serif); color: var(--muted); max-width: 60ch; }
+  .comments-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; font: .72rem/1.6 var(--mono); padding-block: .8rem; border-bottom: 1px solid var(--border); }
+  .comments-meta a { color: var(--accent); }
+  .comments-status { font-size: .85rem; color: var(--muted); }
+  .comments-load { font: inherit; padding: .6rem 1rem; border: 1px solid var(--border-strong); background: var(--surface); color: var(--foreground); margin-bottom: 1rem; }
+  .comments-load:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .giscus { margin-top: 1.2rem; min-width: 0; }
+  @media print { .comments-section { display: none; } }
 </style>

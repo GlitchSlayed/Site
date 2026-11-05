@@ -10,6 +10,9 @@ import { DataTable } from '../src/components/mdx/DataTable';
 import { ParamPlayground } from '../src/components/mdx/ParamPlayground';
 import { HeatmapPlot } from '../src/components/mdx/HeatmapPlot';
 import { NotebookCell } from '../src/components/mdx/NotebookCell';
+import { EngineeringNote } from '../src/components/mdx/EngineeringNote';
+import { EquationBlock } from '../src/components/mdx/EquationBlock';
+import { Measurement } from '../src/components/mdx/Measurement';
 import { Tooltip } from '../src/components/mdx/Tooltip';
 
 // ---------------------------------------------------------------------------
@@ -208,7 +211,7 @@ describe('React MDX Components', () => {
     expect(rows.length).toBe(3);
 
     // Click to sort by range
-    const rangeHeader = container.querySelectorAll('thead th')[1] as HTMLTableCellElement;
+    const rangeHeader = container.querySelectorAll('thead th button')[1] as HTMLButtonElement;
     await act(async () => {
       rangeHeader.click();
     });
@@ -328,6 +331,23 @@ describe('React MDX Components', () => {
     expect(container.querySelector('canvas')).toBeTruthy();
   });
 
+  it('renders engineering context and reported uncertainty without inventing confidence', async () => {
+    await act(async () => root.render(<>
+      <EngineeringNote kind="limitation" title="Small-angle model">No separated flow.</EngineeringNote>
+      <EquationBlock equation="F = ma" description="Force equals mass times acceleration." variables={[{symbol:'m',meaning:'Mass',unit:'kg'}]} />
+      <Measurement label="Reading" value={12.4} unit="N" uncertainty={0.3} uncertaintyLabel="Instrument tolerance" />
+    </>));
+    expect(container.querySelector('aside')?.getAttribute('aria-label')).toBe('Small-angle model');
+    expect(container.textContent).toContain('Force equals mass times acceleration.');
+    expect(container.textContent).toContain('Instrument tolerance');
+    expect(container.textContent).not.toContain('95%');
+  });
+
+  it('reports invalid uncertainty instead of rendering an invalid number', async () => {
+    await act(async () => root.render(<Measurement label="Reading" value={1} unit="N" uncertainty={-1} />));
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('nonnegative uncertainty');
+  });
+
   it('Tooltip renders with data attributes, accessibility, and custom tag', async () => {
     await act(async () => {
       root.render(
@@ -351,6 +371,7 @@ describe('React MDX Components', () => {
     expect(trigger?.getAttribute('data-tooltip-shortcut')).toBe('L/D');
     expect(trigger?.getAttribute('data-tooltip-pos')).toBe('bottom');
     expect(trigger?.getAttribute('tabindex')).toBe('0');
+    expect(document.getElementById(trigger!.getAttribute('aria-describedby')!)?.textContent).toContain('Aerodynamic efficiency measure');
     expect(trigger?.classList.contains('mdx-tooltip-trigger')).toBe(true);
   });
 });

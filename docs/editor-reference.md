@@ -1,5 +1,9 @@
 # Glitchy's Technical Blog: Master Editor Reference & Writing Guide
 
+> Engineering visual update: [engineering-design-refinement.md](engineering-design-refinement.md) defines the current drawing and engineering-brief fields, default cover behavior, register, source shelves, and texture effects. It supersedes earlier decorative-shader defaults.
+
+> Layout update (2026-11-05): See [personal-redesign.md](personal-redesign.md) for the current homepage, project catalogue, writing archive, about page, and section-based newspaper reader. Earlier layout descriptions below are historical; author grounding, schemas, and component guidance still apply.
+
 > **Purpose**: This document is the authoritative reference for the AI writing assistant, human editor, or custom GPT/Claude Project that plans, drafts, and audits content for **Glitchy's Technical Blog** (publicly branded as **Vansh's Technical Blog**).
 > 
 > Keep this document updated whenever site features, collection schemas, or author contexts evolve.

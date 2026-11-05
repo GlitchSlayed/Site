@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import type { PlotAxis, PlotReferenceLine, PlotShadedRegion, EngineeringPlotConfig, PlotSeries } from '../../lib/engineering/types';
 import { EngineeringPlot } from '../engineering/plots/EngineeringPlot';
 import { getSeriesColor } from '../../lib/engineering/colormaps';
 import { sweepFunction, type MathFn } from '../../lib/engineering/evaluator';
-import { subscribeParameter } from '../../lib/engineering/scopedState';
+import { useScopeSnapshot } from '../engineering/shared/useScopedParameter';
 
 export interface FunctionEntry {
   fn: string | MathFn;
@@ -58,22 +58,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
   referenceLines,
   shadedRegions,
 }) => {
-  // Scoped state parameter tracking
-  const [scopedParams, setScopedParams] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    if (!scopeId) return;
-
-    // Listen to parameter changes on this scope
-    const unsubscribe = subscribeParameter(scopeId, (paramId, value) => {
-      setScopedParams((prev) => ({
-        ...prev,
-        [paramId]: value,
-      }));
-    });
-
-    return unsubscribe;
-  }, [scopeId]);
+  const scopedParams = useScopeSnapshot(scopeId);
 
   // Merge static initialParams with live scopedParams
   const mergedParams = useMemo(() => {
@@ -92,7 +77,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
   }, [fn]);
 
   // Compute swept data series
-  const series = useMemo<PlotSeries[]>(() => {
+  const series = useMemo<Array<PlotSeries & { error?: string }>>(() => {
     return functionList.map((entry, idx) => {
       const label = entry.label || (typeof entry.fn === 'string' ? entry.fn : `f_${idx + 1}(x)`);
       const color = entry.color || getSeriesColor(idx);
@@ -112,6 +97,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
         return {
           id: `fn-${idx}`,
           label: `${label} (error)`,
+          error: err instanceof Error ? err.message : "Invalid expression.",
           x: [],
           y: [],
           color,
@@ -166,7 +152,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
 
   return (
     <div className={`eng-function-plot-container ${className}`}>
-      <EngineeringPlot config={config} height={height} toolbar={toolbar} />
+      {series.some(s => s.error) ? <div role="alert" className="eng-plot-error">{series.filter(s => s.error).map(s => <p key={s.id}>{s.label}: {s.error}</p>)}</div> : <EngineeringPlot config={config} height={height} toolbar={toolbar} />}
     </div>
   );
 };

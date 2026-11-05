@@ -1,3 +1,4 @@
+import { alignLineSeries } from '../../lib/engineering/mdxData';
 import React, { useMemo } from 'react';
 import type { PlotAxis, PlotReferenceLine, PlotShadedRegion, EngineeringPlotConfig, PlotSeries } from '../../lib/engineering/types';
 import { EngineeringPlot } from '../engineering/plots/EngineeringPlot';
@@ -52,7 +53,8 @@ export const LinePlot: React.FC<LinePlotProps> = ({
   referenceLines,
   shadedRegions,
 }) => {
-  const config = useMemo<EngineeringPlotConfig>(() => {
+  const result = useMemo<{ config?: EngineeringPlotConfig; error?: string }>(() => {
+    try {
     const formattedSeries: PlotSeries[] = (series || []).map((s, idx) => {
       const xData = s.x && s.x.length > 0 ? s.x : (sharedX || []);
       const id = s.id || `series-${idx}`;
@@ -81,17 +83,18 @@ export const LinePlot: React.FC<LinePlotProps> = ({
       range: yRange,
     };
 
-    return {
+    return { config: {
       title,
       description,
       xAxis,
       yAxis,
-      series: formattedSeries,
+      series: alignLineSeries(formattedSeries),
       referenceLines,
       shadedRegions,
       legend: true,
       tooltips: true,
-    };
+    } };
+    } catch (error) { return { error: error instanceof Error ? error.message : "Invalid line data." }; }
   }, [
     title,
     description,
@@ -109,9 +112,10 @@ export const LinePlot: React.FC<LinePlotProps> = ({
     shadedRegions,
   ]);
 
+  if (!result.config) return <p role="alert">{result.error}</p>;
   return (
     <div className={`eng-line-plot-container ${className}`}>
-      <EngineeringPlot config={config} height={height} toolbar={toolbar} />
+      <EngineeringPlot config={result.config} height={height} toolbar={toolbar} />
     </div>
   );
 };

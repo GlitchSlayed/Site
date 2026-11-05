@@ -92,3 +92,17 @@ Run it from the **Actions** tab, or enable its push trigger for automatic deploy
 Search runs locally in the browser. The site requires no database or application server.
 
 Starter articles are labeled as samples, and initial project entries describe proposed studies. Replace them with original content as the site develops.
+
+## Personal design revision
+
+See [the redesign notes](docs/personal-redesign.md) for 12–15 changes per page category, reader behavior, implementation locations, and validation limits. The newspaper reader now presents natural-height section pairs while preserving a single article body.
+
+The second pass adds [ten engineering-focused refinements](docs/engineering-design-refinement.md), including project-specific vector drawings, lightweight surface shaders, an engineering register, and evidence-aware project briefs.
+
+## MDX authoring and discussions
+
+- [MDX components and working examples](docs/mdx-components-guide.md)
+- [Focused component audit and verification limits](docs/mdx-focused-audit.md)
+- [Giscus setup, themes, thread mapping and deployment checks](docs/giscus-integration.md)
+
+Run the dependency-free regression suite with `npm run test:core`; use the full check/build/browser workflow before deployment.

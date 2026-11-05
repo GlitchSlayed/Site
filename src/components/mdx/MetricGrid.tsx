@@ -14,12 +14,7 @@ export const MetricGrid: React.FC<MetricGridProps> = ({
   return (
     <div
       className={`eng-metric-grid cols-${columns} ${className}`}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(auto-fit, minmax(${columns === 2 ? '240px' : '180px'}, 1fr))`,
-        gap: '0.875rem',
-        margin: '1.25rem 0',
-      }}
+
     >
       {children}
     </div>

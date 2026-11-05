@@ -1,0 +1,8 @@
+---
+interface Props { brief: { question:string; approach:string; constraint:string; evidence:string; nextCheck:string; methods:string[] }; }
+const {brief}=Astro.props;
+---
+<section class="engineering-brief" aria-label="Project engineering brief">
+ <div class="brief-question"><p class="small-label">The engineering question</p><h2>{brief.question}</h2><ul class="method-list" aria-label="Methods">{brief.methods.map(method=><li>{method}</li>)}</ul></div>
+ <dl><div><dt>Approach</dt><dd>{brief.approach}</dd></div><div><dt>What exists</dt><dd>{brief.evidence}</dd></div><div><dt>Limiting constraint</dt><dd>{brief.constraint}</dd></div><div class="brief-next"><dt>Next check</dt><dd>{brief.nextCheck}</dd></div></dl>
+</section>

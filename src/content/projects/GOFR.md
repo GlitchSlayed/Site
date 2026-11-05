@@ -17,6 +17,14 @@ visual: dither
 visualAccent: "#739cda"
 visualLabel: Fedora remix · Concept
 visualAnimate: false
+drawing: gofr
+engineering:
+  question: "Which changes to Fedora defaults are worth the maintenance cost?"
+  approach: "Plan a Fedora Workstation remix with different boot, kernel, and interactive shell defaults."
+  constraint: "Kernel lifecycle, recovery, compatibility, and redistribution need validation."
+  evidence: "Defined concept and proposed architecture. No completed image or validated release is claimed."
+  nextCheck: "Select image-building tools and establish a working virtual-machine prototype."
+  methods: ["RPM packaging planned", "UKI lifecycle planned", "VM validation planned", "Recovery testing planned"]
 ---
 # GOFR: Glitchy's Opinionated Fedora Remix
 

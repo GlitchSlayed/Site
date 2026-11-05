@@ -1,212 +1,47 @@
 ---
 import Base from '../layouts/Base.astro';
-import Rocket from '../components/Rocket.astro';
-import PostList from '../components/PostList.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import ArrowIcon from '../components/ArrowIcon.astro';
 import StatusBadge from '../components/StatusBadge.astro';
+import TechnicalPlate from '../components/drawings/TechnicalPlate.astro';
 import { getCollection } from 'astro:content';
 import { url, dateLabel } from '../config';
-
-const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort(
-  (a, b) => +b.data.date - +a.data.date
-);
-const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
-  (a, b) => (Number(b.data.featured) - Number(a.data.featured)) || (+b.data.date - +a.data.date)
-);
-
-const featuredProject = projects.find((p) => p.data.featured) || projects[0];
-const secondaryProjects = projects.filter((p) => p.id !== featuredProject.id);
+import { readingMinutes } from '../lib/editorial';
+const projects = (await getCollection('projects', ({data}) => !data.draft && !data.sample)).sort((a,b) => Number(b.data.featured)-Number(a.data.featured) || +b.data.date-+a.data.date);
+const posts = (await getCollection('writing', ({data}) => !data.draft && !data.sample)).sort((a,b) => +b.data.date-+a.data.date);
+const lead = projects[0];
 ---
-
-<Base ogImagePath="og/home.png" ogImageAlt="Vansh’s Technical Blog">
-  <!-- Monograph Opening Hero -->
-  <section class="hero shell">
-    <div class="hero-copy">
-      <div class="eyebrow">
-        <span class="status-dot"></span>
-        <span>NOTEBOOK // VOL. 2026 · AEROSPACE &amp; SOFTWARE</span>
-      </div>
-      <h1>
-        Aerospace, physical models &amp; <span class="accent-word"><em>software projects.</em></span>
-      </h1>
-      <p class="hero-description">
-        I’m Vansh, a mechanical engineering student concentrating in aerospace at Hofstra University. Alongside aerospace design and manufacturing, I build software projects and open-source tools as a hobby: from Linux utilities to engineering simulations.
-      </p>
-      <div class="hero-actions">
-        <a class="button primary" href={url('projects/')}>
-          Explore projects <ArrowIcon />
-        </a>
-        <a class="text-link" href={url('writing/')}>
-          Read field notes <ArrowIcon />
-        </a>
-      </div>
-      <div class="hero-footnote">
-        <Rocket />
-        <span>HOFSTRA UNIVERSITY · AEROSPACE &amp; HOBBY SOFTWARE · FEDORA LINUX</span>
-      </div>
-    </div>
-
-    <div class="hero-diagram">
-      <div class="diagram-top">
-        <span>PLATE 01</span>
-        <span>TRAJECTORY &amp; REACTION MODEL // SCHEMATIC</span>
-      </div>
-      <svg viewBox="0 0 470 450" fill="none" aria-hidden="true">
-        <defs>
-          <pattern id="hero-grid" width="34" height="34" patternUnits="userSpaceOnUse">
-            <path d="M34 0H0V34" stroke="currentColor" stroke-opacity=".06" />
-          </pattern>
-          <linearGradient id="trail" x1="100" y1="360" x2="330" y2="100" gradientUnits="userSpaceOnUse">
-            <stop stop-color="var(--accent)" stop-opacity="0.1" />
-            <stop offset="1" stop-color="var(--accent)" />
-          </linearGradient>
-        </defs>
-        <rect width="470" height="450" fill="url(#hero-grid)" />
-        <circle cx="235" cy="225" r="151" stroke="currentColor" stroke-opacity=".1" />
-        <circle cx="235" cy="225" r="105" stroke="currentColor" stroke-opacity=".08" />
-        <path d="M235 30v390M30 225h410" stroke="currentColor" stroke-opacity=".1" stroke-dasharray="3 7" />
-        <path d="M55 390Q224 386 335 103" stroke="url(#trail)" stroke-width="2" />
-        <path d="M85 400Q290 372 400 45" stroke="currentColor" stroke-opacity=".16" stroke-dasharray="5 7" />
-        <g transform="translate(335 103) rotate(27)">
-          <path d="M0-34C-14-18-15 8-9 24H9C15 8 14-18 0-34Z" stroke="currentColor" stroke-width="1.5" fill="var(--background)" />
-          <circle cy="-3" r="5" stroke="var(--accent)" stroke-width="1.5" />
-          <path d="m-11 11-11 19 15-6M11 11l11 19-15-6M-5 29l5 17 5-17" stroke="var(--accent)" stroke-width="1.5" />
-        </g>
-        <circle cx="163" cy="339" r="3" fill="var(--accent)" />
-        <path d="M163 339h74" stroke="currentColor" stroke-opacity=".3" />
-        <text x="243" y="343" fill="currentColor" opacity=".55" font-size="9" font-family="monospace">STAGE SEPARATION // 34.2 km</text>
-      </svg>
-      <div class="diagram-bottom">
-        <span>GOVERNING EQUATIONS → EMPIRICAL TEST</span>
-        <span class="accent"><ArrowIcon /></span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Technical Discipline Band -->
-  <div class="discipline-band">
-    <div class="shell">
-      <span class="discipline-item">AEROSPACE &amp; AIRCRAFT DESIGN</span>
-      <span class="discipline-item">HYDRAULIC ACTUATION &amp; TOOLING</span>
-      <span class="discipline-item">HOBBY SOFTWARE &amp; LINUX SYSTEMS</span>
-      <span class="discipline-item">NUMERICAL SIMULATION</span>
-    </div>
+<Base ogImagePath="og/home.png">
+<div class="personal-home">
+<section class="shell personal-opening">
+  <div class="opening-copy">
+    <p class="small-label">Vansh Datta / Engineering student &amp; curious tinkerer</p>
+    <h1>I like knowing<br/> <em>why it works.</em></h1>
+    <p class="intro-deck">Aircraft, things made in a machine shop, and the software I use every day. This is where I work through them.</p>
+    <p>I’m studying mechanical engineering with an aerospace concentration at Hofstra. Outside class, I spend a lot of time with Fedora Linux, open-source projects, and questions that turn into projects of their own.</p>
+    <div class="inline-links"><a class="button primary" href={url('projects/')}>See what I’m working on ↗</a><a class="text-link" href={url('about/')}>A little about me →</a></div>
+    <p class="location-note">Hofstra University · Long Island, NY · Class of 2027</p>
   </div>
-
-  <!-- Section 01: Selected Investigations (Asymmetrical Editorial Showcase) -->
-  <section class="shell section">
-    <div class="section-heading">
-      <div>
-        <div class="eyebrow"><span class="section-num">§ 01</span> SELECTED INVESTIGATIONS</div>
-        <h2>Engineering Projects</h2>
-      </div>
-      <a class="text-link" href={url('projects/')}>All investigations ({projects.length}) <ArrowIcon /></a>
-    </div>
-
-    <div class="editorial-project-showcase">
-      <!-- Large Lead Feature Project -->
-      <div class="featured-project-lead">
-        <ProjectCard project={featuredProject} featured={true} />
-      </div>
-
-      <!-- Secondary Companion Projects Stack -->
-      <div class="secondary-projects-stack">
-        {secondaryProjects.slice(0, 2).map((project) => (
-          <a class="project-card-compact" href={url(`projects/${project.id}/`)}>
-            <div class="post-meta">
-              {project.data.category && <span class="project-category">{project.data.category}</span>}
-              <span class="project-date">{dateLabel(project.data.date)}</span>
-              <StatusBadge status={project.data.status} size="compact" />
-            </div>
-            <h3>{project.data.title}</h3>
-            <p>{project.data.description}</p>
-            <div class="tag-list">
-              {project.data.tags.slice(0, 3).map((tag: string) => <span>{tag}</span>)}
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-    <p class="section-note">
-      * Engineering projects include aerodynamic studies, manufacturing tooling, and open-source hobby software utilities.
-    </p>
-  </section>
-
-  <!-- Section 02: Active Workbench Investigations -->
-  <section class="shell section workbench-section">
-    <div class="section-heading">
-      <div>
-        <div class="eyebrow"><span class="section-num">§ 02</span> THE WORKBENCH</div>
-        <h2>Active Investigations &amp; Methods</h2>
-      </div>
-      <span class="eyebrow-tag">LAB STATUS: OPERATIONAL</span>
-    </div>
-
-    <div class="workbench-grid">
-      <div class="workbench-card">
-        <div class="workbench-num">INV-01</div>
-        <div class="workbench-tag">AERODYNAMICS</div>
-        <h3>Blended-Wing Body Circulation</h3>
-        <p>
-          Investigating spanwise circulation distributions on low-sweep blended-wing configurations. Balancing lift-to-drag optimization against pitch stability and high-angle stall margin using vortex-lattice and lifting-line methods.
-        </p>
-        <div class="workbench-specs">
-          <span>MODEL: BWB-60</span>
-          <span>AR: 7.2</span>
-          <span>METHOD: VLM / XFLR5</span>
-        </div>
-      </div>
-
-      <div class="workbench-card">
-        <div class="workbench-num">INV-02</div>
-        <div class="workbench-tag">FABRICATION &amp; TOOLING</div>
-        <h3>Shop-Floor Precision &amp; Tolerancing</h3>
-        <p>
-          Applying lessons from aerospace hydraulic actuator manufacturing: designing modular workholding fixtures, custom inspection gages, and rigid test jigs where deflection and repeatability dictate test validity.
-        </p>
-        <div class="workbench-specs">
-          <span>TOLERANCE: ±0.0005 in</span>
-          <span>FOCUS: CNC FIXTURING</span>
-          <span>CAD: SOLIDWORKS</span>
-        </div>
-      </div>
-
-      <div class="workbench-card">
-        <div class="workbench-num">INV-03</div>
-        <div class="workbench-tag">HOBBY SOFTWARE</div>
-        <h3>Linux Workflows &amp; Tooling</h3>
-        <p>
-          Building fast, self-contained desktop utilities and simulation pipelines on Fedora Linux. Emphasizing clean terminal ergonomics, scriptable data processing with NumPy/SciPy, and local-first software.
-        </p>
-        <div class="workbench-specs">
-          <span>OS: FEDORA LINUX</span>
-          <span>STACK: PYTHON / C / RUST</span>
-          <span>TOOLING: CLI FIRST</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 03: Recent Field Notes & Writing -->
-  <section class="shell section writing-section">
-    <div class="section-heading">
-      <div>
-        <div class="eyebrow"><span class="section-num">§ 03</span> TECHNICAL WRITING</div>
-        <h2>Field Notes &amp; Dispatches</h2>
-      </div>
-      <a class="text-link" href={url('writing/')}>All writing ({posts.length}) <ArrowIcon /></a>
-    </div>
-    <PostList posts={posts.slice(0, 3)} />
-  </section>
-
-  <!-- Section 04: Perspective & Background Strip -->
-  <section class="shell about-strip">
-    <div class="eyebrow"><span class="section-num">§ 04</span> PERSPECTIVE</div>
-    <h2>Built on first principles. Grounded on the shop floor.</h2>
-    <p class="hero-description">
-      Whether analyzing lifting-line circulation or designing CNC workholding fixtures, good engineering requires respecting both the governing equations and the realities of physical fabrication. Outside of class and the shop, I build hobby software projects and tinker with Linux systems.
-    </p>
-    <a class="text-link" href={url('about/')}>More about my background and projects <ArrowIcon /></a>
-  </section>
+  <aside class="home-drawing">
+    <TechnicalPlate kind="rocket" hero />
+    <p class="drawing-marginalia">The shape is the beginning. The assumptions are the work.</p>
+  </aside>
+</section>
+<section class="shell route-strip" aria-label="Explore the notebook">
+  <a href={url('projects/')}><span>01 / The work</span><strong>Projects &amp; experiments</strong><p>The question, the approach, and where it stands.</p></a>
+  <a href={url('writing/')}><span>02 / The thinking</span><strong>Notes &amp; longer reads</strong><p>Decisions, rabbit holes, and things I’m figuring out.</p></a>
+  <a href={url('about/')}><span>03 / The person</span><strong>Beyond the project list</strong><p>Manufacturing, aerospace, Linux, and a few other interests.</p></a>
+</section>
+<section class="shell section">
+  <div class="section-heading"><div><p class="small-label">Selected work</p><h2>On my workbench</h2></div><a href={url('projects/')} class="text-link">All {projects.length} projects →</a></div>
+  <div class="personal-projects">
+    {lead && <ProjectCard project={lead} featured />}
+    <div class="project-notes">{projects.slice(1,4).map((p,i) => <a href={url(`projects/${p.id}/`)}><span class="small-label">0{i+2} / {p.data.tags[0]}</span><h3>{p.data.title}</h3><p>{p.data.description}</p><StatusBadge status={p.data.status} size="compact" /></a>)}</div>
+  </div>
+  {!projects.length && <p>The first project write-up is on its way.</p>}
+</section>
+<section class="shell question-board" aria-labelledby="open-questions"><div class="section-heading"><div><p class="small-label">The questions behind the work</p><h2 id="open-questions">What needs checking next?</h2></div></div><div>{projects.filter(p=>p.data.engineering).map(p=><article><span class="small-label">{p.data.title.split(':')[0]}</span><h3><a href={url(`projects/${p.id}/`)}>{p.data.engineering!.question}</a></h3><p><span>Next check</span> {p.data.engineering!.nextCheck}</p></article>)}</div></section>
+<section class="shell personal-letter"><p class="small-label">What the shop taught me</p><h2>A drawing still has to become a part.</h2><p>During my six-month co-op at Arkwin Industries, I worked on fixtures, workholding, cutting tools, drawings, and manufacturing instructions. That experience is a big part of why I care about how a design gets made and measured.</p><a class="text-link" href={url('about/#experience')}>More about that experience →</a></section>
+<section class="shell section"><div class="section-heading"><div><p class="small-label">From the blog</p><h2>Things I’ve been thinking about</h2></div><a class="text-link" href={url('writing/')}>All writing →</a></div><div class="story-grid">{posts.slice(0,3).map(p => <article><p class="small-label"><time datetime={p.data.date.toISOString()}>{dateLabel(p.data.date)}</time> · {readingMinutes(p.body)} min</p><h3><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h3><p>{p.data.description}</p><a class="text-link" href={url(`writing/${p.id}/`)}>Keep reading →</a></article>)}</div></section>
+<section class="shell personal-signoff"><h2>Still learning. Writing it down.</h2><p>Some of these ideas are proposals. Some are prototypes. I’m keeping the reasoning here along with the work.</p><a href={url('rss.xml')} class="text-link">Follow the notebook with RSS ↗</a></section>
+</div>
 </Base>

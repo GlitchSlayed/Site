@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { interpolateColormap, type ColormapName } from '../../lib/engineering/colormaps';
+import { heatmapError } from '../../lib/engineering/mdxData';
 import { formatNumber } from '../../lib/engineering/format';
 
 export interface HeatmapPlotProps {
@@ -40,17 +41,23 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
   interpolate = true,
   className = '',
 }) => {
+  const error = heatmapError(data, xDomain, yDomain, zRange) || (!Number.isFinite(height) || height < 1 ? 'Heatmap height must be a positive finite value.' : null);
+  const [resolution, setResolution] = useState({ width: 600, height });
+  const [cell, setCell] = useState({ row: 0, col: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colorbarCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [hoverInfo, setHoverInfo] = useState<{
-    xVal: number;
-    yVal: number;
-    zVal: number;
-    pixelX: number;
-    pixelY: number;
-  } | null>(null);
+  useEffect(() => {
+    const host = containerRef.current;
+    if (!host || typeof ResizeObserver === 'undefined') return;
+    const resize = new ResizeObserver(() => {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      setResolution({ width: Math.max(1, Math.round(host.clientWidth * ratio)), height: Math.round(height * ratio) });
+    });
+    resize.observe(host);
+    return () => resize.disconnect();
+  }, [height, error]);
 
   // Compute rows, cols, and min/max z value
   const numRows = data.length;
@@ -78,7 +85,7 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
   // Render heatmap canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || numRows === 0 || numCols === 0) return;
+    if (!canvas || error || numRows === 0 || numCols === 0) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -99,6 +106,7 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
       const dataRow = numRows - 1 - r;
       for (let c = 0; c < numCols; c++) {
         const val = data[dataRow][c];
+        if (!Number.isFinite(val)) continue; // Transparent missing cells, never fabricated zeros.
         const norm = Math.max(0, Math.min(1, (val - minZ) / zSpan));
         const [R, G, B] = interpolateColormap(norm, colormap);
 
@@ -116,7 +124,7 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
     ctx.imageSmoothingEnabled = interpolate;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
-  }, [data, numRows, numCols, minZ, maxZ, colormap, interpolate]);
+  }, [data, numRows, numCols, minZ, maxZ, colormap, interpolate, resolution, error]);
 
   // Render colorbar
   useEffect(() => {
@@ -142,19 +150,18 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
       }
     }
     ctx.putImageData(imgData, 0, 0);
-  }, [colormap]);
+  }, [colormap, height, error]);
 
   // Mouse move handler for hover tooltip
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas || numRows === 0 || numCols === 0) return;
+    if (!canvas || error || numRows === 0 || numCols === 0) return;
 
     const rect = canvas.getBoundingClientRect();
     const xRatio = (e.clientX - rect.left) / rect.width;
     const yRatio = (e.clientY - rect.top) / rect.height;
 
     if (xRatio < 0 || xRatio > 1 || yRatio < 0 || yRatio > 1) {
-      setHoverInfo(null);
       return;
     }
 
@@ -162,23 +169,14 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
     // Invert Y so bottom is 0
     const rowIndex = Math.min(numRows - 1, Math.max(0, Math.floor((1 - yRatio) * numRows)));
 
-    const zVal = data[rowIndex]?.[colIndex] ?? 0;
-    const xVal = xDomain[0] + xRatio * (xDomain[1] - xDomain[0]);
-    const yVal = yDomain[0] + (1 - yRatio) * (yDomain[1] - yDomain[0]);
-
-    setHoverInfo({
-      xVal,
-      yVal,
-      zVal,
-      pixelX: e.clientX - rect.left,
-      pixelY: e.clientY - rect.top,
-    });
+    setCell({ row: rowIndex, col: colIndex });
   };
 
-  const handleMouseLeave = () => {
-    setHoverInfo(null);
-  };
 
+  const selectedRow = Math.min(cell.row, numRows - 1);
+  const selectedCol = Math.min(cell.col, numCols - 1);
+  const selected = data[selectedRow]?.[selectedCol];
+  if (error) return <p className="eng-plot-error" role="alert">{error}</p>;
   return (
     <div className={`eng-heatmap-container ${className}`}>
       {(title || description) && (
@@ -204,34 +202,28 @@ export const HeatmapPlot: React.FC<HeatmapPlotProps> = ({
         <div className="eng-heatmap-canvas-wrapper" ref={containerRef} style={{ position: 'relative', flex: 1 }}>
           <canvas
             ref={canvasRef}
-            width={600}
-            height={height}
+            width={resolution.width}
+            height={resolution.height}
+            tabIndex={0}
+            role="img"
+            aria-label={`${title || "Heatmap"}. Use arrow keys to inspect cells; row zero is the bottom row.`}
+            onKeyDown={event => {
+              if (event.key === 'Home') { event.preventDefault(); setCell({row:0,col:0}); return; }
+              if (event.key === 'End') { event.preventDefault(); setCell({row:numRows-1,col:numCols-1}); return; }
+              const moves: Record<string, [number, number]> = { ArrowLeft: [0,-1], ArrowRight: [0,1], ArrowUp: [1,0], ArrowDown: [-1,0] };
+              const move = moves[event.key];
+              if (!move) return;
+              event.preventDefault();
+              setCell({ row: Math.max(0, Math.min(numRows-1, selectedRow+move[0])), col: Math.max(0, Math.min(numCols-1, selectedCol+move[1])) });
+            }}
             onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
             className="eng-heatmap-canvas"
             style={{ width: '100%', height: `${height}px`, display: 'block', borderRadius: '4px' }}
           />
 
-          {/* Hover Crosshair & Tooltip */}
-          {hoverInfo && (
-            <div
-              className="eng-heatmap-tooltip"
-              style={{
-                position: 'absolute',
-                left: `${Math.min(hoverInfo.pixelX + 12, 450)}px`,
-                top: `${Math.max(hoverInfo.pixelY - 36, 10)}px`,
-                pointerEvents: 'none',
-              }}
-            >
-              <div>
-                <strong>{zLabel}:</strong> {formatNumber(hoverInfo.zVal, { sigFigs: 4 })} {zUnit}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                ({xLabel}: {formatNumber(hoverInfo.xVal, { sigFigs: 3 })}, {yLabel}:{' '}
-                {formatNumber(hoverInfo.yVal, { sigFigs: 3 })})
-              </div>
-            </div>
-          )}
+          <p className="mdx-heatmap-readout" role="status">
+            Row {selectedRow + 1}, column {selectedCol + 1}: {zLabel} = {Number.isFinite(selected) ? formatNumber(selected, {sigFigs: 4}) : 'No measurement'} {Number.isFinite(selected) ? zUnit : ''}
+          </p>
 
           {/* X Axis Label */}
           <div className="eng-heatmap-x-axis">

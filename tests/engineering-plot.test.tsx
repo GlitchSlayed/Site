@@ -220,6 +220,48 @@ describe('EngineeringPlot lifecycle', () => {
     document.body.innerHTML = '';
   });
 
+  it('honors author bounds and preserves marker-only observations', async () => {
+    const config: EngineeringPlotConfig = {
+      ...baseConfig,
+      xAxis: { title: 'X', range: [1, 1000] },
+      yAxis: { title: 'Y', range: [1, 100] },
+      series: [{id:'samples',label:'Samples',x:[10,20],y:[3,5],mode:'markers'}],
+    };
+    const { root } = renderPlot(config);
+    await flush();
+    await waitForChart();
+    const plot = createdInstances.at(-1);
+    expect(plot.opts.scales.x.min).toBe(1);
+    expect(plot.opts.scales.x.max).toBe(1000);
+    expect(plot.opts.series[1].width).toBe(0);
+    expect(plot.opts.series[1].points.show).toBe(true);
+    expect(plot.opts.series[1].fill).toBeUndefined();
+    act(() => root.unmount());
+  });
+
+  it('honors configured logarithmic axes on initial mount', async () => {
+    const { root } = renderPlot({ ...baseConfig, xAxis: { title: 'X', type: 'log' }, yAxis: { title: 'Y', type: 'log' } });
+    await flush();
+    await waitForChart();
+    const plot = createdInstances.at(-1);
+    expect(plot.opts.scales.x.distr).toBe(3);
+    expect(plot.opts.scales.y.distr).toBe(3);
+    act(() => root.unmount());
+  });
+
+  it('recovers from invalid log data without losing its canvas host', async () => {
+    const invalid = { ...baseConfig, yAxis: { title: 'Y', type: 'log' as const }, series: [{ ...baseConfig.series[0], y: [0, 15, 17, 14, 10] }] };
+    const { root, container } = renderPlot(invalid);
+    await flush();
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    expect(container.querySelector('.eng-plot-canvas-wrapper')).not.toBeNull();
+    act(() => root.render(<EngineeringPlot config={baseConfig} />));
+    await flush();
+    await waitForChart();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    act(() => root.unmount());
+  });
+
   it('renders loading state before uPlot resolves', () => {
     const { container } = renderPlot();
     expect(container.textContent).toContain('Loading plot…');

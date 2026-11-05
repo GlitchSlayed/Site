@@ -1,0 +1,6 @@
+---
+import { sourceLinks } from '../lib/sourceLinks';
+const {body=''}=Astro.props;
+const links=sourceLinks(body);
+---
+{links.length>0&&<details class="source-shelf"><summary>Sources &amp; project links <span>{links.length}</span></summary><p>Links referenced in this write-up, collected in one place.</p><ul>{links.map(link=><li><a href={link.href}>{link.label} <span aria-hidden="true">↗</span></a><small>{link.host}</small></li>)}</ul></details>}

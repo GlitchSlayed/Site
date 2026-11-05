@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { formatNumber } from '../../lib/engineering/format';
-import { getParameter, subscribeParameter } from '../../lib/engineering/scopedState';
+import { useScopeSnapshot } from '../engineering/shared/useScopedParameter';
 import { renderMathText } from '../../lib/engineering/formatMath';
 
 export interface MetricCardProps {
@@ -32,25 +32,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   paramId,
   className = '',
 }) => {
-  const [dynamicValue, setDynamicValue] = useState<number | undefined>(() => {
-    if (scopeId && paramId) {
-      const v = getParameter(scopeId, paramId);
-      if (typeof v === 'number') return v;
-    }
-    return undefined;
-  });
-
-  useEffect(() => {
-    if (!scopeId || !paramId) return;
-
-    const unsubscribe = subscribeParameter(scopeId, (id, val) => {
-      if (id === paramId) {
-        setDynamicValue(val);
-      }
-    });
-
-    return unsubscribe;
-  }, [scopeId, paramId]);
+  const snapshot = useScopeSnapshot(scopeId);
+  const dynamicValue = paramId ? snapshot[paramId] : undefined;
 
   const rawValue = dynamicValue !== undefined ? dynamicValue : staticValue;
 

@@ -15,6 +15,10 @@ export const collections = {
   ...common,
   status: ProjectStatus,
   art:z.enum(['wing','orbit','code']),
+  drawing:z.enum(['airfoils','bwb','uki','gofr','rocket','wing','orbit','code']).optional(),
+  engineering:z.object({
+   question:z.string(), approach:z.string(), constraint:z.string(), evidence:z.string(), nextCheck:z.string(), methods:z.array(z.string()),
+  }).optional(),
   visual:z.enum(['dither','grain','mesh','grid','dots','asset','screenshot']).optional(),
   visualAccent:z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   visualImage:z.string().optional(),

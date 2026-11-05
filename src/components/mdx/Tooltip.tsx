@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export interface TooltipProps {
   /** The primary tooltip text to display */
@@ -31,7 +31,9 @@ export const Tooltip: React.FC<TooltipProps> = ({
   className = '',
   children,
 }) => {
+  const descriptionId = useId();
   return (
+    <>
     <Component
       className={`mdx-tooltip-trigger ${className}`}
       data-tooltip={content}
@@ -39,9 +41,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
       data-tooltip-subtitle={subtitle}
       data-tooltip-shortcut={shortcut}
       tabIndex={0}
+      aria-describedby={descriptionId}
     >
       {children}
     </Component>
+    <span id={descriptionId} className="mdx-tooltip-description">{[content, subtitle, shortcut].filter(Boolean).join(". ")}</span>
+    </>
   );
 };
 

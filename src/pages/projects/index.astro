@@ -1,411 +1,56 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ProjectCard from '../../components/ProjectCard.astro';
-import ArrowIcon from '../../components/ArrowIcon.astro';
-import SparkIcon from '../../components/SparkIcon.astro';
-import StatusBadge from '../../components/StatusBadge.astro';
 import { getCollection } from 'astro:content';
-import { url, dateLabel } from '../../config';
-
-const allProjects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
-  (a, b) => (Number(b.data.featured) - Number(a.data.featured)) || (+b.data.date - +a.data.date)
-);
-
-const featuredProject = allProjects.find((p) => p.data.featured) || allProjects[0];
+import { url } from '../../config';
+import { statusNotes } from '../../lib/editorial';
+const projects = (await getCollection('projects', ({data})=>!data.draft)).sort((a,b)=>Number(b.data.featured)-Number(a.data.featured)||+b.data.date-+a.data.date);
+const tags = [...new Set(projects.flatMap(p=>p.data.tags))].sort();
+const statuses = [...new Set(projects.map(p=>p.data.status))];
 ---
-
-<Base title="Projects & Engineering Monographs | Vansh" ogImagePath="og/projects.png" ogImageAlt="Vansh’s Projects">
-  <section class="shell page-section">
-    <!-- Header with Archival / Technical Eyebrow -->
-    <div class="project-index-header">
-      <div class="eyebrow">
-        <span class="status-dot"></span>
-        <span>ENGINEERING REPOSITORY // VOL. 2026 · MONOGRAPHS</span>
-      </div>
-      <h1 class="page-title">
-        Technical investigations &amp; <br />
-        <span class="accent-word"><em>engineering monographs.</em></span>
-      </h1>
-      <p class="page-description">
-        Detailed studies across aerodynamics, aerospace structures, manufacturing tooling, and open-source software tools. Each monograph documents governing physics, design trade-offs, and physical realities.
-      </p>
-    </div>
-
-    <!-- Filter Strip -->
-    <div class="project-filter-strip" role="toolbar" aria-label="Filter projects by category">
-      <div class="filter-buttons">
-        <button type="button" class="project-filter-btn active" data-filter="all" aria-pressed="true">
-          All Disciplines ({allProjects.length})
-        </button>
-        <button type="button" class="project-filter-btn" data-filter="aerospace" aria-pressed="false">
-          Aerospace &amp; Flight
-        </button>
-        <button type="button" class="project-filter-btn" data-filter="manufacturing" aria-pressed="false">
-          Manufacturing &amp; Tooling
-        </button>
-        <button type="button" class="project-filter-btn" data-filter="software" aria-pressed="false">
-          Hobby Software &amp; Systems
-        </button>
-      </div>
-      <div class="project-counter" id="project-count" aria-live="polite">
-        Showing {allProjects.length} monographs
-      </div>
-    </div>
-
-    <!-- Featured Lead Monograph Feature Card -->
-    <div class="lead-monograph-card" id="lead-monograph-section" data-categories={JSON.stringify([featuredProject.data.category || '', ...featuredProject.data.tags].map(s => s.toLowerCase()))}>
-      <div class="lead-monograph-badge">
-        <SparkIcon />
-        <span>PRIMARY RESEARCH MONOGRAPH // DOC-01</span>
-      </div>
-      <div class="lead-monograph-body">
-        <div class="lead-monograph-content">
-          <div class="post-meta">
-            {featuredProject.data.category && <span class="project-category">{featuredProject.data.category}</span>}
-            <span class="project-date">{dateLabel(featuredProject.data.date)}</span>
-            <StatusBadge status={featuredProject.data.status} size="compact" />
-          </div>
-          <h2>
-            <a href={url(`projects/${featuredProject.id}/`)}>
-              {featuredProject.data.title}
-            </a>
-          </h2>
-          <p class="lead-monograph-abstract">
-            {featuredProject.data.description}
-          </p>
-          <div class="lead-monograph-specs">
-            <div class="spec-cell">
-              <span class="spec-label">DISCIPLINE</span>
-              <span class="spec-value">{featuredProject.data.category || 'Aerodynamics'}</span>
-            </div>
-            <div class="spec-cell">
-              <span class="spec-label">DOCUMENT TYPE</span>
-              <span class="spec-value">Research Monograph</span>
-            </div>
-            <div class="spec-cell">
-              <span class="spec-label">MODELS</span>
-              <span class="spec-value">Interactive Simulation</span>
-            </div>
-            <div class="spec-cell">
-              <span class="spec-label">STATUS</span>
-              <span class="spec-value">Active Iteration</span>
-            </div>
-          </div>
-          <div class="lead-actions">
-            <a class="button primary" href={url(`projects/${featuredProject.id}/`)}>
-              Open Full Monograph <ArrowIcon />
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- All Projects Grid / Catalogue -->
-    <div class="project-catalogue-heading">
-      <div class="eyebrow">RESEARCH ARCHIVE &amp; PROJECT INDEX</div>
-    </div>
-
-    <div class="project-grid" id="project-catalogue">
-      {allProjects.map((project) => (
-        <div
-          class="project-grid-item"
-          data-categories={JSON.stringify([project.data.category || '', ...project.data.tags].map(s => s.toLowerCase()))}
-        >
-          <ProjectCard project={project} />
-        </div>
-      ))}
-    </div>
-
-    <p id="no-projects-msg" class="empty-state" hidden>
-      No monographs found under this discipline.
-    </p>
-
-    <!-- Classification Legend at Base -->
-    <div class="monograph-legend">
-      <div class="legend-header">
-        <span class="legend-title">§ MONOGRAPH CLASSIFICATIONS &amp; METHODOLOGY</span>
-      </div>
-      <div class="legend-grid">
-        <div class="legend-item">
-          <h4>Research Monograph</h4>
-          <p>
-            In-depth aerospace and aerodynamic studies featuring numerical physics, lifting-line methods, and interactive parameter explorers.
-          </p>
-        </div>
-        <div class="legend-item">
-          <h4>Fabrication &amp; Tooling</h4>
-          <p>
-            Physical engineering projects derived from machine shop workholding, hydraulic actuation fixtures, and tight-tolerance manufacturing.
-          </p>
-        </div>
-        <div class="legend-item">
-          <h4>Hobby Software &amp; Systems</h4>
-          <p>
-            Open-source developer utilities, Linux desktop tools, and command-line automation scripts built for computational workflows.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+<Base title="Projects | Vansh Datta" ogImagePath="og/projects.png">
+<section class="shell page-section personal-catalogue">
+<header class="personal-page-head"><p class="small-label">The workbench / Projects</p><h1 class="page-title">A question worth<br/><em>working through.</em></h1><p class="intro-deck">Airfoil experiments, aircraft trade studies, and software I want to exist. Here’s what I’m working on, including the parts I haven’t figured out yet.</p></header>
+<div class="catalogue-summary">{statuses.map(s=><span><strong>{projects.filter(p=>p.data.status===s).length}</strong> {s}</span>)}</div>
+<form class="catalogue-controls" id="project-controls" role="search" aria-label="Find a project">
+<label>Find a project<input type="search" id="project-query" placeholder="Try airfoil, Fedora, simulation…" /></label>
+<label>Topic<select id="project-topic"><option value="all">All topics</option>{tags.map(t=><option value={t}>{t}</option>)}</select></label>
+<label>Stage<select id="project-stage"><option value="all">Every stage</option>{statuses.map(s=><option>{s}</option>)}</select></label>
+<label>Order<select id="project-sort"><option value="selected">Selected first</option><option value="newest">Newest first</option><option value="title">A to Z</option></select></label>
+<button type="reset" class="button">Reset</button>
+</form>
+<div class="register-view" role="group" aria-label="Project view" hidden><button type="button" data-view="cards" aria-pressed="true">Drawing cards</button><button type="button" data-view="register" aria-pressed="false">Engineering register</button></div>
+<p id="project-count" role="status">{projects.length} projects in the notebook</p>
+<div class="project-grid" id="project-catalogue">{projects.map((p,i)=><div class="project-grid-item" data-id={p.id} data-title={p.data.title} data-search={`${p.data.title} ${p.data.description} ${p.data.tags.join(' ')} ${p.data.engineering?.methods.join(' ') || ''} ${p.data.engineering?.question || ''}`.toLowerCase()} data-tags={JSON.stringify(p.data.tags)} data-status={p.data.status} data-date={+p.data.date} data-order={i}><ProjectCard project={p} /><p class="project-stage-note">{statusNotes[p.data.status]}</p></div>)}</div>
+<div class="project-register" id="project-register" hidden role="region" aria-label="Engineering project register" tabindex="0"><table><caption>Project scope, methods, and the next check</caption><thead><tr><th scope="col">Project / stage</th><th scope="col">Question &amp; method</th><th scope="col">Next check</th></tr></thead><tbody>{projects.map(p=><tr data-id={p.id}><th scope="row"><a href={url(`projects/${p.id}/`)}>{p.data.title}</a><span>{p.data.status}</span></th><td>{p.data.engineering?.question || p.data.description}{p.data.engineering&&<small>{p.data.engineering.methods.join(' · ')}</small>}</td><td>{p.data.engineering?.nextCheck || 'See the project write-up for next steps.'}</td></tr>)}</tbody></table></div>
+<div id="project-empty" class="empty-state" hidden><h2>No projects match those filters.</h2><p>Try a broader topic or reset the filters to see the whole workbench.</p></div>
+<details class="status-guide"><summary>What the project stages mean</summary><dl>{Object.entries(statusNotes).map(([s,n])=><div><dt>{s}</dt><dd>{n}</dd></div>)}</dl></details>
+<aside class="personal-letter"><p class="small-label">A note on what’s here</p><h2>Plans belong in the notebook, too.</h2><p>A concept page records a question and a possible way to answer it. It doesn’t mean I’ve built the hardware or run the experiment. Each project keeps its methods, assumptions, and remaining work together.</p></aside>
+</section>
 </Base>
-
-<style>
-  .project-index-header {
-    margin-bottom: 36px;
-    padding-bottom: 28px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .project-filter-strip {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .filter-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .project-filter-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.5px;
-    padding: 7px 14px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--muted);
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.16s ease;
-  }
-
-  .project-filter-btn:hover {
-    color: var(--foreground);
-    border-color: var(--border-strong);
-  }
-
-  .project-filter-btn.active {
-    background: var(--foreground);
-    color: var(--background);
-    border-color: var(--foreground);
-    font-weight: 500;
-  }
-
-  .project-counter {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* Lead Monograph Styling */
-  .lead-monograph-card {
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
-    border-radius: 4px;
-    position: relative;
-    margin-bottom: 48px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
-    overflow: hidden;
-  }
-
-  .lead-monograph-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--accent);
-  }
-
-  .lead-monograph-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--surface-2);
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    font-family: var(--mono);
-    font-size: 9.5px;
-    letter-spacing: 1px;
-    font-weight: 600;
-    color: var(--accent);
-  }
-
-  .lead-monograph-body {
-    padding: 32px;
-  }
-
-  .lead-monograph-content h2 {
-    font-family: var(--serif-display);
-    font-size: clamp(26px, 3.2vw, 36px);
-    font-weight: 550;
-    letter-spacing: -0.6px;
-    line-height: 1.2;
-    margin: 8px 0 16px;
-  }
-
-  .lead-monograph-content h2 a {
-    text-decoration: none;
-    color: var(--foreground);
-    transition: color 0.16s ease;
-  }
-
-  .lead-monograph-content h2 a:hover {
-    color: var(--accent);
-  }
-
-  .lead-monograph-abstract {
-    font-family: var(--serif);
-    font-size: 16.5px;
-    line-height: 1.7;
-    color: var(--muted);
-    max-width: 820px;
-    margin-bottom: 24px;
-  }
-
-  .lead-monograph-specs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 16px;
-    padding: 16px 20px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    margin-bottom: 24px;
-  }
-
-  .spec-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .spec-label {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 1px;
-    color: var(--subtle);
-  }
-
-  .spec-value {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--foreground);
-  }
-
-  .lead-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .project-catalogue-heading {
-    margin: 40px 0 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .monograph-legend {
-    margin-top: 64px;
-    padding: 28px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-  }
-
-  .legend-header {
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed var(--border);
-  }
-
-  .legend-title {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 1px;
-    color: var(--muted);
-    font-weight: 600;
-  }
-
-  .legend-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-
-  .legend-item h4 {
-    font-family: var(--serif-display);
-    font-size: 15px;
-    font-weight: 550;
-    margin: 0 0 6px;
-    color: var(--foreground);
-  }
-
-  .legend-item p {
-    font-size: 12.5px;
-    line-height: 1.6;
-    color: var(--muted);
-    margin: 0;
-  }
-
-  @media (max-width: 860px) {
-    .lead-monograph-body {
-      padding: 24px 20px;
-    }
-    .legend-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-  }
-</style>
-
 <script>
-  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.project-filter-btn');
-  const projectItems = document.querySelectorAll<HTMLElement>('.project-grid-item');
-  const countLabel = document.querySelector<HTMLElement>('#project-count');
-  const noProjects = document.querySelector<HTMLElement>('#no-projects-msg');
-
-  filterBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const filter = btn.dataset.filter || 'all';
-
-      filterBtns.forEach((b) => {
-        const isCurrent = b === btn;
-        b.classList.toggle('active', isCurrent);
-        b.setAttribute('aria-pressed', String(isCurrent));
-      });
-
-      let visible = 0;
-      projectItems.forEach((item) => {
-        const categories: string[] = JSON.parse(item.dataset.categories || '[]');
-        let matches = filter === 'all';
-        if (filter === 'aerospace') {
-          matches = categories.some((c) => c.includes('aero') || c.includes('flight') || c.includes('space') || c.includes('wing'));
-        } else if (filter === 'manufacturing') {
-          matches = categories.some((c) => c.includes('manuf') || c.includes('tool') || c.includes('shop') || c.includes('cad') || c.includes('fixture'));
-        } else if (filter === 'software') {
-          matches = categories.some((c) => c.includes('soft') || c.includes('linux') || c.includes('code') || c.includes('system') || c.includes('python') || c.includes('web'));
-        }
-
-        item.hidden = !matches;
-        if (matches) visible++;
-      });
-
-      if (countLabel) {
-        countLabel.textContent = `Showing ${visible} monograph${visible === 1 ? '' : 's'}`;
-      }
-
-      if (noProjects) {
-        noProjects.hidden = visible > 0;
-      }
-    });
-  });
+const form = document.querySelector<HTMLFormElement>('#project-controls');
+const grid = document.querySelector<HTMLElement>('#project-catalogue');
+const register = document.querySelector<HTMLElement>('#project-register')!;
+const rows = [...register.querySelectorAll<HTMLTableRowElement>('tbody tr')];
+const items = [...document.querySelectorAll<HTMLElement>('.project-grid-item')];
+const query = document.querySelector<HTMLInputElement>('#project-query')!;
+const topic = document.querySelector<HTMLSelectElement>('#project-topic')!;
+const stage = document.querySelector<HTMLSelectElement>('#project-stage')!;
+const sort = document.querySelector<HTMLSelectElement>('#project-sort')!;
+const viewButtons=[...document.querySelectorAll<HTMLButtonElement>('.register-view button')];
+function setView(view:string){const table=view==='register';grid!.hidden=table;register.hidden=!table;viewButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===(table?'register':'cards'))));try{localStorage.setItem('project-view',table?'register':'cards');}catch{}}
+viewButtons.forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view!)));
+(document.querySelector('.register-view') as HTMLElement).hidden=false;
+try{setView(localStorage.getItem('project-view')||'cards');}catch{setView('cards');}
+function update() {
+ let count=0;
+ items.forEach(item=>{item.hidden=!(item.dataset.search!.includes(query.value.trim().toLowerCase()) && (topic.value==='all'||JSON.parse(item.dataset.tags!).includes(topic.value)) && (stage.value==='all'||item.dataset.status===stage.value)); if(!item.hidden)count++;});
+ [...items].sort((a,b)=>sort.value==='title'?a.dataset.title!.localeCompare(b.dataset.title!):sort.value==='newest'?Number(b.dataset.date)-Number(a.dataset.date):Number(a.dataset.order)-Number(b.dataset.order)).forEach(item=>{grid?.append(item);const row=rows.find(r=>r.dataset.id===item.dataset.id);if(row){row.hidden=item.hidden;register.querySelector('tbody')!.append(row);}});
+ document.querySelector('#project-count')!.textContent=`${count} of ${items.length} projects`;
+ (document.querySelector('#project-empty') as HTMLElement).hidden=count>0;
+}
+form?.addEventListener('submit',e=>e.preventDefault());
+form?.addEventListener('input',update);
+form?.addEventListener('reset',()=>setTimeout(update,0));
 </script>

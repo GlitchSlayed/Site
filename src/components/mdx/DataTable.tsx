@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useId, useEffect } from 'react';
+import { csvCell, compareCells, safePageSize } from '../../lib/engineering/mdxData';
 import { formatNumber } from '../../lib/engineering/format';
 import { renderMathText } from '../../lib/engineering/formatMath';
 
@@ -34,11 +35,13 @@ export const DataTable: React.FC<DataTableProps> = ({
   downloadable = true,
   className = '',
 }) => {
+  const captionId = useId();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activePageSize, setActivePageSize] = useState<number | 'all'>(pageSize);
+  const [activePageSize, setActivePageSize] = useState<number | 'all'>(safePageSize(pageSize));
+  useEffect(() => { setActivePageSize(safePageSize(pageSize)); setCurrentPage(1); }, [pageSize]);
 
   // Filter rows based on search text
   const filteredData = useMemo(() => {
@@ -57,23 +60,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   const sortedData = useMemo(() => {
     if (!sortKey || !sortOrder) return filteredData;
     const sorted = [...filteredData];
-    sorted.sort((a, b) => {
-      const valA = a[sortKey];
-      const valB = b[sortKey];
-
-      if (valA === undefined || valA === null) return 1;
-      if (valB === undefined || valB === null) return -1;
-
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return sortOrder === 'asc' ? valA - valB : valB - valA;
-      }
-
-      const strA = String(valA).toLowerCase();
-      const strB = String(valB).toLowerCase();
-      if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
-      if (strA > strB) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
+    sorted.sort((a, b) => compareCells(a[sortKey], b[sortKey], sortOrder === 'desc'));
     return sorted;
   }, [filteredData, sortKey, sortOrder]);
 
@@ -107,25 +94,18 @@ export const DataTable: React.FC<DataTableProps> = ({
 
   // Export CSV download
   const handleExportCSV = () => {
-    const headers = columns.map((col) => `"${(col.label + (col.unit ? ` [${col.unit}]` : '')).replace(/"/g, '""')}"`);
-    const rows = sortedData.map((row) =>
-      columns
-        .map((col) => {
-          const val = row[col.key];
-          if (val === undefined || val === null) return '""';
-          return `"${String(val).replace(/"/g, '""')}"`;
-        })
-        .join(',')
-    );
-
+    const headers = columns.map(col => csvCell(col.label + (col.unit ? ` [${col.unit}]` : '')));
+    const rows = sortedData.map(row => columns.map(col => csvCell(row[col.key])).join(','));
     const csvContent = [headers.join(','), ...rows].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${title ? title.toLowerCase().replace(/\s+/g, '_') : 'data'}_export.csv`;
+    document.body.append(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
@@ -133,7 +113,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       {(title || description || searchable || downloadable) && (
         <div className="eng-table-toolbar">
           <div className="eng-table-info">
-            {title && <h4 className="eng-table-title">{title}</h4>}
+            {title && <h4 id={captionId} className="eng-table-title">{title}</h4>}
             {description && <p className="eng-table-desc">{description}</p>}
           </div>
 
@@ -174,7 +154,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       )}
 
       <div className="eng-table-responsive">
-        <table className="eng-data-table">
+        <table className="eng-data-table" aria-labelledby={title ? captionId : undefined} aria-label={title ? undefined : "Data table"}>
           <thead>
             <tr>
               {columns.map((col) => {
@@ -183,11 +163,12 @@ export const DataTable: React.FC<DataTableProps> = ({
                 return (
                   <th
                     key={col.key}
-                    onClick={() => isSortable && handleSort(col.key)}
+                    scope="col"
+                    aria-sort={isSorted ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
                     className={`${isSortable ? 'sortable' : ''} align-${col.align || 'left'} ${isSorted ? `sorted-${sortOrder}` : ''}`}
                     style={{ textAlign: col.align || 'left' }}
                   >
-                    <span className="th-content">
+                    <button type="button" className="th-content eng-table-sort" disabled={!isSortable} onClick={() => handleSort(col.key)}>
                       <span>{renderMathText(col.label)}</span>
                       {col.unit && <span className="th-unit"> [{renderMathText(col.unit)}]</span>}
                       {isSortable && (
@@ -195,7 +176,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                           {isSorted ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}
                         </span>
                       )}
-                    </span>
+                    </button>
                   </th>
                 );
               })}
@@ -226,7 +207,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                     return (
                       <td
                         key={col.key}
-                        style={{ textAlign: col.align || 'left' }}
+                        style={{ textAlign: col.align || (isNum ? 'right' : 'left') }}
                         className={`align-${col.align || 'left'} ${isNum ? 'is-numeric' : ''}`}
                       >
                         {isStatus ? (
@@ -245,7 +226,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       </div>
 
       <div className="eng-table-pagination">
-        <div className="eng-pagination-summary">
+        <div className="eng-pagination-summary" role="status">
           {totalRows > 0 ? (
             <span>
               Showing {isAll ? 1 : (pageIndex - 1) * rowsPerPage + 1} to{' '}
@@ -267,6 +248,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                 setCurrentPage(1);
               }}
             >
+              {![10,25,50].includes(safePageSize(pageSize)) && <option value={safePageSize(pageSize)}>{safePageSize(pageSize)}</option>}
               <option value={10}>10</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
@@ -279,7 +261,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               <button
                 type="button"
                 disabled={pageIndex <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage(Math.max(1, pageIndex - 1))}
                 className="eng-page-btn"
                 aria-label="Previous Page"
               >
@@ -291,7 +273,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               <button
                 type="button"
                 disabled={pageIndex >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage(Math.min(totalPages, pageIndex + 1))}
                 className="eng-page-btn"
                 aria-label="Next Page"
               >

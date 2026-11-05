@@ -195,7 +195,7 @@ function show(data: ActiveTooltipData) {
   positionTooltip(data.target, data.position);
 
   overlay.style.visibility = 'visible';
-  data.target.setAttribute('aria-describedby', 'site-tooltip');
+  data.target.setAttribute('aria-describedby', [...new Set([...(data.target.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean), 'site-tooltip'])].join(' '));
 
   // Mark warm transition state
   isWarm = true;
@@ -209,7 +209,9 @@ function hide() {
   }
 
   if (activeTarget) {
-    activeTarget.removeAttribute('aria-describedby');
+    const remaining = (activeTarget.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== 'site-tooltip');
+    if (remaining.length) activeTarget.setAttribute('aria-describedby', remaining.join(' '));
+    else activeTarget.removeAttribute('aria-describedby');
     activeTarget = null;
   }
 

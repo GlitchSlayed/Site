@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useId } from 'react';
-import { getParameter, setParameter, subscribeParameter } from '../../lib/engineering/scopedState';
+import { registerParameter, setParameter } from '../../lib/engineering/scopedState';
+import { useScopeSnapshot } from '../engineering/shared/useScopedParameter';
 import { renderMathText } from '../../lib/engineering/formatMath';
 
 export interface ParamSliderProps {
@@ -32,36 +33,44 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
   className = '',
 }) => {
   const inputId = useId();
+  const validBounds = Number.isFinite(min) && Number.isFinite(max) && min < max && Number.isFinite(defaultValue) && (step === undefined || (Number.isFinite(step) && step > 0));
   const calculatedStep = step ?? (max - min <= 1 ? 0.01 : max - min <= 10 ? 0.1 : 1);
 
-  // Initialize value from scoped state or defaultValue
-  const [val, setVal] = useState<number>(() => {
-    if (scopeId) {
-      const existing = getParameter(scopeId, id);
-      if (typeof existing === 'number') return existing;
-    }
-    return defaultValue;
-  });
-
+  const snapshot = useScopeSnapshot(scopeId);
+  const [localValue, setLocalValue] = useState(defaultValue);
+  const val = scopeId ? snapshot[id] ?? defaultValue : localValue;
+  const valueRef = useRef(val);
+  const onChangeRef = useRef(onChange);
+  valueRef.current = val;
+  onChangeRef.current = onChange;
   const [isPlaying, setIsPlaying] = useState(false);
   const animRef = useRef<number | null>(null);
   const directionRef = useRef<1 | -1>(1);
-
-  // Keep in sync with scoped state if another controller modifies this param
   useEffect(() => {
-    if (!scopeId) return;
+    if (!validBounds) return;
+    if (scopeId) registerParameter(scopeId, id, Math.min(max, Math.max(min, defaultValue)));
+    else setLocalValue(defaultValue);
+  }, [scopeId, id, defaultValue, validBounds, min, max]);
+  const publish = (next: number) => {
+    if (!validBounds || !Number.isFinite(next)) return;
+    next = Math.min(max, Math.max(min, next));
+    valueRef.current = next;
+    if (scopeId) setParameter(scopeId, id, next);
+    else setLocalValue(next);
+    onChangeRef.current?.(next);
+  };
 
-    // Set initial value in scope
-    setParameter(scopeId, id, val);
-
-    const unsubscribe = subscribeParameter(scopeId, (paramId, newVal) => {
-      if (paramId === id) {
-        setVal(newVal);
-      }
-    });
-
-    return unsubscribe;
-  }, [scopeId, id]);
+  useEffect(() => {
+    if (typeof matchMedia === 'undefined' || typeof IntersectionObserver === 'undefined') return;
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    const pause = () => { if (document.hidden || motion.matches) setIsPlaying(false); };
+    const observer = new IntersectionObserver(entries => { if (!entries[0]?.isIntersecting) setIsPlaying(false); });
+    const control = document.getElementById(inputId);
+    if (control) observer.observe(control);
+    document.addEventListener('visibilitychange', pause);
+    motion.addEventListener('change', pause);
+    return () => { observer.disconnect(); document.removeEventListener('visibilitychange', pause); motion.removeEventListener('change', pause); };
+  }, [inputId]);
 
   // Handle animation sweep loop
   useEffect(() => {
@@ -78,24 +87,10 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      setVal((prev) => {
-        let next = prev + directionRef.current * speed * dt;
-        if (next >= max) {
-          next = max;
-          directionRef.current = -1;
-        } else if (next <= min) {
-          next = min;
-          directionRef.current = 1;
-        }
-
-        // Round to 3 decimal places to keep value clean
-        const rounded = Math.round(next * 1000) / 1000;
-        if (scopeId) {
-          setParameter(scopeId, id, rounded);
-        }
-        onChange?.(rounded);
-        return rounded;
-      });
+      let next = valueRef.current + directionRef.current * speed * dt;
+      if (next >= max) { next = max; directionRef.current = -1; }
+      else if (next <= min) { next = min; directionRef.current = 1; }
+      publish(Math.round(next * 1000) / 1000);
 
       animRef.current = requestAnimationFrame(stepAnim);
     };
@@ -104,15 +99,11 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [isPlaying, min, max, scopeId, id, onChange]);
+  }, [isPlaying, min, max, scopeId, id]);
 
   const handleChange = (newVal: number) => {
     if (isPlaying) setIsPlaying(false);
-    setVal(newVal);
-    if (scopeId) {
-      setParameter(scopeId, id, newVal);
-    }
-    onChange?.(newVal);
+    publish(newVal);
   };
 
   const handleReset = () => {
@@ -122,6 +113,7 @@ export const ParamSlider: React.FC<ParamSliderProps> = ({
 
   const isModified = Math.abs(val - defaultValue) > 1e-9;
 
+  if (!validBounds) return <p role="alert">{label}: slider bounds and step must be finite, with max greater than min and step positive.</p>;
   return (
     <div className={`eng-param-slider ${className}`}>
       <div className="eng-param-slider-header">

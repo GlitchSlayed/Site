@@ -1,6 +1,9 @@
 ---
 import '../styles/global.css';
 import '../styles/engineering.css';
+import '../styles/personal.css';
+import '../styles/technical.css';
+import '../styles/mdx.css';
 import 'katex/dist/katex.min.css';
 import 'uplot/dist/uPlot.min.css';
 import Rocket from '../components/Rocket.astro';
@@ -86,7 +89,7 @@ const commitHash = getCommitHash();
       <span class="brand-icon"><Rocket /></span>
       <span class="brand-text">
         <span class="brand-name">Vansh Datta</span>
-        <span class="brand-label">TECHNICAL NOTEBOOK</span>
+        <span class="brand-label">A PERSONAL NOTEBOOK</span>
       </span>
     </a>
     <nav aria-label="Main navigation">
@@ -124,6 +127,7 @@ const commitHash = getCommitHash();
     </a>
   </div>
   <div class="footer-links">
+    <button type="button" id="texture-toggle" class="texture-toggle" aria-pressed="true" hidden>Texture on</button>
     <a href={url('rss.xml')}>RSS <ArrowIcon /></a>
     {site.github && <a href={site.github} target="_blank" rel="noopener noreferrer">GitHub <ArrowIcon /></a>}
     {site.linkedin && <a href={site.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn <ArrowIcon /></a>}
@@ -183,14 +187,7 @@ button?.addEventListener('click', () => {
   } catch {}
   syncLabel();
   window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
-  const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
-  if (iframe?.contentWindow) {
-    const giscusTheme =
-      theme === 'dark'
-        ? 'https://glitchslayed.github.io/Site/giscus-dark.css'
-        : 'https://glitchslayed.github.io/Site/giscus-light.css';
-    iframe.contentWindow.postMessage({ giscus: { setConfig: { theme: giscusTheme } } }, 'https://giscus.app');
-  }
+
 });
 
 window.addEventListener('keydown', (e) => {

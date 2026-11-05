@@ -12,3 +12,6 @@ export * from './DataTable';
 export * from './HeatmapPlot';
 export * from './NotebookCell';
 export * from './Tooltip';
+export * from './EngineeringNote';
+export * from './EquationBlock';
+export * from './Measurement';

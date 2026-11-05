@@ -1,5 +1,9 @@
 # Glitchy's Technical Blog: Technical and Editorial Reference
 
+> Engineering visual update: [engineering-design-refinement.md](engineering-design-refinement.md) defines the current drawing and engineering-brief fields, default cover behavior, register, source shelves, and texture effects. It supersedes earlier decorative-shader defaults.
+
+> Layout update (2026-11-05): See [personal-redesign.md](personal-redesign.md) for the current homepage, project catalogue, writing archive, about page, and section-based newspaper reader. Earlier layout descriptions below are historical; author grounding, schemas, and component guidance still apply.
+
 This file is reference material for writing and maintaining content for the site. Read it alongside `writing-playbook.md` before generating site-ready articles or project pages.
 
 The purpose is to produce technically sound, honest, readable content that fits the site's actual implementation. A successful output should be easy to edit, copy into the repository, build, and publish.

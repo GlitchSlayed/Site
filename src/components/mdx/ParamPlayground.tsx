@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useScopeSnapshot } from '../engineering/shared/useScopedParameter';
 import { ParamSlider } from './ParamSlider';
 import { setParameter } from '../../lib/engineering/scopedState';
 import { renderMathText } from '../../lib/engineering/formatMath';
@@ -36,17 +37,20 @@ export const ParamPlayground: React.FC<ParamPlaygroundProps> = ({
   children,
   className = '',
 }) => {
-  const [activePreset, setActivePreset] = useState<string | null>(null);
+  const snapshot = useScopeSnapshot(scopeId);
+  const activePreset = Object.entries(presets ?? {}).find(([, values]) => Object.entries(values).length > 0 && Object.entries(values).every(([id, value]) => {
+    const parameter = parameters.find(p => p.id === id);
+    return parameter && (snapshot[id] ?? parameter.defaultValue) === Math.min(parameter.max, Math.max(parameter.min, value));
+  }))?.[0];
 
-  const applyPreset = (presetName: string, values: Record<string, number>) => {
-    setActivePreset(presetName);
+  const applyPreset = (values: Record<string, number>) => {
     Object.entries(values).forEach(([paramId, val]) => {
-      setParameter(scopeId, paramId, val);
+      const parameter = parameters.find(p => p.id === paramId);
+      if (parameter && Number.isFinite(val)) setParameter(scopeId, paramId, Math.min(parameter.max, Math.max(parameter.min, val)));
     });
   };
 
   const handleResetAll = () => {
-    setActivePreset(null);
     parameters.forEach((param) => {
       setParameter(scopeId, param.id, param.defaultValue);
     });
@@ -80,7 +84,8 @@ export const ParamPlayground: React.FC<ParamPlaygroundProps> = ({
                 key={name}
                 type="button"
                 className={`eng-preset-chip ${activePreset === name ? 'active' : ''}`}
-                onClick={() => applyPreset(name, values)}
+                aria-pressed={activePreset === name}
+                onClick={() => applyPreset(values)}
               >
                 {name}
               </button>

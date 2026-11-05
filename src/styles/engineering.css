@@ -1384,28 +1384,10 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   overflow: hidden;
 }
 
-.eng-viewer-loading,
-.eng-viewer-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 450px;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.eng-viewer-error button {
-  margin-top: 8px;
-  font: inherit;
-  font-size: 12px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--background);
-  color: var(--accent);
-  cursor: pointer;
-}
+/* The renderer owns only this canvas host. React owns controls and status. */
+.eng-viewer-canvas { width: 100%; height: 100%; }
+.eng-viewer-status { position: absolute; inset: auto 1rem 1rem; padding: 1rem; background: var(--surface); color: var(--foreground); z-index: 2; }
+.eng-viewer-status button { padding: .5rem 1rem; border: 1px solid var(--border); background: var(--background); color: var(--accent); }
 
 .eng-viewer-toolbar {
   position: absolute;
@@ -2458,3 +2440,4 @@ html[data-theme="light"] .eng-inspector-indicator {
 .eng-cell-output-prompt {
   font-size: 11px;
 }
+

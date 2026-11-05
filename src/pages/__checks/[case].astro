@@ -1,0 +1,16 @@
+---
+// Emitted only by the browser regression build, never the production build.
+import BlogArticle from '../../layouts/BlogArticle.astro';
+import MdxHarness from '../../../tests/browser/MdxHarness';
+import RegressionHarness from '../../../tests/browser/RegressionHarness';
+export function getStaticPaths() {
+  return process.env.SITE_BROWSER_TESTS === '1' ? [{params:{case:'audit'}}] : [];
+}
+const headings = Array.from({length:6},(_,i)=>({depth:2,slug:`section-${i}`,text:`Section ${i}`}));
+const entry={id:'browser-regression',body:'Regression article',data:{title:'Reader regression',description:'Browser regression fixture',date:new Date('2026-01-01'),tags:['Testing']}};
+---
+<BlogArticle entry={entry} headings={headings}>
+  {headings.map((h,i)=><Fragment><h2 id={h.slug}>{h.text}</h2>{Array.from({length:4},()=> <p>Paragraph in section {i}. This content exercises reading position across desktop facing pages, continuous reading, and mobile layouts. The original DOM must stay mounted so interactive elements keep their state.</p>)}</Fragment>)}
+  <RegressionHarness client:load modelUrl={`${import.meta.env.BASE_URL}__checks/model.gltf`} />
+  <MdxHarness client:load />
+</BlogArticle>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 
 export interface NotebookCellProps {
   inputNumber?: number;
@@ -20,14 +20,14 @@ export const NotebookCell: React.FC<NotebookCellProps> = ({
   className = '',
 }) => {
   const [isCodeCollapsed, setIsCodeCollapsed] = useState(initialCollapsed);
+  const codeId = useId();
+  const [copyError, setCopyError] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!code) return;
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    try { await navigator.clipboard.writeText(code); setCopied(true); setCopyError(false); }
+    catch { setCopyError(true); setCopied(false); }
   };
 
   return (
@@ -46,6 +46,8 @@ export const NotebookCell: React.FC<NotebookCellProps> = ({
                 type="button"
                 onClick={() => setIsCodeCollapsed(!isCodeCollapsed)}
                 className="eng-cell-toggle-btn"
+                aria-expanded={!isCodeCollapsed}
+                aria-controls={codeId}
                 data-tooltip={isCodeCollapsed ? 'Expand code block' : 'Collapse code block'}
                 data-tooltip-pos="top"
               >
@@ -63,13 +65,12 @@ export const NotebookCell: React.FC<NotebookCellProps> = ({
             </div>
           </div>
 
-          {!isCodeCollapsed && (
-            <div className="eng-cell-code-container">
+          <div id={codeId} hidden={isCodeCollapsed} className="eng-cell-code-container">
               <pre className={`eng-cell-code language-${language}`}>
                 <code>{code}</code>
               </pre>
             </div>
-          )}
+          <span role="status">{copyError ? "Copy failed. Select and copy the code manually." : copied ? "Code copied." : ""}</span>
         </div>
       )}
 

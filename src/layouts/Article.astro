@@ -7,6 +7,11 @@ import SparkIcon from '../components/SparkIcon.astro';
 import StatusBadge from '../components/StatusBadge.astro';
 import { url, dateLabel } from '../config';
 import Comments from '../components/Comments.astro';
+import EngineeringBrief from '../components/EngineeringBrief.astro';
+import TechnicalPlate from '../components/drawings/TechnicalPlate.astro';
+import SourceShelf from '../components/SourceShelf.astro';
+import { getCollection } from 'astro:content';
+import { statusNotes, readingMinutes } from '../lib/editorial';
 
 interface Props {
   entry: any;
@@ -17,10 +22,11 @@ interface Props {
 const { entry, headings = [], type = 'projects' } = Astro.props;
 const { data } = entry;
 const h2Headings = headings.filter((h) => h.depth === 2);
+const related = (await getCollection('writing', ({data:d}) => !d.draft && !d.sample)).filter(p => p.data.tags.some((t:string) => data.tags.includes(t))).sort((a,b) => +b.data.date-+a.data.date).slice(0,2);
 ---
 
 <Base
-  title={`${data.title} | Engineering Monograph`}
+  title={`${data.title} | Project notes`}
   description={data.description}
   ogType="article"
   ogImagePath={`og/${type}/${entry.id}.png`}
@@ -29,7 +35,7 @@ const h2Headings = headings.filter((h) => h.depth === 2);
   <div class="shell article-shell">
     <div class="monograph-nav-bar">
       <a class="back-link" href={url(`${type}/`)}>
-        <BackArrow /> Back to {type === 'writing' ? 'Field Notes' : 'Monographs & Investigations'}
+        <BackArrow /> Back to {type === 'writing' ? 'Field Notes' : 'Projects'}
       </a>
       <div class="doc-code">
         DOC // {entry.id.toUpperCase()}
@@ -40,7 +46,7 @@ const h2Headings = headings.filter((h) => h.depth === 2);
     <header class="monograph-header">
       <div class="monograph-doc-banner">
         <div class="banner-left">
-          <span class="classification-badge">ENGINEERING RESEARCH MONOGRAPH</span>
+          <span class="classification-badge">PROJECT NOTEBOOK</span>
           <span class="report-num">REF: {entry.id.replace(/-/g, '_').toUpperCase()}</span>
         </div>
         <div class="banner-right">
@@ -54,11 +60,11 @@ const h2Headings = headings.filter((h) => h.depth === 2);
       <!-- Framed Scientific Abstract Box -->
       <div class="monograph-abstract-box">
         <div class="abstract-label">
-          <span>§ ABSTRACT // SCOPE OF INVESTIGATION</span>
+          <span>The question & scope</span>
         </div>
         <p class="abstract-text">{data.description}</p>
         <div class="abstract-keywords">
-          <span class="keywords-label">KEYWORDS:</span>
+          <span class="keywords-label">Topics:</span>
           {data.tags.map((tag: string) => <span class="keyword-tag">{tag}</span>)}
         </div>
       </div>
@@ -66,7 +72,7 @@ const h2Headings = headings.filter((h) => h.depth === 2);
       <!-- Technical Metadata Spec Grid -->
       <div class="monograph-meta-grid">
         <div class="meta-cell">
-          <span class="meta-label">INVESTIGATOR</span>
+          <span class="meta-label">AUTHOR</span>
           <span class="meta-val">Vansh Datta</span>
         </div>
         <div class="meta-cell">
@@ -75,7 +81,7 @@ const h2Headings = headings.filter((h) => h.depth === 2);
         </div>
         <div class="meta-cell">
           <span class="meta-label">DISCIPLINE</span>
-          <span class="meta-val">{data.category || 'Aerospace Engineering'}</span>
+          <span class="meta-val">{data.category || data.tags[0] || 'Project'}</span>
         </div>
         <div class="meta-cell">
           <span class="meta-label">STATUS</span>
@@ -92,6 +98,10 @@ const h2Headings = headings.filter((h) => h.depth === 2);
       }
     </header>
 
+    {data.engineering && <EngineeringBrief brief={data.engineering} />}
+    {data.drawing && <details class="project-drawing-detail"><summary>Open the project drawing <span>Illustrative schematic</span></summary><TechnicalPlate kind={data.drawing} /></details>}
+    <aside class="project-state-context"><strong>{data.status}</strong><p>{statusNotes[data.status] || 'See the notes below for the current scope.'}</p><span class="small-label">{readingMinutes(entry.body)} min read · Published {dateLabel(data.date)}</span></aside>
+    {h2Headings.length > 0 && <details class="project-mobile-contents"><summary>In this project</summary><nav>{h2Headings.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav></details>}
     <div class="article-grid">
       <article class="prose monograph-prose" data-pagefind-body>
         <slot />
@@ -101,7 +111,7 @@ const h2Headings = headings.filter((h) => h.depth === 2);
         h2Headings.length > 0 && (
           <aside class="toc monograph-toc">
             <div class="eyebrow">CONTENTS // ON THIS PAGE</div>
-            <nav class="toc-nav" aria-label="Monograph sections">
+            <nav class="toc-nav" aria-label="Project sections">
               <span class="toc-indicator" aria-hidden="true" />
               {h2Headings.map((h) => (
                 <a href={`#${h.slug}`}>{h.text}</a>
@@ -112,6 +122,8 @@ const h2Headings = headings.filter((h) => h.depth === 2);
       }
     </div>
 
+    {related.length > 0 && <section class="related-stories"><p class="small-label">Related notes from the blog</p><div class="story-grid">{related.map(p => <article><h2><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h2><p>{p.data.description}</p></article>)}</div></section>}
+    <SourceShelf body={entry.body} />
     <!-- Discussion and Comments -->
     <div class="monograph-comments-container">
       <Comments />
@@ -123,8 +135,8 @@ const h2Headings = headings.filter((h) => h.depth === 2);
         <SparkIcon />
       </div>
       <div class="end-plate-text">
-        <span class="end-plate-status">INVESTIGATION CONCLUDED // CODE &amp; MODELS LOGGED</span>
-        <p>Built from first principles. Grounded on shop floor realities and physical fabrication.</p>
+        <span class="end-plate-status">END OF THIS WRITE-UP</span>
+        <p>The work continues at the stage shown above. Thanks for taking a look.</p>
       </div>
       <a class="button" href={url(`${type}/`)}>
         All {type === 'writing' ? 'Field Notes' : 'Investigations'} <ArrowIcon />

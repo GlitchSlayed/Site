@@ -17,6 +17,14 @@ visual: dither
 visualAccent: "#e58a58"
 visualLabel: Fedora · UEFI · UKI
 visualAnimate: false
+drawing: uki
+engineering:
+  question: "Can maintaining a direct UKI boot path on Fedora be made manageable and recoverable?"
+  approach: "Coordinate dracut, ukify, EFI entries, and kernel lifecycle hooks through a Rust CLI."
+  constraint: "UEFI only. Secure Boot signing and pre-built RPM packages are not yet included."
+  evidence: "Pre-release CLI implementation described in the project. Cross-system compatibility and startup improvements are not established."
+  nextCheck: "Verify kernel-update and trial-boot behavior on representative machines, then measure boot stages."
+  methods: ["Rust CLI", "dracut + ukify", "UEFI BootNext", "Kernel lifecycle checks"]
 ---
 
 I’m building RustyUKI as a Rust command-line tool for creating and installing Unified Kernel Images (UKIs) on Fedora-based systems. I started it because I was frustrated by how long startup could feel on computers with SSDs and NVMe drives. While investigating where that time was going, I noticed how much of the boot path happens before the Linux kernel even starts.

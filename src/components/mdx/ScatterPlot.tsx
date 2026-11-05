@@ -1,3 +1,4 @@
+import { alignScatterSeries } from '../../lib/engineering/mdxData';
 import React, { useMemo } from 'react';
 import type { PlotAxis, PlotReferenceLine, PlotShadedRegion, EngineeringPlotConfig, PlotSeries } from '../../lib/engineering/types';
 import { EngineeringPlot } from '../engineering/plots/EngineeringPlot';
@@ -57,7 +58,8 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
   referenceLines,
   shadedRegions,
 }) => {
-  const config = useMemo<EngineeringPlotConfig>(() => {
+  const result = useMemo<{ config?: EngineeringPlotConfig; error?: string }>(() => {
+    try {
     let formattedSeries: PlotSeries[] = [];
 
     if (directSeries && directSeries.length > 0) {
@@ -113,17 +115,18 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
       range: yRange,
     };
 
-    return {
+    return { config: {
       title,
       description,
       xAxis,
       yAxis,
-      series: formattedSeries,
+      series: alignScatterSeries(formattedSeries),
       referenceLines,
       shadedRegions,
       legend: formattedSeries.length > 1,
       tooltips: true,
-    };
+    } };
+    } catch (error) { return { error: error instanceof Error ? error.message : "Invalid scatter data." }; }
   }, [
     title,
     description,
@@ -141,9 +144,10 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
     shadedRegions,
   ]);
 
+  if (!result.config) return <p role="alert">{result.error}</p>;
   return (
     <div className={`eng-scatter-plot-container ${className}`}>
-      <EngineeringPlot config={config} height={height} toolbar={toolbar} />
+      <EngineeringPlot config={result.config} height={height} toolbar={toolbar} />
     </div>
   );
 };

@@ -8,6 +8,14 @@ art: wing
 featured: false
 draft: false
 sample: false
+drawing: airfoils
+engineering:
+  question: "How closely can a student-built test reproduce predicted airfoil lift curves?"
+  approach: "Compare NACA 0012, NACA 4412, and a flat plate at comparable Reynolds numbers."
+  constraint: "Tunnel speed range, balance resolution, and model mounting remain unconfirmed."
+  evidence: "Test proposal only. No manufactured models, simulations, or tunnel measurements yet."
+  nextCheck: "Review access, instrumentation, and mounting feasibility with the lab."
+  methods: ["Thin airfoil theory", "XFOIL planned", "Repeated angle sweeps", "Uncertainty analysis"]
 ---
 
 I want to use Hofstra's new wind tunnel to investigate how closely a student-built experiment can reproduce the lift characteristics predicted for familiar airfoil shapes. The proposed study compares a symmetric NACA 0012, a cambered NACA 4412, and a flat plate under the same nominal test conditions, using thin airfoil theory and XFOIL as analytical and numerical references.
