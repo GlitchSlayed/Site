@@ -1,64 +1,139 @@
 ---
 title: RustyUKI
-description: I’m building a Fedora-focused tool for creating and installing
-  Unified Kernel Images, inspired by the time modern systems spend booting
-  before Linux starts.
-date: 2026-10-24
+description: A reliable, distribution-independent Unified Kernel Image lifecycle manager for Linux, featuring a decoupled three-stage pipeline, dual boot backends, and fail-safe trial boots.
+date: 2026-11-05
 tags:
   - Linux
   - Fedora
-  - Open source
-status: Prototype
+  - Rust
+  - Systems
+status: In Development
 art: code
 featured: false
 draft: false
 sample: false
 visual: dither
 visualAccent: "#e58a58"
-visualLabel: Fedora · UEFI · UKI
+visualLabel: Fedora · UEFI · UKI · Rust
 visualAnimate: false
 drawing: uki
 engineering:
   question: "Can maintaining a direct UKI boot path on Fedora be made manageable and recoverable?"
-  approach: "Coordinate dracut, ukify, EFI entries, and kernel lifecycle hooks through a Rust CLI."
-  constraint: "UEFI only. Secure Boot signing and pre-built RPM packages are not yet included."
-  evidence: "Pre-release CLI implementation described in the project. Cross-system compatibility and startup improvements are not established."
-  nextCheck: "Verify kernel-update and trial-boot behavior on representative machines, then measure boot stages."
-  methods: ["Rust CLI", "dracut + ukify", "UEFI BootNext", "Kernel lifecycle checks"]
+  approach: "Decouple generation, FAT32 staging, and boot activation with dual backends (systemd-boot and Direct UEFI) and late-userspace trial boots."
+  constraint: "UEFI firmware only. FAT32 non-transactional filesystem limits require explicit cluster sync and fallback slot preservation."
+  evidence: "v0.2.0 architecture, containerized CI, QEMU UEFI boot validation, and automated nightly Fedora RPM packages."
+  nextCheck: "Measure physical firmware handover duration vs kernel early initialization across varied vendor motherboards."
+  methods: ["Rust CLI", "dracut + ukify", "systemd-boot + Direct UEFI", "Trial boot state machine", "UEFI BootNext"]
 ---
 
-I’m building RustyUKI as a Rust command-line tool for creating and installing Unified Kernel Images (UKIs) on Fedora-based systems. I started it because I was frustrated by how long startup could feel on computers with SSDs and NVMe drives. While investigating where that time was going, I noticed how much of the boot path happens before the Linux kernel even starts.
+I built RustyUKI as a Rust command-line tool and lifecycle manager for creating, installing, and safely booting [Unified Kernel Images (UKIs)](https://uapi-group.org/specifications/specs/unified_kernel_image/) on Fedora and other modern Linux distributions.
 
-That led me to UKIs. After learning about them through the [official UKI specification](https://uapi-group.org/specifications/specs/unified_kernel_image/) and the [ArchWiki](https://wiki.archlinux.org/title/Unified_kernel_image), I wanted to make a Fedora-friendly way to build them and try a shorter boot path on modern UEFI systems.
+The project started from a simple frustration: even on fast NVMe storage, system startup can feel sluggish. While inspecting where that time was actually going, I noticed how much of the boot path happens before the Linux kernel even starts executing. That led me to UKIs, which combine the Linux kernel (`vmlinuz`), the initramfs (`dracut`), the kernel command line (`cmdline`), and OS release metadata into a single PE/COFF executable that UEFI firmware can load directly without an intermediate bootloader.
 
-## The motivation
+However, moving from an experimental proof-of-concept into real-world use on my daily Fedora workstation quickly revealed the real challenge: **managing the boot path is fundamentally a reliability and recovery problem.** If a tool modifies the EFI System Partition (ESP) or motherboard NVRAM in a fragile way, a single bad kernel update or sudden power loss can render a machine unbootable.
 
-Fast storage does not make every part of startup instantaneous. Firmware, boot managers, configuration, and the handoff to the kernel all contribute to the experience. I wanted to investigate whether removing a separate bootloader step could make sense on systems that can load a UKI directly.
+In version 0.2.0, I thoroughly rehabilitated RustyUKI from a prototype script into a decoupled, fail-safe lifecycle manager with atomic staging, late-userspace health assessment, and dual pluggable boot backends.
 
-A UKI is a single EFI executable that can contain the Linux kernel, initramfs, and kernel command line. That makes it possible for UEFI firmware to load the image directly, without first starting GRUB. My goal with RustyUKI is to make the Fedora-side work of creating and maintaining that image manageable, including keeping it in sync with kernel updates.
+---
 
-The motivation is an engineering hypothesis, not a measured result: shortening the boot chain may reduce time before the kernel starts, but actual startup time depends on the firmware, hardware, operating system, and configuration. I have not established a benchmark showing how much RustyUKI changes boot time across systems.
+## The Three-Stage Decoupled Pipeline
 
-## What RustyUKI does
+Early prototype scripts often combine initramfs generation, binary assembly, partition writing, and NVRAM updates into one monolithic procedure. If anything fails halfway through—such as `dracut` running out of memory, or a misconfigured kernel argument—the system can be left with a truncated, unbootable binary on the ESP.
 
-I built RustyUKI to coordinate existing Linux tools rather than replace them. It uses `dracut` to generate an initramfs and `ukify` to assemble the UKI. I’ve added CLI commands to inspect configuration, build images, register EFI boot entries, reconcile images for installed kernels, and install a `kernel-install` hook for kernel events.
+RustyUKI resolves this by enforcing a strict **three-stage decoupled pipeline** where failure at any stage leaves prior working boot entries untouched:
 
-I also treat changing a boot path as a recovery problem. The install flow schedules a one-time trial boot using UEFI `BootNext`, retains the existing default boot entry while the new image is being tried, and promotes the UKI after a successful boot. I want the transition to be testable before changing the permanent boot order.
+### Stage 1: Isolated Generation & Verification
+Everything happens in an isolated staging directory (e.g. `/tmp/rustyuki-staging/`) without touching the ESP or firmware variables:
+1. `dracut` compiles the initramfs with all required storage drivers (LUKS, LVM, btrfs subvolumes).
+2. `ukify` packages the kernel binary, initramfs, normalized command line, `os-release`, and optional boot splash into a PE/COFF image.
+3. If Secure Boot is configured, RustyUKI invokes `pesign` (via NSS database tokens) or `sbsign` (via PEM certificates).
+4. Before proceeding, RustyUKI validates the generated PE binary: checking DOS `MZ` headers, verifying reasonable file size, and recording a cryptographic SHA-256 hash.
 
-## Compatibility goals and limits
+### Stage 2: Durable ESP Installation & Fallback Preservation
+Writing to an EFI System Partition requires navigating the quirks of FAT32, which is an unjournaled, non-transactional filesystem:
+- **Preflight Checks**: Verifies that the ESP is mounted read-write and has at least 50 MB of free storage.
+- **Durable Staging**: The new UKI is written to a temporary sibling file (`.linux-<version>.efi.tmp`) and explicitly committed to flash media using `File::sync_all()`.
+- **Fallback Slot Preservation**: If an existing `linux-<version>.efi` is present, it is moved to `linux-<version>.prev.efi` before replacement.
+- **Atomic Rename**: The temporary file is renamed over the target path, and the parent directory is synchronized via `sync_directory_entry()` (handling VFAT driver `EINVAL`/`ENOTSUP` limitations while catching genuine I/O errors).
+- **Provenance Manifests**: A sidecar `linux-<version>.efi.manifest.json` is generated, recording generator metadata, hashes, and distribution flavor.
 
-My preferred path is for compatible UEFI firmware to load a UKI directly. I also want a systemd-boot path available for UEFI systems whose firmware or setup makes direct UKI boot inconvenient. That compatibility path is still a design goal. I’ve implemented EFI entry registration and `bootctl` synchronization, but I haven’t added a dedicated fallback mode for unusual firmware configurations yet.
+### Stage 3: Boot Activation
+The verified image is activated using one of two pluggable backends.
 
-I currently support UEFI systems only, so legacy BIOS systems are out of scope. An older motherboard is a possible target only if it supports UEFI and can boot the configured image. I need to establish compatibility on real hardware rather than infer it from age alone.
+---
 
-## Current status
+## Pluggable Dual Boot Backends
 
-I’m developing RustyUKI as pre-release software. So far, I’ve built a Rust CLI for UKI generation through `dracut` and `ukify`, EFI entry management, one-time trial boots, kernel reconciliation, and a `kernel-install` hook. I haven’t added Secure Boot signing or pre-built RPM packages yet. Since it changes boot configuration, I recommend keeping a recovery route available before trying it.
+Rather than forcing a single boot philosophy, RustyUKI supports two first-class backends configured via `/etc/rustyuki/config.toml`:
 
-I haven’t validated every Fedora release, motherboard, or boot configuration. Next, I want to test compatibility and measure startup carefully: compare boot stages on representative machines, verify kernel-update behavior, and document which systems can use direct firmware boot versus a systemd-boot route.
+### 1. `systemd-boot` (Default Production Priority)
+For standard production workstations, `systemd-boot` provides the cleanest and safest experience:
+- Places UKIs under `/EFI/Linux/` following the Type #2 UKI specification.
+- Runs `bootctl update` to synchronize bootloader binaries.
+- Supports multi-kernel selection menus out of the box.
+- Avoids creating per-kernel NVRAM entries, preventing NVRAM storage exhaustion on motherboards with constrained firmware chipsets.
+- Arms one-shot trial boots using `bootctl set-oneshot <entry>` and manages permanent defaults via `bootctl set-default`.
 
-## Project links
+### 2. Direct UEFI Backend (First-Class Architecture)
+For systems where firmware executes the UKI directly without any intermediate bootloader code:
+- Resolves the underlying block device and ESP partition number automatically via `findmnt` and `lsblk`.
+- Deduplicates existing entries to avoid accumulating stale boot variables across kernel updates.
+- Arms one-shot trial booting using UEFI `BootNext`, leaving the permanent `BootOrder` untouched until confirmed.
+- Monitors motherboard NVRAM capacity and reports firmware quirks.
 
-- [RustyUKI source code and current documentation](https://github.com/GlitchSlayed/RustyUKI)
-- [Unified Kernel Image specification](https://uapi-group.org/specifications/specs/unified_kernel_image/)
-- [ArchWiki: Unified kernel image](https://wiki.archlinux.org/title/Unified_kernel_image)
+---
+
+## Boot Safety & Late-Userspace Health Assessment
+
+The most dangerous pitfall in automated boot tools is **premature confirmation**. Traditional boot managers often consider a boot "successful" the moment systemd starts (`After=local-fs.target`). But if a graphic driver crashes, a display server fails to initialize, or the root filesystem drops into an emergency shell, the machine is completely unusable—yet an unbootable kernel would have been permanently promoted.
+
+RustyUKI implements a fail-safe trial boot workflow:
+
+1. **Trial Boot Armed**: During kernel installation or trial boot (`rustyuki install`), the new UKI is armed exclusively as a one-shot boot (`BootNext` or `bootctl set-oneshot`). The permanent default remains pointing to your existing, known-good bootloader entry.
+2. **Late-Userspace Health Evaluation**:
+   The confirmation service (`rustyuki-boot-confirm.service`) is ordered strictly late in the boot process:
+   ```ini
+   After=multi-user.target graphical.target systemd-user-sessions.service
+   ```
+3. **State Assessment**:
+   When `rustyuki confirm` runs, it queries `systemctl is-system-running`:
+   - If the system is `running` (or cleanly `degraded`), confirmation succeeds. The entry is promoted to permanent default and `BootNext` is cleared.
+   - If the system dropped into `emergency`, `rescue`, or `maintenance` mode, **confirmation is aborted immediately**. The trial entry is not promoted.
+4. **Automatic Fallback**:
+   If the machine panics, freezes, or fails to reach graphical/multi-user targets, simply resetting or power-cycling the machine causes the firmware to fall back automatically to the prior working boot entry.
+
+---
+
+## Automatic Rollback & Foreign UKI Protection
+
+If an updated kernel introduces subtle bugs after confirmation, recovery does not require manual initramfs rebuilding:
+```bash
+sudo rustyuki rollback --kernel <version>
+```
+This moves the preserved `linux-<version>.prev.efi` back into the active slot. RustyUKI stages the rollback through a temporary file before renaming, keeping the backup slot intact so repeated recovery attempts remain safe.
+
+Furthermore, RustyUKI inspects sidecar `.manifest.json` files during cleanup and reconciliation. Any UKI on the ESP that lacks a RustyUKI manifest is treated as an unmanaged or foreign UKI (such as an image installed by another distribution or tool) and will **never** be pruned or deleted.
+
+---
+
+## Automated Kernel Hook & Packaging
+
+To make UKI maintenance zero-touch during routine system updates:
+
+- **`kernel-install` Plugin (`90-rustyuki.install`)**:
+  Integrated into the distribution kernel lifecycle. When `dnf` installs or removes a kernel, RustyUKI automatically builds or cleans up the corresponding UKI.
+- **Failure Registry**:
+  If a build fails (e.g. disk full), the error is recorded persistently under `/var/lib/uki-build/pending-failures/` without failing the RPM scriptlet, preventing broken package manager transactions.
+- **Offline Building (`--sysroot`)**:
+  Supports generating UKIs into chroots or disk images without probing or leaking host `/proc`, `/sys`, or host UEFI NVRAM.
+- **RPM Packaging & CI Infrastructure**:
+  Packaged as an RPM targeting Fedora 44 and Fedora 45. The codebase is tested continuously via GitHub Actions using containerized checks, unit tests, and real QEMU UEFI VM integration tests. Nightly RPM releases are automatically published on every commit to `main`.
+
+---
+
+## Project Links
+
+- [RustyUKI GitHub Repository](https://github.com/GlitchSlayed/RustyUKI)
+- [Architecture & Pipeline Documentation](https://github.com/GlitchSlayed/RustyUKI/blob/main/docs/architecture.md)
+- [Boot Safety & Trial Workflow Guide](https://github.com/GlitchSlayed/RustyUKI/blob/main/docs/boot-flow-and-safety.md)
+- [Unified Kernel Image Specification](https://uapi-group.org/specifications/specs/unified_kernel_image/)
