@@ -75,7 +75,7 @@ export function EngineeringModelViewer({ src, showAxes = true, showGrid = true, 
         const [three, { OrbitControls }, { GLTFLoader }] = await Promise.all([
           import('three'), import('three/examples/jsm/controls/OrbitControls.js'), import('three/examples/jsm/loaders/GLTFLoader.js'),
         ]);
-        if (disposed) return;
+        if (disposed || !host) return;
         scene = new three.Scene();
         camera = new three.PerspectiveCamera(45, 1, .01, 10000);
         camera.position.set(5, 3, 7);
@@ -91,6 +91,7 @@ export function EngineeringModelViewer({ src, showAxes = true, showGrid = true, 
         if (showGrid) scene.add(new three.GridHelper(20, 40, 0x777777, 0x999999));
         if (showAxes) scene.add(new three.AxesHelper(3));
         const updateSize = () => {
+          if (!host) return;
           const width = host.clientWidth, height = host.clientHeight;
           if (!width || !height || !camera || !renderer) return;
           camera.aspect = width / height;

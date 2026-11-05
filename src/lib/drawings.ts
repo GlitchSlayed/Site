@@ -14,7 +14,7 @@ const text=(x:number,y:number,label:string,cls='label')=>`<text class="${cls}" x
 const path=(d:string,cls='line')=>`<path class="${cls}" d="${d}"/>`;
 const rect=(x:number,y:number,w:number,h:number,cls='line')=>`<rect class="${cls}" x="${x}" y="${y}" width="${w}" height="${h}"/>`;
 const arrow=(x:number,y:number)=>path(`M${x-5} ${y-4}l5 4-5 4`,'accent');
-function datum(x:number,y:number){return path(`M${x-7} ${y}h14M${x} ${y-7}v14`,'faint');}
+export function datum(x:number,y:number){return path(`M${x-7} ${y}h14M${x} ${y-7}v14`,'faint');}
 function frame(width:number,height:number){return [path(`M24 40V24h16M${width-40} 24h16v16M24 ${height-40}v16h16M${width-40} ${height-24}h16v-16`,'faint'),...Array.from({length:9},(_,i)=>path(`M${80+i*(width-160)/8} ${height-24}v-5`,'faint'))].join('');}
 /** NACA four-digit section coordinates; closed trailing edge (-0.1036 x^4).
  * Unit chord, cosine spacing, camber-normal thickness. Illustration only.
