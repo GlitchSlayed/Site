@@ -172,3 +172,7 @@ But even if it remains a personal experiment, I think there's a lot to learn fro
 **The end goal isn't to make Fedora unrecognizable. It's to see what happens when I take a distribution I already like and push a few of its defaults in a direction I find interesting.**
 
 And that's really the entire idea behind GOFR.
+
+---
+
+> **Update:** GOFR has since progressed from an initial concept into a working, albeit experimental, distribution. It now features an ultra-compact Netinstall-first ISO (< 1 GiB), pure systemd-boot with Type #2 UKIs managed by RustyUKI, CachyOS kernel integration, and automated CI/CD builds. For the full technical breakdown, storage blueprints, and build instructions, read the [GOFR Engineering Monograph](/projects/GOFR).

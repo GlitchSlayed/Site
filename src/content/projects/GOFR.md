@@ -1,13 +1,13 @@
 ---
 title: "GOFR: Glitchy's Opinionated Fedora Remix"
-description: A Fedora-based Linux remix exploring modern boot infrastructure,
-  performance-oriented defaults, and a refreshed command-line experience.
+description: A working, experimental Fedora 45 remix featuring Unified Kernel Images (UKIs) via systemd-boot, the CachyOS performance kernel, RustyUKI lifecycle management, and a Netinstall-first delivery architecture.
 category: Operating Systems
-status: Concept
+status: In Development
 tags:
   - Fedora
   - Systemd
   - Rust
+  - Linux Kernel
   - Open Source
 date: 2026-10-24
 art: code
@@ -15,159 +15,209 @@ featured: true
 draft: false
 visual: dither
 visualAccent: "#739cda"
-visualLabel: Fedora remix · Concept
+visualLabel: Fedora remix · In Development
 visualAnimate: false
 drawing: gofr
 engineering:
-  question: "Which changes to Fedora defaults are worth the maintenance cost?"
-  approach: "Plan a Fedora Workstation remix with different boot, kernel, and interactive shell defaults."
-  constraint: "Kernel lifecycle, recovery, compatibility, and redistribution need validation."
-  evidence: "Defined concept and proposed architecture. No completed image or validated release is claimed."
-  nextCheck: "Select image-building tools and establish a working virtual-machine prototype."
-  methods: ["RPM packaging planned", "UKI lifecycle planned", "VM validation planned", "Recovery testing planned"]
+  question: "Can an opinionated Fedora remix eliminate bootloader bottlenecks and deliver modern performance defaults while maintaining complete upstream compatibility?"
+  approach: "Combine a lightweight Netinstall-first ISO with systemd-boot, Type #2 Unified Kernel Images managed by RustyUKI, the CachyOS performance kernel, and a 4 GiB ESP on Btrfs."
+  constraint: "x86_64 UEFI-only. Experimental installer delivery; requires active network for Netinstall package resolution."
+  evidence: "Functional Netinstall hybrid UEFI ISO (< 1 GiB), reproducible QEMU/OVMF boot verification, automated release pipeline with incremental build tags (45.x), and local disk image builders."
+  nextCheck: "Validate bare-metal Anaconda Netinstall flow and Secure Boot MOK enrollment workflow."
+  methods: ["Netinstall ISO", "CachyOS kernel", "systemd-boot", "RustyUKI", "Btrfs subvolumes", "Brush shell"]
 ---
 # GOFR: Glitchy's Opinionated Fedora Remix
 
-**GOFR** (pronounced *Gopher*) is a planned **Fedora**-based Linux distribution remix built around a relatively simple idea: take the Fedora Workstation experience I already enjoy and make a handful of opinionated changes to its underlying architecture, boot process, kernel, and command-line environment.
+**GOFR** (pronounced *Gopher*) is an opinionated **Fedora 45** remix designed around a straightforward objective: take the rock-solid foundation of Fedora Workstation and modernize its boot subsystem, kernel scheduling, command-line defaults, and delivery architecture.
 
-The goal isn't to reinvent Fedora or build an entirely new operating system. Instead, GOFR aims to preserve what makes Fedora great while experimenting with modern Linux technologies and alternative defaults that I believe could improve the overall experience.
+What began as a theoretical exploration of modern Linux defaults has evolved into a **working, albeit experimental, operating system distribution**. GOFR now possesses functional build pipelines, custom RPM packages, bootable hybrid UEFI Netinstall ISOs, virtual disk images, and automated QEMU/OVMF verification harnesses.
 
-The project is currently in its **conceptual and early planning phase**. The specifications below represent design goals rather than completed or validated features.
+The goal is not to fork Fedora or reinvent the Linux desktop. Instead, GOFR preserves upstream package compatibility and SELinux enforcement while adopting **Unified Kernel Images (UKIs)** via `systemd-boot`, the **CachyOS performance kernel**, **RustyUKI** lifecycle management, and a **Netinstall-first delivery architecture**.
 
-As a heads-up I often go by the name **Glitchy** or **GlitchSlayed** digitally, so that is where the name stems from.
-
----
-## Project Goals
-
-GOFR is guided by several principles:
-
-- **Stay close to Fedora.** Preserve the familiar Fedora Workstation experience, including GNOME, Wayland, DNF5, RPM packaging, and Fedora's existing system infrastructure.
-- **Modernize the boot process.** Explore systemd-boot and Unified Kernel Images (UKIs) as an alternative to the traditional GRUB-based boot configuration.
-- **Explore performance-oriented defaults.** Integrate the CachyOS kernel while preserving Fedora's compatibility and maintainability.
-- **Improve the command-line experience.** Experiment with newer tools such as Brush, zoxide, and uutils coreutils.
-- **Minimize unnecessary changes.** Avoid excessive customization, redundant components, or changes made solely for aesthetic reasons.
-- **Remain maintainable.** Prioritize standard packaging, reliable updates, and upstream compatibility over fragile custom scripts.
+*(As a brief heads-up: I frequently use the handle **Glitchy** or **GlitchSlayed** online, which is where the remix's name originates).*
 
 ---
 
-## Planned Architecture
+## The Netinstall-First Delivery Architecture
 
-| Component | Planned GOFR Default |
-|---|---|
-| Base distribution | Fedora Workstation |
-| Desktop environment | GNOME / Wayland |
-| Package management | DNF5 / RPM |
-| Kernel | CachyOS kernel via Fedora COPR |
-| Bootloader | systemd-boot |
-| Boot format | Unified Kernel Images |
-| EFI System Partition | 4 GiB |
-| Root filesystem | Btrfs |
-| Swap | zram |
-| Third-party repositories | RPM Fusion Free & Nonfree |
-| Default user shell | Brush |
-| Directory navigation | zoxide |
-| User-facing core utilities | uutils, where compatible |
-| Security | SELinux enforcing; planned Secure Boot support |
-| Initial platform | x86_64 UEFI |
+Rather than distributing monolithic multi-gigabyte live images that quickly grow stale, GOFR is engineered around a **Netinstall-first delivery model**:
+
+- **Ultra-Compact ISO (< 1 GiB):** The primary bootable hybrid UEFI ISO weighs under 100 MiB (~84 MiB). It downloads in seconds and fits comfortably within GitHub Releases asset constraints.
+- **Always Up to Date:** At installation time, packages stream dynamically from official Fedora 45 and CachyOS mirrors. You install the latest software and security updates directly, completely eliminating the tedious post-install multi-gigabyte `dnf upgrade` ritual.
+- **Modular Profile Deployment:** Because packages are resolved dynamically via Kickstart and Anaconda, deployments can target different workstation personas—ranging from standard GNOME on Wayland to minimal window managers (Sway, COSMIC) or specialized engineering toolchains.
+- **Pure UKI & systemd-boot Provisioning:** During installation, GOFR automatically formats a dedicated **4 GiB FAT32 ESP at `/efi`** and configures a **Btrfs root filesystem with `@` and `@home` subvolumes**, generating the initial UKI using RustyUKI without legacy GRUB scaffolding.
+
+For instant virtualization and cloud testing without running the interactive installer, the build system also produces pre-installed QCOW2 virtual machine disk images (~3.0 GiB), sliced deterministically into 1800MB chunks (`.part00`, `.part01`) to comply with GitHub's 2.0 GiB file limit.
 
 ---
 
-### 1. Fedora as the Foundation
+## Technical Specifications & Architecture
 
-Fedora Workstation is the foundation of GOFR because it already provides a modern, well-maintained Linux environment without requiring extensive modification.
+| Component | Upstream Fedora 45 Default | GOFR Implementation | Status |
+|---|---|---|---|
+| **Base Distribution** | Fedora Workstation 45 (`x86_64`) | Fedora Workstation 45 (`x86_64`) | Verified |
+| **Desktop Environment** | GNOME 49 / Wayland | GNOME 49 / Wayland | Verified |
+| **Package Management** | DNF5 / RPM | DNF5 / RPM | Verified |
+| **Kernel** | Stock upstream Fedora kernel | [CachyOS Kernel](https://github.com/CachyOS/linux-cachyos) (`kernel-cachyos`) | Verified |
+| **CPU Scheduler** | EEVDF | BORE (Burst-Oriented Response Enhancer) | Verified |
+| **Bootloader** | GRUB 2 (`grub2-efi`) | `systemd-boot` | Verified |
+| **Boot Artifact** | Kernel + Initramfs + BLS Type #1 | BLS Type #2 Unified Kernel Image (PE32+) | Verified |
+| **UKI Orchestration** | None (manual scripts or experimental dracut) | [RustyUKI](https://github.com/GlitchSlayed/RustyUKI) + `gofr-rustyuki-integration` | Verified |
+| **EFI System Partition** | 500 MiB – 1 GiB (`/boot/efi`) | **4 GiB FAT32** mounted at `/efi` | Verified |
+| **Filesystem Layout** | Btrfs (`root`, `home`) with `/boot` partition | Btrfs (`@`, `@home`), **no separate `/boot`** | Verified |
+| **Swap** | zram-generator | zram-generator | Verified |
+| **Default User Shell** | `/bin/bash` | [Brush](https://github.com/reubeno/brush) (Rust, Bash-compatible) | Verified |
+| **Command-Line Tools** | GNU coreutils | `zoxide`, `uutils-coreutils`, `ripgrep`, `fd-find`, `bat`, `eza`, `btop` | Verified |
+| **Repositories** | Fedora Base, Updates | Base, Updates, RPM Fusion Free & Nonfree, CachyOS COPR | Verified |
+| **Security** | SELinux Enforcing | SELinux Enforcing | Verified |
+| **Target Platform** | x86_64 UEFI | x86_64 UEFI (v3 microarchitecture recommended) | Verified |
 
-GOFR intends to retain Fedora's existing desktop stack, package management, security policies, and update infrastructure.
+---
 
-The intention is for GOFR to feel like Fedora, not an entirely different operating system.
+## Boot Subsystem & Storage Topology
 
-### 2. Modern Boot Infrastructure
+GOFR discards the legacy partition hierarchy—specifically the traditional separation between `/boot` and `/boot/efi`—in favor of a unified UEFI standard.
 
-One of GOFR's most significant planned changes is replacing GRUB with **systemd-boot** and using **Unified Kernel Images (UKIs)**.
+```
+[ UEFI Firmware ]
+       │
+       ▼
+[ /efi (4 GiB FAT32 ESP) ]
+       ├── EFI/BOOT/BOOTX64.EFI          (systemd-boot boot manager)
+       ├── loader/loader.conf            (timeout, default entries)
+       └── EFI/Linux/                    (BLS Type #2 Unified Kernel Images)
+             ├── gofr-cachyos.efi        (Active CachyOS UKI)
+             └── gofr-cachyos.prev.efi   (Fallback slot)
+       │
+       ▼
+[ /dev/disk/by-uuid/... (Btrfs Root) ]
+       ├── Subvolume @                   (Mounted at /)
+       └── Subvolume @home               (Mounted at /home)
+```
 
-A UKI combines the kernel, initramfs, and associated boot information into a single EFI executable, offering a more integrated approach to Linux boot management.
+### Why a 4 GiB ESP at `/efi`?
 
-The intended boot sequence is:
+Standard Linux distributions typically allocate 512 MiB to 1 GiB for the ESP. In a pure Unified Kernel Image model, each self-contained UKI binary bundles the Linux kernel, uncompressed or Zstandard-compressed Dracut initramfs, CPU microcode updates, kernel command line, and boot splash into a single PE executable (typically 80–120 MiB per kernel version).
 
-`UEFI → systemd-boot → UKI → CachyOS Kernel → Fedora Userspace`
+A 4 GiB ESP guarantees reliable headroom for:
+1. Multiple rolling CachyOS kernel generations during active development.
+2. Automatic fallback slots (`.prev.efi`) preserved during updates.
+3. Recovery environments and diagnostic PE binaries.
+4. Firmware updates deployed via `fwupd` capsules without the danger of partition exhaustion.
 
-GOFR also proposes a 4 GiB EFI System Partition to accommodate multiple kernel images, updates, and recovery options.
+---
 
-A central engineering challenge will be ensuring that kernel installation, updates, removal, and fallback behavior work reliably without manual intervention.
+## Performance Kernel Subsystem
 
-### 3. CachyOS Kernel Integration
+GOFR integrates the **CachyOS Linux kernel** via its maintained Fedora COPR repository (`bieszczaders/kernel-cachyos`).
 
-GOFR plans to use the CachyOS kernel through its Fedora COPR packaging.
+Key characteristics include:
+- **BORE CPU Scheduler:** Designed to prioritize interactive desktop responsiveness, lower dispatch latency, and mitigate stutter during heavy background computational tasks.
+- **Compiler Optimizations:** Built with advanced compiler flags tailored for modern x86-64 microarchitectures (x86-64-v3 instructions).
+- **Filesystem & Memory Tuning:** Tuned sysctl defaults, optimized Btrfs writeback paths, and low-latency memory management.
 
-The motivation is to explore alternative kernel configurations, scheduler behavior, and performance-oriented optimizations while retaining Fedora as the underlying operating system.
+Because GOFR relies on standard RPM packaging, the CachyOS kernel receives automated upstream patches alongside standard Fedora updates.
 
-The project will need to evaluate:
+---
 
-- Compatibility with supported Fedora releases.
-- Hardware requirements and CPU architecture support.
-- Integration with systemd's kernel installation mechanisms.
-- Automatic UKI generation during kernel updates.
-- Reliable recovery when an update fails.
-- Real-world performance differences compared with Fedora's stock kernel.
+## RustyUKI Lifecycle Management
 
-The objective is not to assume that an alternative kernel is universally faster, but to determine whether its design and configuration offer worthwhile benefits.
+The core engineering mechanism enabling GOFR's boot experience is its integration with [RustyUKI](https://github.com/GlitchSlayed/RustyUKI), an independent Rust toolchain designed specifically for managing UKI lifecycles.
 
-### 4. A Modern Command-Line Environment
+GOFR provides a glue package, `gofr-rustyuki-integration`, which binds RustyUKI into Fedora's `kernel-install` framework:
 
-GOFR also experiments with a newer collection of command-line tools.
+1. **Kernel Installation Hook (`90-rustyuki.install`):** When DNF5 installs or upgrades a kernel, RustyUKI triggers automatically, assembling a new BLS Type #2 UKI into `/efi/EFI/Linux/gofr-cachyos.efi`.
+2. **Fallback Retention (`.prev.efi`):** Before writing a new image, RustyUKI safely rotates the existing functional UKI to `gofr-cachyos.prev.efi`. If an updated kernel triggers a kernel panic or regressions, the fallback entry remains immediately selectable from the `systemd-boot` menu.
+3. **Trial Boot Safety:** Support for one-shot boot verification via `rustyuki-boot-confirm.service`. If the new image fails to reach userspace target confirmation, the bootloader automatically reverts to the proven previous slot on next boot.
+4. **Offline Sysroot Support:** RustyUKI provides full `--sysroot` support, allowing GOFR's ISO and disk image build scripts to synthesize bootable UKIs inside isolated containers without altering the host system.
 
-**Brush** is a Rust-based shell aiming for Bash compatibility. It is planned as the default interactive and login shell for newly created users, while Bash remains available for system compatibility.
+---
 
-**zoxide** provides smarter directory navigation by learning frequently visited locations.
+## Custom RPM Packaging Suite
 
-**uutils coreutils** is a Rust implementation of traditional Unix core utilities. GOFR aims to make these tools available and potentially prefer them for interactive use without compromising system scripts that depend on GNU coreutils.
+To maintain clean separation and avoid brittle post-installation shell scripts, GOFR's customizations are compiled into native Fedora 45 RPM packages:
 
-Together, these tools represent an opportunity to explore newer implementations of familiar Linux components without unnecessarily disrupting the existing system.
+```
+packaging/
+├── gofr-release/
+│   └── Sets distribution identity, /etc/os-release, and repo configurations
+├── gofr-defaults/
+│   └── Configures Brush shell, environment variables, zoxide, and modern CLI tools
+├── gofr-boot/
+│   └── Manages systemd-boot installation, loader.conf templates, and ESP structure
+└── gofr-rustyuki-integration/
+    └── Delivers kernel-install hooks, cmdline templates, and /usr/sbin/gofr-uki-reconcile
+```
 
-### 5. Repository and Software Defaults
+Each package is built in a clean `fedora:45` container environment using native RPM build tools and DNF5.
 
-GOFR plans to enable RPM Fusion Free and Nonfree by default, simplifying access to software that Fedora does not include in its standard repositories.
+---
 
-This decision introduces additional considerations involving redistribution, package signing, licensing, and repository trust, all of which will need to be addressed before publishing installable images.
+## Modern Command-Line Environment
 
-## Development Roadmap
+GOFR experiments with modern terminal ergonomics while strictly guarding system script compatibility:
 
-The roadmap is provisional and may change as technical limitations and design decisions become clearer.
+- **Brush as Default Login Shell:** Newly provisioned user accounts have their interactive shell set to [Brush](https://github.com/reubeno/brush) via `useradd -D -s /usr/bin/brush`. Brush is an active Rust project implementing Bash syntax. System scripts, root operations, and cron tasks continue running under standard GNU Bash (`/bin/bash`).
+- **Smart Directory Navigation:** `zoxide` is initialized automatically across interactive shell sessions via `/etc/profile.d/gofr-defaults.sh`.
+- **Modern CLI Replacements:** Interactive environments provide `ripgrep` (`rg`), `fd-find` (`fd`), `bat`, `eza`, `btop`, and selective user-space aliases for `uutils-coreutils`, demonstrating memory-safe Unix utilities without displacing core system tooling.
 
-- [ ] **Phase 1: Research and Architecture:** Validate upstream dependencies, select image-building tools, and finalize major architectural decisions.
-- [ ] **Phase 2: Configuration and Packaging:** Develop GOFR-specific RPM packages for system defaults, boot configuration, and integration.
-- [ ] **Phase 3: Virtual Machine Prototype:** Build an initial disk image and validate systemd-boot, UKIs, and the CachyOS kernel.
-- [ ] **Phase 4: Installable ISO:** Produce an installable Fedora-based ISO with the intended defaults.
-- [ ] **Phase 5: Automated Testing:** Validate installation, boot behavior, package updates, kernel lifecycle, and recovery.
-- [ ] **Phase 6: Release Infrastructure:** Establish reproducible build procedures, GitHub Actions, documentation, and versioned development releases.
+---
 
-## Technical Challenges
+## Build Automation & Continuous Integration
 
-Several aspects of GOFR require additional research before implementation.
+GOFR maintains an automated, reproducible build pipeline orchestrated via a unified `Makefile`:
 
-**Kernel and UKI lifecycle:** Kernel updates must reliably generate new bootable UKIs while retaining an appropriate fallback.
+```bash
+# Verify build environment prerequisites
+make deps
 
-**Installer integration:** Fedora's installation tooling must be adapted to support the intended partition layout and installed-system boot configuration.
+# Build GOFR custom RPM packages in clean Fedora 45 container
+make rpms
 
-**Shell compatibility:** Brush needs to work reliably as a login shell without interfering with system components that expect Bash.
+# Build bootable hybrid UEFI Netinstall ISO (< 1 GiB)
+make iso
 
-**Coreutils compatibility:** Rust-based replacements must be introduced without breaking system utilities or package-management operations.
+# Build bootable QEMU/OVMF GPT disk image (4 GiB ESP + Btrfs root)
+make disk-image
 
-**Secure Boot:** Signing, key management, and firmware trust enrollment require a practical design before Secure Boot can be supported.
+# Run automated QEMU/OVMF UEFI ISO boot verification
+make test-iso
 
-**Redistribution:** GOFR must account for Fedora branding requirements, third-party repository licensing, and software redistribution policies.
+# Run automated QEMU/OVMF UEFI disk image boot verification
+make test-vm
 
-## Current Status
+# Run kernel update lifecycle and rollback test
+make test-lifecycle
+```
 
-**Conceptual / Planning**
+### GitHub Actions Release Pipeline
 
-GOFR currently exists as a defined concept and proposed technical architecture. Its core design goals and initial implementation requirements have been outlined, but no completed distribution image or validated release is being claimed.
+The project features a continuous integration and release pipeline (`.github/workflows/release.yml`):
+- Runs entirely inside pristine `registry.fedoraproject.org/fedora:45` containers with privileged capabilities for loopback partitioning and Btrfs subvolume layout.
+- Calculates automatic incremental version tags (`45.1`, `45.2`, etc.) keyed to the Fedora major version.
+- Compiles the RPM package suite, synthesizes the hybrid UEFI Netinstall ISO, formats disk images, and computes `SHA256SUMS` alongside a structured `manifest.json` SBOM.
 
-The immediate priority is moving from architecture planning to a working virtual machine prototype.
+---
 
-## Long-Term Vision
+## Current Status & Experimental Boundaries
 
-The ideal end result is a small, maintainable Fedora remix that remains close to upstream Fedora while providing an alternative set of modern system defaults.
+| Dimension | Current State | Notes |
+|---|---|---|
+| **Product Maturity** | **Working Prototype / In Development** | Core boot path, ISO generation, and image tooling function end-to-end. |
+| **QEMU/OVMF Boot** | Verified Functional | Boots cleanly from firmware to desktop via `systemd-boot` and Type #2 UKIs. |
+| **Netinstall ISO** | Verified Functional | Bootable hybrid ISO generates valid installation environments. |
+| **Kernel Rollback** | Verified Functional | Multi-generation rotation preserves `.prev.efi` fallback slot. |
+| **Hardware Scope** | x86_64 UEFI | Requires UEFI 2.4+ firmware; x86-64-v3 microarchitecture recommended for CachyOS. |
+| **Secure Boot** | Documented Specification | Requires custom MOK enrollment; native signing key infrastructure currently in development. |
 
-Even if GOFR never grows beyond a personal project, the development process offers an opportunity to learn more about Linux distribution engineering, RPM packaging, bootloaders, systemd, kernel integration, image building, and automated testing.
+---
 
-For now, GOFR is an experiment in what a slightly more opinionated Fedora could look like.
+## What's Next?
+
+With the fundamental boot architecture, custom RPM packaging, Netinstall ISO generation, and VM testing proven functional, development is focused on:
+
+1. **Bare-Metal Installation Validation:** Stress-testing the Anaconda Netinstall kickstart across diverse physical UEFI firmware implementations and NVMe storage controllers.
+2. **Secure Boot MOK Integration:** Finalizing a straightforward local Machine Owner Key (MOK) enrollment flow so users can run GOFR under Secure Boot with custom-signed UKIs.
+3. **Hardware Driver Profiles:** Streamlining proprietary NVIDIA kernel module compilation against the CachyOS kernel during the Netinstall phase.
+
+GOFR has moved beyond an initial whiteboard concept. It is now a functioning, testable Linux remix that demonstrates the power of pairing Fedora's robust engineering with contemporary bootloader and kernel innovations.
