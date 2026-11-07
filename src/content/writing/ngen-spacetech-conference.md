@@ -3,12 +3,12 @@ title: "Notes From the NGEN SpaceTech Conference"
 description: "A day in New York with the Hofstra AIAA chapter: panels on where aerospace is going, Matt Desch on rebuilding Iridium, protein grown in orbit, and a phased array lesson from Kevin Bell in a bar after hours."
 date: 2026-11-09
 tags: ["Aerospace", "SpaceTech", "Conference", "AIAA"]
-draft: true
+draft: false
 sample: false
 featured: false
 ---
 
-On Friday, November 6, I went into New York City with a group from our Hofstra AIAA chapter for the NGEN SpaceTech Conference. Our co-president Adriel Ventura was there, our VP Kimberly Tapia was there, and a good number of our members made the trip. NGEN is a student founder network, around 20,000 student founders across more than 15 campuses, and this was their space focused day: panels, a keynote, an interactive session, a $150K pitch competition, and networking after.
+On Friday, November 6, I went into New York City with a group from our Hofstra AIAA chapter for the NGEN SpaceTech Conference. Our co-president Adriel Ventura was there, our VP Kimberly Tapia was there, and a good number of our members made the trip. NGEN is a student founder network, around 20,000 student founders across more than 15 campuses, and this was their space focused day: panels, a keynote, an interactive session, a $150K pitch competition, and networking after. Harsha Ravindran, one of NGEN's co-founders, had invited our chapter.
 
 I went in thinking of the space industry as a fairly narrow thing. Big companies, big rockets, NASA. I came out with a very different picture, and most of this post is about that.
 
@@ -38,9 +38,9 @@ He also said that when he looks back, he will remember the people more than the 
 
 At midday there was an interactive space colony session with randomized teams. My team worked on healthcare and medical services in space and built a presentation we never got to give, because earlier segments ran overtime and the presentations got cut. I was annoyed for about a minute. The randomized groups turned the session into a mixer instead, and I met more new people in that hour than I would have listening to presentations, so it worked out.
 
-The Frontier Tech panel was the part that connected most directly to my own background. My favorite piece was the protein layering work, growing protein layers in space, with the goal of helping treat people back on Earth. I did a manufacturing co-op at Arkwin, building fixtures for aerospace hardware, and I spend a lot of time thinking about how things actually get made. Seeing manufacturing treated as a space technology in its own right, not just a support function for the exciting parts, was the best surprise of the afternoon. The panel also covered a new commercial station being developed out of Ohio with a 2028 target, satellites flying at 200 km instead of the usual 500 km for better communications and missile detection, and a compression system from Steven Shepard's team.
+The Frontier Tech panel was the part that connected most directly to my own background. My favorite piece was the protein layering work, growing protein layers in space, with the goal of helping treat people back on Earth. I did a manufacturing co-op at Arkwin, building fixtures for aerospace hardware, and I spend a lot of time thinking about how things actually get made. Seeing manufacturing treated as a space technology in its own right, not just a support function for the exciting parts, was the best surprise of the afternoon. The panel also covered a new commercial station being developed out of Ohio with a 2028 target, satellites flying at 200 km instead of the usual 500 km for better communications and missile detection, and a compression system from Steven P. Shepard, co-founder and CEO of Vaxon Space.
 
-Later in the day was the $150K pitch competition. [NOTE FOR VANSH: add the winning startup's name here once we have it.] After the conference ended, a group of us went to the networking mixer near Penn Station, and I got to talk with the team that won. They were energetic, generous with their time, and clearly still processing it. I wish them real luck with the company.
+Later in the day was the $150K pitch competition. After the conference ended, a group of us went to the networking mixer near Penn Station, and I got to talk with the team that won. They were energetic, generous with their time, and clearly still processing it. I wish them real luck with the company.
 
 ## Kevin Bell, after hours
 
