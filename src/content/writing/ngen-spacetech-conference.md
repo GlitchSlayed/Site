@@ -1,5 +1,5 @@
 ---
-title: "Notes From the NGEN SpaceTech Conference"
+title: "It's not just about rockets"
 description: "A day in New York with the Hofstra AIAA chapter: panels on where aerospace is going, Matt Desch on rebuilding Iridium, protein grown in orbit, and a phased array lesson from Kevin Bell in a bar after hours."
 date: 2026-11-07
 tags: ["Aerospace", "SpaceTech", "Conference", "AIAA"]
