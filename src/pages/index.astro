@@ -27,12 +27,20 @@ const lead = projects[0];
   </aside>
 </section>
 <section class="shell route-strip" aria-label="Explore the notebook">
-  <a href={url('projects/')}><span>01 / The work</span><strong>Projects &amp; experiments</strong><p>The question, the approach, and where it stands.</p></a>
-  <a href={url('writing/')}><span>02 / The thinking</span><strong>Notes &amp; longer reads</strong><p>Decisions, rabbit holes, and things I’m figuring out.</p></a>
+  <a href={url('writing/')}><span>01 / The thinking</span><strong>Notes &amp; longer reads</strong><p>Decisions, rabbit holes, and things I’m figuring out.</p></a>
+  <a href={url('projects/')}><span>02 / The work</span><strong>Projects &amp; experiments</strong><p>The question, the approach, and where it stands.</p></a>
   <a href={url('about/')}><span>03 / The person</span><strong>Beyond the project list</strong><p>Manufacturing, aerospace, Linux, and a few other interests.</p></a>
 </section>
 
-<!-- 1. Main Projects Section -->
+<!-- 1. Blogs Section -->
+<section class="shell section">
+  <div class="section-heading"><div><p class="small-label">From the blog</p><h2>Things I’ve been thinking about</h2></div><a class="text-link" href={url('writing/')}>All writing →</a></div>
+  <div class="story-grid">
+    {posts.slice(0,3).map(p => <article><p class="small-label"><time datetime={p.data.date.toISOString()}>{dateLabel(p.data.date)}</time> · {readingMinutes(p.body)} min</p><h3><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h3><p>{p.data.description}</p><a class="text-link" href={url(`writing/${p.id}/`)}>Keep reading →</a></article>)}
+  </div>
+</section>
+
+<!-- 2. Main Projects Section -->
 <section class="shell section">
   <div class="section-heading"><div><p class="small-label">Selected work</p><h2>On my workbench</h2></div><a href={url('projects/')} class="text-link">All {projects.length} projects →</a></div>
   <div class="personal-projects">
@@ -40,14 +48,6 @@ const lead = projects[0];
     <div class="project-notes">{projects.slice(1,4).map((p,i) => <a href={url(`projects/${p.id}/`)}><span class="small-label">0{i+2} / {p.data.tags[0]}</span><h3>{p.data.title}</h3><p>{p.data.description}</p><StatusBadge status={p.data.status} size="compact" /></a>)}</div>
   </div>
   {!projects.length && <p>The first project write-up is on its way.</p>}
-</section>
-
-<!-- 2. Blogs Section (Right under main projects) -->
-<section class="shell section">
-  <div class="section-heading"><div><p class="small-label">From the blog</p><h2>Things I’ve been thinking about</h2></div><a class="text-link" href={url('writing/')}>All writing →</a></div>
-  <div class="story-grid">
-    {posts.slice(0,3).map(p => <article><p class="small-label"><time datetime={p.data.date.toISOString()}>{dateLabel(p.data.date)}</time> · {readingMinutes(p.body)} min</p><h3><a href={url(`writing/${p.id}/`)}>{p.data.title}</a></h3><p>{p.data.description}</p><a class="text-link" href={url(`writing/${p.id}/`)}>Keep reading →</a></article>)}
-  </div>
 </section>
 
 <!-- 3. What Needs Checking Next (Moved down) -->
