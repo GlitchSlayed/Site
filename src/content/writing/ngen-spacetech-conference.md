@@ -1,7 +1,7 @@
 ---
 title: "Notes From the NGEN SpaceTech Conference"
 description: "A day in New York with the Hofstra AIAA chapter: panels on where aerospace is going, Matt Desch on rebuilding Iridium, protein grown in orbit, and a phased array lesson from Kevin Bell in a bar after hours."
-date: 2026-11-09
+date: 2026-11-07
 tags: ["Aerospace", "SpaceTech", "Conference", "AIAA"]
 draft: false
 sample: false
@@ -20,9 +20,9 @@ That shift has a cost. Hundreds of satellites means a lot more spacecraft to bui
 
 The panel also spent time on whether companies should collaborate or race. The answer was basically both. Competition pushes everyone, government customers want more than one supplier, and nobody solves the whole problem alone.
 
-The part of the panel aimed at students stuck with me more than the industry analysis. Kevin Bell said he wished he had understood in college how much engineering is team work. You never work alone again after school, so you may as well learn to communicate well now. His three traits were passion, curiosity, and grit. Kristin Houston gave her ABCs: be authentic, be bold, be curious. And the line I wrote down with stars next to it came from the Navy, by way of the panel: do not bring the problem. If you see something worth complaining about, figure out how to make it better, and then help make it better.
+The part of the panel aimed at students stuck with me more than the industry analysis. Mr. Bell said he wished he had understood in college how much engineering is team work. You never work alone again after school, so you may as well learn to communicate well now. His three traits were passion, curiosity, and grit. Kristin Houston gave her ABCs: be authentic, be bold, be curious. And the line I wrote down with stars next to it came from the Navy, by way of the panel: do not bring the problem. If you see something worth complaining about, figure out how to make it better, and then help make it better.
 
-Bell also gave the audience homework. He told us to go home that night and look up what an RF phased array antenna is, just to be curious about it. I ended up getting that lesson in person instead. More on that below.
+Mr. Bell also gave the audience homework. He told us to go home that night and look up what an RF phased array antenna is, just to be curious about it. I ended up getting that lesson in person instead. More on that below.
 
 ## Matt Desch and the Iridium story
 
@@ -40,15 +40,15 @@ At midday there was an interactive space colony session with randomized teams. M
 
 The Frontier Tech panel was the part that connected most directly to my own background. My favorite piece was the protein layering work, growing protein layers in space, with the goal of helping treat people back on Earth. I did a manufacturing co-op at Arkwin, building fixtures for aerospace hardware, and I spend a lot of time thinking about how things actually get made. Seeing manufacturing treated as a space technology in its own right, not just a support function for the exciting parts, was the best surprise of the afternoon. The panel also covered a new commercial station being developed out of Ohio with a 2028 target, satellites flying at 200 km instead of the usual 500 km for better communications and missile detection, and a compression system from Steven P. Shepard, co-founder and CEO of Vaxon Space.
 
-Later in the day was the $150K pitch competition. After the conference ended, a group of us went to the networking mixer near Penn Station, and I got to talk with the team that won. They were energetic, generous with their time, and clearly still processing it. I wish them real luck with the company.
+Later in the day was the $150K pitch competition, and after the conference ended, a group of us went to the networking mixer near Penn Station.
 
-## Kevin Bell, after hours
+## Mr. Bell, after hours
 
 The best conversation of my day happened after the conference, at the mixer.
 
-I joined a conversation between Kevin Bell and Akmal Shaik, a student from Brown University. Akmal is working on CubeSats that would use several different measuring instruments to map black holes, built to sample fast enough that the data could be assembled into something close to video of an environment nobody can visit. It is a work in progress, and Bell was giving it serious technical attention, which says a lot about both of them.
+I joined a conversation between Kevin Bell and Akmal Shaik, a student from Brown University. Akmal is working on CubeSats that would use several different measuring instruments to map black holes, built to sample fast enough that the data could be assembled into something close to video of an environment nobody can visit. It is a work in progress, and Mr. Bell was giving it serious technical attention, which says a lot about both of them.
 
-Afterwards, Bell took the time to explain phased array satellites to me and a few of us from Hofstra, following up on the homework he had assigned from the stage that morning. The simple version is this. Instead of one huge dish talking to everyone in its footprint at once, you use clusters of smaller satellites working together. The array can steer its signal so precisely that it can deliver a short burst of data, at one specific frequency, in a window of something like 10 to 20 milliseconds, to one specific receiver, even with many other receivers in range. It behaves almost like encryption, because the data is only really there for the person it was aimed at, at the moment it was aimed.
+Afterwards, Mr. Bell took the time to explain phased array satellites to me and a few of us from Hofstra, following up on the homework he had assigned from the stage that morning. The simple version is this. Instead of one huge dish talking to everyone in its footprint at once, you use clusters of smaller satellites working together. The array can steer its signal so precisely that it can deliver a short burst of data, at one specific frequency, in a window of something like 10 to 20 milliseconds, to one specific receiver, even with many other receivers in range. It behaves almost like encryption, because the data is only really there for the person it was aimed at, at the moment it was aimed.
 
 He told us to pay attention to this part of the industry because it is growing fast and will be a big part of where satellites go next. Having a senior vice president from The Aerospace Corporation explain antenna arrays to a group of students in a bar, hours after his panel ended, is not something I will forget soon. It is also the whole argument for going to events like this in person.
 
