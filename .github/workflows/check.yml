@@ -1,32 +1,90 @@
 name: Check site
+
 on:
   push:
     branches: [main]
   pull_request:
+
 permissions:
   contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  check:
+    name: Check (Astro)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci
-      - run: npm run check
-      - run: npm test
-      - run: npm run test:core
-      - run: npm run build
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+
+  test:
+    name: Unit & Core Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run test:core
+
+  build-and-browser:
+    name: Build & Browser Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bun run build
         env:
           SITE_BROWSER_TESTS: '1'
-      - run: npm install --prefix tests/browser
-      - run: npx --prefix tests/browser playwright install --with-deps chromium
-      - name: Browser regressions
+      - name: Check if browser tests should run
+        id: filter
+        if: github.event_name == 'pull_request'
         run: |
-          npm run preview -- --host 127.0.0.1 > /tmp/site-preview.log 2>&1 &
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || true)
+          if echo "$CHANGED" | grep -qE '^(src/|tests/|package\.json|bun\.lock|astro\.config\.mjs)'; then
+            echo "run_browser=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping browser tests for non-code changes"
+            echo "run_browser=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Cache Playwright Chromium
+        if: steps.filter.outputs.run_browser == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
+      - name: Install Playwright Chromium
+        if: steps.filter.outputs.run_browser == 'true'
+        run: bunx playwright install --with-deps chromium
+      - name: Browser regressions
+        if: steps.filter.outputs.run_browser == 'true'
+        run: |
+          bun run preview -- --host 127.0.0.1 > /tmp/site-preview.log 2>&1 &
           for attempt in $(seq 1 30); do
             curl --fail --silent http://127.0.0.1:4321/Site/__checks/audit/ > /dev/null && break
             sleep 1
           done
-          npm run test:browser
+          bun run test:browser
