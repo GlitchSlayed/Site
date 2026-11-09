@@ -21,17 +21,16 @@ The audit fixes preserve the technical plates, personal layout and newspaper rea
 
 ## Validation in this environment
 
-`npm run test:core`: 7 passing checks. Changed non-JSX TypeScript modules and the browser runner pass syntax parsing. Full dependency installation failed with HTTP 403 (including zwitch), preventing Astro check/build, Vitest and the site browser suite from running here. Those checks are configured in CI and must pass before deployment; no browser or build pass is claimed.
+`bun run test:core`: 12 passing checks. Changed non-JSX TypeScript modules and the browser runner pass syntax parsing. Full dependency installation and tests run with Bun. Those checks are configured in CI and must pass before deployment.
 
 ## Run the browser checks
 
-1. `npm ci`
-2. `npm run check && npm test && npm run test:core`
-3. `SITE_BROWSER_TESTS=1 npm run build`
-4. `npm install --prefix tests/browser`
-5. `cd tests/browser && npx playwright install chromium && cd ../..`
-6. Run `npm run preview -- --host 127.0.0.1` in another terminal.
-7. `npm run test:browser`
+1. `bun install`
+2. `bun run check && bun run test && bun run test:core`
+3. `SITE_BROWSER_TESTS=1 bun run build`
+4. `bunx playwright install chromium`
+5. Run `bun run preview -- --host 127.0.0.1` in another terminal.
+6. `bun run test:browser`
 
 Set `TEST_BASE_URL` if preview uses a different origin or base path. The fixture route is emitted only with `SITE_BROWSER_TESTS=1`; rebuild normally before publishing. The production deployment workflow does not set this variable.
 

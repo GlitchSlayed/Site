@@ -16,19 +16,19 @@ Built with a minimal layout, light and dark themes, and subtle red-orange accent
 
 ## Development
 
-Requires **Node.js 24** and npm.
+Requires **Node.js 24** and **Bun** (package manager and script runner).
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the development server |
-| `npm run check` | Check Astro and TypeScript |
-| `npm run build` | Build the site into `dist/` |
-| `npm run preview` | Preview the production build |
+| `bun run dev` | Start the development server |
+| `bun run check` | Check Astro and TypeScript |
+| `bun run build` | Build the site into `dist/` |
+| `bun run preview` | Preview the production build |
 
 ## Project Structure
 
@@ -105,4 +105,4 @@ The second pass adds [ten engineering-focused refinements](docs/engineering-desi
 - [Focused component audit and verification limits](docs/mdx-focused-audit.md)
 - [Giscus setup, themes, thread mapping and deployment checks](docs/giscus-integration.md)
 
-Run the dependency-free regression suite with `npm run test:core`; use the full check/build/browser workflow before deployment.
+Run the dependency-free regression suite with `bun run test:core`; use the full check/build/browser workflow before deployment.

@@ -22,6 +22,21 @@ export default defineConfig({
     }),
     react(),
     pagefind(),
+    ...(process.env.SITE_BROWSER_TESTS === '1'
+      ? [
+          {
+            name: 'browser-test-fixtures',
+            hooks: {
+              'astro:config:setup': ({ injectRoute }) => {
+                injectRoute({
+                  pattern: '/__checks/[case]',
+                  entrypoint: './src/pages/__checks/[case].astro',
+                });
+              },
+            },
+          },
+        ]
+      : []),
   ],
 
   markdown: {

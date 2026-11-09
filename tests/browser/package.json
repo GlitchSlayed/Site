@@ -1,4 +1,5 @@
 {
+  "name": "tests-browser",
   "private": true,
   "type": "module",
   "scripts": {

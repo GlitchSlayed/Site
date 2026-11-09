@@ -364,16 +364,16 @@ Do not invent the author's feelings, childhood stories, collaborations, complete
 
 ## 11. Build, preview, and deployment
 
-The established local environment uses Node 24 and npm. The repository lockfile should be committed.
+The established local environment uses Node 24 and Bun (as package manager and script runner). The repository lockfile (`bun.lock`) should be committed.
 
 ```bash
-npm ci
-npm run check
-npm run build
-npm run preview
+bun install
+bun run check
+bun run build
+bun run preview
 ```
 
-Use `npm install` when adding/updating dependencies or generating the initial lockfile. Use `npm ci` for repeatable installs once a matching lockfile exists. Preview requires a successful build.
+Use `bun install` for repeatable installs from `bun.lock`. Preview requires a successful build.
 
 The GitHub Pages workflow runs on pushes to `main` after its push trigger is enabled. The optimized setup keeps checks on PRs and the production check/build in the Pages workflow, rather than duplicating the same build on every push.
 
@@ -393,9 +393,9 @@ dist/
 .wrangler/
 ```
 
-Keep `package.json`, `package-lock.json`, source files, assets, configuration, and workflow files tracked. Before suggesting `git add .`, tell the user to inspect status and confirm the ignore rules; dependencies were accidentally committed once during setup. Prefer staging the specific content files and assets involved.
+Keep `package.json`, `bun.lock`, source files, assets, configuration, and workflow files tracked. Before suggesting `git add .`, tell the user to inspect status and confirm the ignore rules; dependencies were accidentally committed once during setup. Prefer staging the specific content files and assets involved.
 
-Do not suggest `npm audit fix --force` as a default repair. Review the actual advisory chain, update related packages coherently, and verify the build and rendered math after dependency overrides.
+Do not suggest forced audit fixes as a default repair. Review the actual advisory chain, update related packages coherently, and verify the build and rendered math after dependency overrides.
 
 ## 12. Known failure modes
 

@@ -60,4 +60,4 @@ No engineering model, project prose body, or blog prose body was changed. Projec
 - Retained the original Markdown/MDX prose and numerical implementation. Checked ZIP integrity on delivery.
 - Full Astro build, TypeScript type checking, Vitest, browser interaction, and live WebGL rendering remain unverified in this environment. The previous dependency install failed with registry HTTP 403 and Chromium launch was denied a required socket operation. No successful browser validation is claimed.
 
-After installing dependencies, use the existing `npm run check`, `npm test`, and `npm run build`. In preview, verify both themes, mobile layouts, register filter/sort parity, WebGL fallback, texture preference, and reduced-motion behavior.
+After installing dependencies, use the existing `bun run check`, `bun run test`, and `bun run build`. In preview, verify both themes, mobile layouts, register filter/sort parity, WebGL fallback, texture preference, and reduced-motion behavior.

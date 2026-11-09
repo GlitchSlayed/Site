@@ -342,7 +342,7 @@ const basePath = url();
 
     const pf = await loadPagefind();
     if (!pf) {
-      resultsContainer.innerHTML = '<div class="search-empty">Search index will be built when building the site (<code>npm run build</code>).</div>';
+      resultsContainer.innerHTML = '<div class="search-empty">Search index will be built when building the site (<code>bun run build</code>).</div>';
       return;
     }
 

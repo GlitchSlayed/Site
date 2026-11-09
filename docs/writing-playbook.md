@@ -489,8 +489,8 @@ Do not wrap site Markdown in ChatGPT writing-block syntax. Do not include explan
 
 ### Final verification
 
-- Run `npm run check`.
-- Run `npm run build`.
+- Run `bun run check`.
+- Run `bun run build`.
 - Preview the built site and inspect desktop/mobile layouts.
 - Check math, code blocks, images, search labels, and cross-links.
 - Stage the intended source files and assets, not node_modules or generated output.

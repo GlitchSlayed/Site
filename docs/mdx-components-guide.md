@@ -161,4 +161,4 @@ Measurement: label/value/unit required; uncertainty must be nonnegative and in t
 
 The prop interfaces beside each component are the canonical machine-readable contract. An editor should emit those props and the appropriate hydration directive. Do not copy obsolete block schemas from previous documentation. Keep all examples illustrative unless sourced from actual measurements.
 
-Run `npm run test:core`, `npm test`, `npm run check`, and the browser workflow in `docs/audit-fixes.md`. See `docs/mdx-focused-audit.md` for findings, fixes and verification limits; see `docs/giscus-integration.md` for discussion configuration and migration.
+Run `bun run test:core`, `bun run test`, `bun run check`, and the browser workflow in `docs/audit-fixes.md`. See `docs/mdx-focused-audit.md` for findings, fixes and verification limits; see `docs/giscus-integration.md` for discussion configuration and migration.

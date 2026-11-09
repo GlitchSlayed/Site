@@ -36,9 +36,9 @@ try {
   await page.waitForSelector('.reader-enhancements:not([hidden])');
   assert.equal(await page.locator('#reader').getAttribute('data-mode'),'continuous');
   await page.locator('#section-4').scrollIntoViewIfNeeded();
-  await page.evaluate(()=>document.getElementById('section-4').scrollIntoView({block:'start'}));
+  await page.evaluate(()=>document.getElementById('section-4').scrollIntoView({block:'start', behavior:'instant'}));
   // DOM click avoids scrolling the toolbar into view before remembering the article position.
-  await page.locator('button[data-mode="spread"]').evaluate(button=>button.click());
+  await page.locator('button[data-mode="spread"]').evaluate(button=>(/** @type {HTMLElement} */ (button)).click());
   assert.ok(await page.locator('#section-4').isVisible());
   await page.setViewportSize({width:800,height:1000});
   await page.waitForFunction(()=>document.querySelector('#reader').dataset.mode==='continuous');

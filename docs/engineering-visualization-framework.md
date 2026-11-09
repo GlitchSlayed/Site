@@ -239,7 +239,7 @@ Do not use a global store; scopes are isolated by `scopeId`.
 
 ## 10. How to test numerical correctness
 
-Tests live in `tests/` and run with Vitest (`npm run test`). Test:
+Tests live in `tests/` and run with Vitest (`bun run test`). Test:
 
 - Analytical reference cases (hand-computed values).
 - Edge cases: zero denominators, `NaN`, `Infinity`, out-of-range inputs, `e = 0` in drag polar.

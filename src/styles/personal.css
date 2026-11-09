@@ -963,7 +963,7 @@ button:disabled {
 }
 
 .reader .story-page > * {
-  scroll-margin-top: calc(var(--site-header-height, 0px) + var(--reader-toolbar-height, 0px) + 1rem);
+  scroll-margin-top: calc(var(--reader-toolbar-height, 0px) + 0.5rem);
 }
 
 .reader[data-mode='spread'] .story-page[hidden='until-found'] {

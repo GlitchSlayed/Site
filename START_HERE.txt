@@ -1,7 +1,7 @@
 1. Extract the ZIP and copy the contents of Site-main into your repository root, including .github.
 2. Read docs/engineering-design-refinement.md for the latest ten changes, visuals, shaders, new metadata, and validation limits. docs/personal-redesign.md covers the preceding redesign.
 3. Keep your existing src/config.ts contact settings, or fill in any missing channels.
-4. With Node 24+, run npm ci, npm run check, npm test, and npm run build.
-5. Use npm run preview to inspect the homepage, project catalogue/detail, blog archive/reader, and about page at desktop and mobile sizes.
+4. With Node 24+ and Bun, run bun install, bun run check, bun run test, and bun run build.
+5. Use bun run preview to inspect the homepage, project catalogue/detail, blog archive/reader, and about page at desktop and mobile sizes.
 
 No deployment was performed. Dependency downloads returned HTTP 403 here, so a full Astro build was not verified. New browser scripts passed syntax parsing; browser interaction checks were blocked by the local Chromium environment.
