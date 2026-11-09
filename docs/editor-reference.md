@@ -54,7 +54,7 @@ Follow these core operating principles:
 | **Hosting** | GitHub Pages | Deployed via GitHub Actions to `https://glitchslayed.github.io/Site/` |
 | **Base Path** | `/Site/` | Handled automatically via `url()` helper in Astro templates |
 | **Search** | Pagefind | Full-text static search inside a native accessible `<dialog>` with `⌘K` shortcut |
-| **Equations** | KaTeX | Fast build-time LaTeX rendering via `remark-math` and `rehype-katex` |
+| **Equations** | KaTeX | Fast build-time LaTeX rendering via Satteri and `satteri-katex` |
 | **Plots & Charts** | uPlot + WebGL | High-performance interactive 2D scientific plotting (`EngineeringPlot`) |
 | **Path Aliases** | TypeScript | `@components/*`, `@lib/*`, `@layouts/*`, `@styles/*` configured in `tsconfig.json` |
 | **Comments** | Giscus | GitHub Discussions integration styled via site-hosted stylesheets |

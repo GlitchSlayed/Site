@@ -1,10 +1,9 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import { unified } from '@astrojs/markdown-remark';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeEngineeringAnnotations from './src/lib/rehype/rehypeEngineeringAnnotations.ts';
+import { satteri } from '@astrojs/markdown-satteri';
+import { satteriKatex } from 'satteri-katex';
+import { satteriEngineeringAnnotations } from './src/lib/satteri/satteriEngineeringAnnotations.ts';
 import react from '@astrojs/react';
 import pagefind from 'astro-pagefind';
 
@@ -40,9 +39,13 @@ export default defineConfig({
   ],
 
   markdown: {
-    processor: unified({
-      remarkPlugins: [remarkMath],
-      rehypePlugins: [rehypeKatex, rehypeEngineeringAnnotations],
+    processor: satteri({
+      features: {
+        math: true,
+        rawHtml: true,
+      },
+      mdastPlugins: [satteriKatex()],
+      hastPlugins: [satteriEngineeringAnnotations()],
     }),
     shikiConfig: {
       theme: 'github-dark',

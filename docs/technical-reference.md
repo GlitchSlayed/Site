@@ -50,8 +50,8 @@ The site is a static Astro application. Source content is converted to HTML duri
 | Styling | Plain CSS + Engineering Design System | Tailwind utility classes are not used |
 | Interactive visuals | React 19, Three.js, uPlot, and `@paper-design/shaders-react` | Used for interactive plots, 3D models, and decorative shader cards |
 | Social previews | Build-generated 1200 × 630 PNGs rendered with Sharp | Each page gets an absolute `og:image` and Twitter card URL |
-| Equations | remark-math + rehype-katex + KaTeX | LaTeX-style math rendered at build time |
-| Markdown pipeline | `unified()` from `@astrojs/markdown-remark` | Math plugins and engineering annotation processors |
+| Equations | satteri-katex + KaTeX | LaTeX-style math rendered at build time |
+| Markdown pipeline | Satteri processor (`@astrojs/markdown-satteri`) | Rust-based processor with math and engineering annotations |
 | Syntax highlighting | Shiki | Use fenced code blocks with a language |
 | Search | Pagefind with native `<dialog>` modal | Full-text site search with keyboard navigation (`⌘K`) |
 | Comments | Giscus | GitHub Discussions integration styled for light and dark themes |

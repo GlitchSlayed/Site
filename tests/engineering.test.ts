@@ -15,7 +15,7 @@ import { formatResult, formatPercentageChange, MAX_DECIMALS } from '../src/lib/e
 import { formatNumber } from '../src/lib/engineering/format';
 import { getModel } from '../src/lib/engineering/registry';
 import { getPlotDefinition } from '../src/lib/engineering/plots/registry';
-import rehypeEngineeringAnnotations from '../src/lib/rehype/rehypeEngineeringAnnotations';
+import satteriEngineeringAnnotations from '../src/lib/satteri/satteriEngineeringAnnotations';
 
 describe('lift model', () => {
   it('computes lift for standard conditions', () => {
@@ -553,25 +553,20 @@ describe('plot configuration validation', () => {
   });
 });
 
-describe('rehypeEngineeringAnnotations', () => {
+describe('satteriEngineeringAnnotations', () => {
   it('wraps multiple percentage values in table cells without regex statefulness skipping', () => {
-    const plugin = rehypeEngineeringAnnotations();
-    const mockTree: any = {
-      type: 'root',
+    const entry = satteriEngineeringAnnotations() as any;
+    const plugin = typeof entry === 'function' ? entry() : entry;
+    const cell: any = {
+      type: 'element',
+      tagName: 'td',
       children: [
-        {
-          type: 'element',
-          tagName: 'td',
-          children: [
-            { type: 'text', value: 'Delta (+15.1%) and (-8.4%) followed by (±2.0%)' },
-          ],
-        },
+        { type: 'text', value: 'Delta (+15.1%) and (-8.4%) followed by (±2.0%)' },
       ],
     };
 
-    plugin(mockTree);
+    plugin.element.visit(cell);
 
-    const cell = mockTree.children[0];
     const spans = cell.children.filter((c: any) => c.type === 'element' && c.tagName === 'span');
     expect(spans).toHaveLength(3);
     expect(spans[0].children[0].value).toBe('(+15.1%)');

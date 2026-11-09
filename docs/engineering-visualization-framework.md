@@ -291,7 +291,7 @@ For the aircraft performance model, aspect ratio is related to wingspan and refe
 - The drag polar and aircraft performance models are low-order, steady-level-flight approximations — not CFD/FEA and not certified data.
 - The BWB structural-mass penalty is an explicit illustrative assumption, not a validated structural prediction.
 - Three.js WebGL is unavailable on some devices/components; the viewer shows an error/fallback state.
-- KaTeX rendering in MDX requires the `remark-math`/`rehype-katex` pipeline (configured in `astro.config.mjs`).
+- KaTeX rendering in MDX requires the Satteri `satteri-katex` pipeline (configured in `astro.config.mjs`).
 
 ## 15. Troubleshooting
 
