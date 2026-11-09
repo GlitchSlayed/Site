@@ -2,7 +2,7 @@
 title: "GOFR: Glitchy's Opinionated Fedora Remix"
 description: A working, experimental Fedora 45 remix featuring Unified Kernel Images (UKIs) via systemd-boot, the CachyOS performance kernel, RustyUKI lifecycle management, and a Netinstall-first delivery architecture.
 category: Operating Systems
-status: In Development
+status: Prototype
 tags:
   - Fedora
   - Systemd

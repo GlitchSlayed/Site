@@ -1,6 +1,6 @@
 ---
 export interface Props {
-  status: 'Concept' | 'In Development' | 'Prototype' | 'Completed' | string;
+  status: 'Concept' | 'In Development' | 'Prototype' | 'Completed' | 'Released' | string;
   size?: 'normal' | 'compact';
   class?: string;
 }
@@ -15,6 +15,7 @@ const statusDescriptions: Record<string, string> = {
   'in-development': 'Active aerodynamic simulation, parameter exploration & code refinement',
   prototype: 'Computational or hardware prototype undergoing validation against benchmarks',
   completed: 'Peer-reviewed, validated study with published results & interactive explorer',
+  released: 'Shipped and available for use, with documented scope and known limits',
 };
 ---
 
@@ -114,6 +115,16 @@ const statusDescriptions: Record<string, string> = {
     background: #15803d;
   }
 
+  /* 5. RELEASED (Amber Gold / Shipped) */
+  .status-released {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.05);
+    border-color: rgba(180, 83, 9, 0.24);
+  }
+  .status-released .status-indicator {
+    background: #b45309;
+  }
+
   /* Dark Theme Adjustments */
   :global(html[data-theme='dark']) .status-concept {
     color: #a5b4fc;
@@ -149,5 +160,14 @@ const statusDescriptions: Record<string, string> = {
   }
   :global(html[data-theme='dark']) .status-completed .status-indicator {
     background: #86efac;
+  }
+
+  :global(html[data-theme='dark']) .status-released {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.08);
+    border-color: rgba(251, 191, 36, 0.25);
+  }
+  :global(html[data-theme='dark']) .status-released .status-indicator {
+    background: #fbbf24;
   }
 </style>

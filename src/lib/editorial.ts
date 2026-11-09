@@ -4,4 +4,5 @@ export const statusNotes: Record<string, string> = {
   'In Development': 'Work is underway. The write-up separates what exists from what is planned.',
   Prototype: 'An early implementation. See the project notes for checks and remaining limits.',
   Completed: 'The documented scope is complete. Methods and limitations remain part of the record.',
+  Released: 'A working release is out and available to use. The write-up covers what it does and what is still rough.',
 };

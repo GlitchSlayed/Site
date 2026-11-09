@@ -6,6 +6,7 @@ export const ProjectStatus = z.enum([
   'In Development',
   'Prototype',
   'Completed',
+  'Released',
 ]);
 
 const common = { title:z.string(), description:z.string(), date:z.coerce.date(), tags:z.array(z.string()), category:z.string().optional(), draft:z.boolean().default(false), sample:z.boolean().default(false), featured:z.boolean().default(false) };

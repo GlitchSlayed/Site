@@ -7,7 +7,7 @@ tags:
   - Fedora
   - Rust
   - Systems
-status: In Development
+status: Released
 art: code
 featured: false
 draft: false
