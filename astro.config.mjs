@@ -13,6 +13,9 @@ export default defineConfig({
   trailingSlash: 'always',
   output: 'static',
   compressHTML: true,
+  build: {
+    concurrency: 4,
+  },
 
   integrations: [
     mdx(),
@@ -20,7 +23,7 @@ export default defineConfig({
       filter: (page) => !page.includes('/og/'),
     }),
     react(),
-    pagefind(),
+    ...(process.env.FAST_BUILD === '1' ? [] : [pagefind()]),
     ...(process.env.SITE_BROWSER_TESTS === '1'
       ? [
           {
