@@ -43,6 +43,7 @@ bun run dev
 | `src/layouts/` | Shared page layouts |
 | `src/styles/global.css` | Site styling and theme colors |
 | `src/config.ts` | Public identity and contact links |
+| `editor/` | Purpose — Desktop technical monograph and MDX editor (Tauri 2 + Flatpak) |
 | `public/` | Static assets |
 | `.github/workflows/` | Build and deployment workflows |
 | `docs/` | Writing playbook and technical reference |

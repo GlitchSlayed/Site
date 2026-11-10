@@ -246,6 +246,52 @@ import { Tooltip } from '@components/mdx';
 The <Tooltip content="Blended Wing Body" subtitle="An aircraft configuration integrating wing and fuselage">BWB</Tooltip> configuration reduces wetted area.
 ```
 
+### 7. `EngineeringNote`
+Archival monograph callout box for formal engineering assumptions, limitations, observations, or decisions.
+```mdx
+import { EngineeringNote } from '@components/mdx';
+
+<EngineeringNote kind="decision" title="Airfoil Selection: Supercritical SC(2)-0714">
+  Selected NASA SC(2)-0714 section to delay drag divergence to Mach 0.83 while preserving 14% thickness-to-chord for wing root spars.
+</EngineeringNote>
+```
+
+### 8. `EquationBlock`
+Accessible formal mathematical block with equation typesetting, labeled reference tag, and variable dictionary.
+```mdx
+import { EquationBlock } from '@components/mdx';
+
+<EquationBlock
+  equation="L = \frac{1}{2} \rho v^2 S C_L"
+  label="(Eq. 1)"
+  description="Classical aerodynamic lift equation representing resultant force normal to freestream velocity."
+  variables={[
+    { symbol: "L", meaning: "Lift force", unit: "N" },
+    { symbol: "\\rho", meaning: "Fluid density", unit: "kg/m³" },
+    { symbol: "v", meaning: "Freestream velocity", unit: "m/s" },
+    { symbol: "S", meaning: "Wing reference area", unit: "m²" },
+    { symbol: "C_L", meaning: "Lift coefficient" }
+  ]}
+/>
+```
+
+### 9. `Measurement`
+Empirical measurement card with author-reported uncertainty bounds, test method, and operating conditions.
+```mdx
+import { Measurement } from '@components/mdx';
+
+<Measurement
+  label="Wing Static Tip Deflection"
+  value={42.8}
+  unit="mm"
+  uncertainty={0.4}
+  uncertaintyLabel="Laser photogrammetry uncertainty"
+  method="Laser triangulated photogrammetry"
+  conditions="Full aeroelastic limit load (2.5g)"
+  significantFigures={3}
+/>
+```
+
 ---
 
 ## 7. Math & Formatting Standards
@@ -284,3 +330,26 @@ Before submitting an article draft, run through this verification checklist:
 - [ ] **Equations**: All math syntax compiles cleanly in KaTeX, variables are defined, units are stated.
 - [ ] **Links**: Relative internal URLs use the Astro `url()` pattern or clean relative paths. External links point to real documentation.
 - [ ] **Handoff Note**: Outside the file, include the intended target path (e.g. `src/content/writing/airfoil-study.md`) and list any unresolved questions or missing image files.
+
+---
+
+## 9. Purpose Desktop Editor (`editor/`)
+
+The repository includes **Purpose**, a tailored desktop application in `editor/` for composing, previewing, and publishing content.
+
+### Key Capabilities
+- **Exact Visual Mirroring**: Uses the site's archival book paper palette (`#F8F6F0`) by default, with dark mode toggle (`#161614`), display serif headings (`Fraunces`), and reading serif prose (`Newsreader`).
+- **Real-Time Headings Outline**: Automatically extracts `#`, `##`, `###` headings into a collapsible drawer with click-to-jump navigation.
+- **Tag Autocomplete**: Interactive tag chips with workspace-wide tag suggestions across articles and projects.
+- **Editorial Linter**: Automatically enforces the em-dash ban, warns about corporate buzzwords, and detects missing MDX component imports.
+- **Safe Sandboxing**: Packaged as a Flatpak (`com.glitchslayed.site-editor`) that uses `flatpak-spawn --host` to run local checks and scoped Git operations without blanket filesystem access.
+
+To launch Purpose locally:
+```bash
+flatpak run com.glitchslayed.site-editor
+```
+Or start in development mode inside `editor/`:
+```bash
+cd editor
+npm run tauri:dev
+```

@@ -1,0 +1,364 @@
+---
+import { url } from '../config';
+---
+
+<div class="simulator-wrapper" id="lander-game-wrapper" aria-label="Manual Vector Override Flight Simulator">
+  <div class="sim-terminal-bar">
+    <div class="sim-status-indicator">
+      <span class="sim-blink-led"></span>
+      <span class="sim-sys-name">AGC PROGRAM 404 // VECTOR RECOVERY</span>
+      <span class="sim-score-chip" id="sim-score-chip">RECOVERIES: <strong id="sim-recoveries">0</strong></span>
+    </div>
+    <div class="sim-tools">
+      <button type="button" id="sim-sas-toggle" class="sim-ctrl-btn active" aria-label="Toggle Stability Assist System" title="Toggle automatic leveling (SAS) (S)">
+        SAS: <span id="sim-sas-label">ON</span>
+      </button>
+      <button type="button" id="sim-audio-toggle" class="sim-ctrl-btn" aria-label="Toggle simulator sound" title="Toggle audio (M)">
+        <span id="sim-audio-label">Sound: Off</span>
+      </button>
+      <button type="button" id="sim-reset-btn" class="sim-ctrl-btn" aria-label="Restart trajectory simulation" title="Restart simulation (R)">
+        ↺ Reset Vector
+      </button>
+    </div>
+  </div>
+
+  <div class="sim-display-container">
+    <canvas
+      id="lander-canvas"
+      width="640"
+      height="320"
+      role="img"
+      aria-label="Interactive 2D vector lander simulation showing an off-course spacecraft attempting to touch down on Target Pad 404"
+      tabindex="0"
+      data-home={url()}
+      data-writing={url('writing/')}
+      data-projects={url('projects/')}
+    ></canvas>
+    <div id="sim-banner" class="sim-banner" role="status" aria-live="polite" hidden></div>
+  </div>
+
+  <div class="sim-control-pad" role="group" aria-label="Simulator Controls">
+    <button type="button" id="sim-btn-left" class="sim-key-btn" aria-label="Fire Port RCS Thruster">
+      ◀ Roll Port <kbd>A / ←</kbd>
+    </button>
+    <button type="button" id="sim-btn-thrust" class="sim-key-btn primary-thrust" aria-label="Fire Main Thruster">
+      ▲ Main Thruster <kbd>W / ↑ / Space</kbd>
+    </button>
+    <button type="button" id="sim-btn-right" class="sim-key-btn" aria-label="Fire Starboard RCS Thruster">
+      Roll Stbd ▶ <kbd>D / →</kbd>
+    </button>
+  </div>
+
+  <div class="sim-instructions">
+    <div class="guide-item"><strong>Objective:</strong> Touch down gently on <span class="pad-pill">[TARGET PAD 404]</span>.</div>
+    <div class="guide-item"><strong>Guidance:</strong> Descent rate <span class="spec-val">&lt; 8.0 m/s</span> · Lateral rate <span class="spec-val">&lt; 5.2 m/s</span> · Attitude upright (&lt; 20°).</div>
+    <div class="guide-item"><strong>Stability:</strong> <span class="spec-val">SAS ON</span> auto-stabilizes roll when keys are released.</div>
+  </div>
+</div>
+
+<script>
+  import { LanderGame } from '../lib/lander';
+
+  (function () {
+    const wrapper = document.getElementById('lander-game-wrapper');
+    const canvas = document.getElementById('lander-canvas') as HTMLCanvasElement | null;
+    if (!wrapper || !canvas) return;
+
+    new LanderGame({
+      wrapper,
+      canvas,
+      banner: document.getElementById('sim-banner'),
+      scoreChip: document.getElementById('sim-score-chip'),
+      recoveriesEl: document.getElementById('sim-recoveries'),
+      resetBtn: document.getElementById('sim-reset-btn'),
+      audioToggle: document.getElementById('sim-audio-toggle'),
+      audioLabel: document.getElementById('sim-audio-label'),
+      sasToggle: document.getElementById('sim-sas-toggle'),
+      sasLabel: document.getElementById('sim-sas-label'),
+      btnLeft: document.getElementById('sim-btn-left'),
+      btnRight: document.getElementById('sim-btn-right'),
+      btnThrust: document.getElementById('sim-btn-thrust'),
+    });
+  })();
+</script>
+
+<style>
+  .simulator-wrapper {
+    margin: 0 0 32px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  }
+
+  .sim-terminal-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .sim-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+
+  .sim-blink-led {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: simBlink 1.4s infinite;
+  }
+
+  @keyframes simBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+
+  .sim-sys-name {
+    letter-spacing: 0.6px;
+    font-weight: 500;
+  }
+
+  .sim-score-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10.5px;
+    color: var(--foreground);
+  }
+
+  .sim-score-chip strong {
+    color: var(--accent);
+  }
+
+  .sim-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sim-ctrl-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--foreground);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: 28px;
+  }
+
+  .sim-ctrl-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .sim-ctrl-btn.active {
+    background: var(--surface-2);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .sim-display-container {
+    position: relative;
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+  }
+
+  #lander-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    cursor: crosshair;
+    outline: none;
+  }
+
+  #lander-canvas:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .sim-banner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    padding: 20px;
+    text-align: center;
+    z-index: 5;
+  }
+
+  :global(.banner-success),
+  :global(.banner-fail) {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    padding: 20px 24px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    max-width: 480px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  :global(.banner-success strong) {
+    color: #1D8338;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+
+  :global(html[data-theme='dark'] .banner-success strong) {
+    color: #5CD068;
+  }
+
+  :global(.banner-fail strong) {
+    color: var(--accent);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+
+  :global(.banner-stats) {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 10px 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  :global(.banner-hint) {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  :global(.banner-links) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  :global(.sim-retry-btn) {
+    display: inline-block;
+    background: var(--foreground);
+    color: var(--background);
+    border: none;
+    border-radius: 3px;
+    padding: 8px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    min-height: 36px;
+  }
+
+  :global(.sim-retry-btn:hover) {
+    opacity: 0.9;
+  }
+
+  .sim-control-pad {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    gap: 8px;
+    padding: 12px 14px;
+    background: var(--surface);
+    touch-action: none;
+    user-select: none;
+  }
+
+  .sim-key-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    min-height: 48px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--foreground);
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .sim-key-btn kbd {
+    font-size: 9.5px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1px 5px;
+  }
+
+  .sim-key-btn:active {
+    background: var(--hover);
+    border-color: var(--accent);
+  }
+
+  .sim-key-btn.primary-thrust {
+    border-color: var(--accent-border);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .sim-instructions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px 12px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .pad-pill {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .spec-val {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  @media (max-width: 600px) {
+    .sim-terminal-bar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .sim-control-pad {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
