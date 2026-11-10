@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { satteri } from '@astrojs/markdown-satteri';
@@ -8,6 +8,41 @@ import react from '@astrojs/react';
 import pagefind from 'astro-pagefind';
 
 export default defineConfig({
+  prefetch: { prefetchAll: true },
+  fonts: [
+    {
+      provider: fontProviders.google(),
+      name: 'Fraunces',
+      cssVariable: '--serif-display',
+      weights: [400, 500, 600],
+      styles: ['normal', 'italic'],
+      fallbacks: ['Newsreader', 'Garamond', 'Georgia', 'serif'],
+    },
+    {
+      provider: fontProviders.google(),
+      name: 'Newsreader',
+      cssVariable: '--serif',
+      weights: [400, 500],
+      styles: ['normal', 'italic'],
+      fallbacks: ['Garamond', 'Georgia', 'serif'],
+    },
+    {
+      provider: fontProviders.google(),
+      name: 'Inter',
+      cssVariable: '--sans',
+      weights: [400, 500, 600],
+      styles: ['normal'],
+      fallbacks: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+    },
+    {
+      provider: fontProviders.google(),
+      name: 'IBM Plex Mono',
+      cssVariable: '--mono',
+      weights: [400, 500, 600],
+      styles: ['normal'],
+      fallbacks: ['SF Mono', 'Menlo', 'Consolas', 'monospace'],
+    },
+  ],
   site: process.env.SITE_URL || 'https://glitchslayed.github.io',
   base: process.env.BASE_PATH || '/Site/',
   trailingSlash: 'always',

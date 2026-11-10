@@ -86,4 +86,4 @@ The reader intentionally uses section-length pages rather than pretending that a
 - npm ci was attempted with the existing lockfile. The registry returned HTTP 403, preventing dependency installation. Astro check, tests, and the full build could not run.
 - Browser interaction fixtures were prepared, but Chromium could not start because the environment denied its socket operation. Browser rendering and interaction verification are therefore not claimed.
 - Verify responsive presentation, keyboard navigation, MDX island behavior when moving between spreads, and print output in a real browser after installing dependencies.
-- On a machine with dependencies: npm ci, npm run check, npm test, npm run build, npm run preview. Existing CI also performs checks.
+- On a machine with dependencies: bun install, bun run check, bun test, bun run build, bun run preview. Existing CI also performs checks.

@@ -6,11 +6,12 @@ Built with a minimal layout, light and dark themes, and subtle red-orange accent
 
 ## Stack
 
-- **Astro 7:** static site generation
+- **Bun:** package manager and script runner
+- **Astro 7:** static site generation and client link prefetching
 - **TypeScript:** typed configuration and application code
-- **Markdown / MDX:** articles and project pages
+- **Markdown / MDX:** articles and project pages with Satteri Rust compiler
 - **KaTeX:** mathematical equations
-- **Plain CSS:** styling and responsive layouts
+- **Plain CSS:** styling, self-hosted fonts with metric-matched fallbacks, and responsive layouts
 - **React + Paper Design shaders:** decorative project and homepage visuals
 - **GitHub Pages + Actions:** hosting and deployment
 
@@ -77,7 +78,7 @@ For the full writing workflow, AI editor instructions, content schema, and compo
 
 Edit `src/config.ts` for the public name, description, and contact links. Empty contact fields remain hidden.
 
-Edit `src/styles/global.css` for typography, colors, spacing, and responsive styles. Fonts load from Google Fonts with system fallbacks.
+Edit `src/styles/global.css` for design tokens, colors, spacing, and responsive styles. Fonts are self-hosted via Astro's built-in fonts configuration (`fonts` in `astro.config.mjs`) with automated metric fallbacks to eliminate layout shift, while link prefetching is enabled across all internal pages.
 
 Use the `url()` helper for internal links in Astro components so they work under the GitHub Pages repository path.
 

@@ -59,6 +59,8 @@ The site is a static Astro application. Source content is converted to HTML duri
 | Build checks | Astro check and Vitest test suite | Type checks and 95+ unit/component tests in CI |
 | Sitemap | `@astrojs/sitemap` + `robots.txt` | Automatically generated on every build |
 | Feed | `@astrojs/rss` route | Published writing entries appear in RSS |
+| Package manager | Bun (`bun.lock`) | Fast package installation, workspace orchestration, and script runner |
+| Fonts & Navigation | Astro Fonts + Prefetch | Self-hosted woff2 with automated metric fallbacks to prevent CLS; hover-driven link prefetching |
 | Path Aliases | TypeScript paths | `@components/*`, `@lib/*`, `@layouts/*`, `@styles/*` |
 
 React, Three.js, and uPlot are installed for scientific data visualization and interactive models. Tailored MDX components (`LinePlot`, `ScatterPlot`, `FunctionPlot`, `DataTable`, `MetricCard`, `MetricGrid`, `ParamPlayground`, `ParamSlider`, `NotebookCell`, `Tooltip`) are available for `.mdx` pages. Tailwind, CMS engines, or server backends are not used.

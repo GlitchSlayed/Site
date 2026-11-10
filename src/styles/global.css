@@ -24,11 +24,7 @@
   --code-bg: #EFECE3;
   --table-header: #EFECE3;
 
-  /* Typography System */
-  --serif: 'Newsreader', Garamond, 'Georgia', serif;
-  --serif-display: 'Fraunces', 'Newsreader', Garamond, 'Georgia', serif;
-  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --mono: 'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace;
+  /* Typography System defined via Astro self-hosted fonts in astro.config.mjs */
 
   /* Line Heights & Reading Measures */
   --leading-prose: 1.76;

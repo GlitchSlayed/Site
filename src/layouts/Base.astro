@@ -10,6 +10,7 @@ import Rocket from '../components/Rocket.astro';
 import ArrowIcon from '../components/ArrowIcon.astro';
 import SearchIcon from '../components/SearchIcon.astro';
 import SearchModal from '../components/SearchModal.astro';
+import { Font } from 'astro:assets';
 import { site, url } from '../config';
 import { getCommitHash } from '../lib/git';
 
@@ -38,12 +39,10 @@ const commitHash = getCommitHash();
     <meta name="theme-color" content="#F8F7F3" id="meta-theme-color" />
     <title>{title}</title>
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;450;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap"
-    />
+    <Font cssVariable="--serif-display" preload={[{ weight: 400, style: 'normal' }]} />
+    <Font cssVariable="--serif" preload={[{ weight: 400, style: 'normal' }]} />
+    <Font cssVariable="--sans" preload={[{ weight: 400, style: 'normal' }]} />
+    <Font cssVariable="--mono" />
     {configured && <link rel="canonical" href={canonical} />}
     <meta property="og:site_name" content="Vansh's Technical Blog" />
     <meta property="og:title" content={title} />
