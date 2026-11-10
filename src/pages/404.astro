@@ -5,35 +5,63 @@ import { url } from '../config';
 ---
 
 <Base
-  title="404 | Trajectory Off Course"
+  title="404 | Page Not Found"
   ogImagePath="og/404.png"
   ogImageAlt="Page not found"
   noindex={true}
 >
   <section class="shell page-section error-section" data-pagefind-ignore>
     <div class="error-container">
-      <div class="eyebrow">
-        <span class="status-dot"></span>
-        <span>TELEMETRY ERROR // 404 DEVIATION</span>
+      <!-- Unmistakable 404 Headline & Status -->
+      <div class="error-badge-row">
+        <div class="error-badge" aria-hidden="true">
+          <span class="error-code">404</span>
+          <span class="error-badge-divider">/</span>
+          <span class="error-badge-label">PAGE NOT FOUND</span>
+        </div>
+        <div class="error-status-chip">
+          <span class="status-dot"></span>
+          <span>HTTP 404 — UNRESOLVED ROUTE</span>
+        </div>
       </div>
 
       <h1 class="page-title error-title">
-        Trajectory deviated from <br />
-        <span class="accent-word"><em>charted airspace.</em></span>
+        The page you’re looking for <br />
+        <span class="accent-word"><em>doesn’t exist.</em></span>
       </h1>
 
       <p class="page-description">
-        The requested coordinate does not exist in the engineering archives or field dispatches. Let's recalculate your vector and return to familiar coordinates.
+        No document or project matches <code class="missing-path-code" id="missing-path-display">the requested URL</code>. It may have been moved, renamed, or never existed in the repository.
       </p>
+
+      <!-- Immediate primary navigation for quick departure -->
+      <div class="error-quick-nav">
+        <a class="button primary" href={url()}>
+          Return to Flight Deck <ArrowIcon />
+        </a>
+        <a class="button" href={url('writing/')}>
+          Field Dispatches <ArrowIcon />
+        </a>
+        <a class="button" href={url('projects/')}>
+          Engineering Monographs <ArrowIcon />
+        </a>
+        <a class="text-link" href={url('writing/tags/')}>
+          Browse by Topic →
+        </a>
+      </div>
 
       <!-- Apollo AGC / Trajectory Correction Mini-Simulator -->
       <div class="simulator-wrapper" aria-label="Manual Vector Override Flight Simulator">
         <div class="sim-terminal-bar">
           <div class="sim-status-indicator">
             <span class="sim-blink-led"></span>
-            <span class="sim-sys-name">AGC PROGRAM 404 // MANUAL VECTOR CORRECTION</span>
+            <span class="sim-sys-name">AGC PROGRAM 404 // VECTOR RECOVERY</span>
+            <span class="sim-score-chip" id="sim-score-chip">RECOVERIES: <strong id="sim-recoveries">0</strong></span>
           </div>
           <div class="sim-tools">
+            <button type="button" id="sim-sas-toggle" class="sim-ctrl-btn active" aria-label="Toggle Stability Assist System" title="Toggle automatic leveling (SAS)">
+              SAS: <span id="sim-sas-label">ON</span>
+            </button>
             <button type="button" id="sim-audio-toggle" class="sim-ctrl-btn" aria-label="Toggle simulator sound" title="Toggle audio (M)">
               <span id="sim-audio-label">Sound: Off</span>
             </button>
@@ -51,8 +79,10 @@ import { url } from '../config';
             role="img"
             aria-label="Interactive 2D vector lander simulation showing an off-course spacecraft attempting to touch down on Target Pad 404"
             tabindex="0"
+            data-home={url()}
+            data-writing={url('writing/')}
+            data-projects={url('projects/')}
           ></canvas>
-          <div id="sim-hud-overlay" class="sim-hud" aria-hidden="true"></div>
           <div id="sim-banner" class="sim-banner" role="status" aria-live="polite" hidden></div>
         </div>
 
@@ -69,35 +99,26 @@ import { url } from '../config';
         </div>
 
         <div class="sim-instructions">
-          <span>Guidance: Touch down gently on <strong>[TARGET PAD 404]</strong>. Keep descent velocity <span class="spec-val">&lt; 1.8 m/s</span> and attitude upright.</span>
+          <div class="guide-item"><strong>Objective:</strong> Touch down gently on <span class="pad-pill">[TARGET PAD 404]</span>.</div>
+          <div class="guide-item"><strong>Guidance:</strong> Descent rate <span class="spec-val">&lt; 8.0 m/s</span> · Lateral rate <span class="spec-val">&lt; 5.2 m/s</span> · Attitude upright (&lt; 20°).</div>
+          <div class="guide-item"><strong>Stability:</strong> <span class="spec-val">SAS ON</span> auto-stabilizes roll when keys are released.</div>
         </div>
       </div>
 
-      <!-- Quick Navigation Actions -->
+      <!-- Telemetry Diagnostics Box -->
       <div class="error-telemetry-box">
         <div class="telemetry-row">
           <span>VECTOR STATUS:</span>
-          <span class="telemetry-warn">UNRESOLVED COORDINATE (HTTP 404)</span>
+          <span class="telemetry-warn">UNRESOLVED ROUTE (HTTP 404)</span>
+        </div>
+        <div class="telemetry-row">
+          <span>NAVIGATION AID:</span>
+          <span>IF YOU WERE FOLLOWING A LINK, IT MAY BE DEPRECATED OR MISSPELLED</span>
         </div>
         <div class="telemetry-row">
           <span>RECOMMENDED WAYPOINTS:</span>
-          <span>FLIGHT DECK, MONOGRAPHS, OR ARCHIVE</span>
+          <span>FLIGHT DECK, FIELD DISPATCHES, OR TOPIC INDEX</span>
         </div>
-      </div>
-
-      <div class="error-actions">
-        <a class="button primary" href={url()}>
-          Return to Flight Deck <ArrowIcon />
-        </a>
-        <a class="button" href={url('projects/')}>
-          Engineering Monographs <ArrowIcon />
-        </a>
-        <a class="text-link" href={url('writing/')}>
-          Field Dispatches <ArrowIcon />
-        </a>
-        <a class="text-link" href={url('writing/tags/')}>
-          Topic Index <ArrowIcon />
-        </a>
       </div>
     </div>
   </section>
@@ -106,6 +127,21 @@ import { url } from '../config';
 <script>
   // Self-contained Vector Recovery Simulator
   (function () {
+    // Populate attempted path for maximum clarity
+    const pathDisplay = document.getElementById('missing-path-display');
+    if (pathDisplay) {
+      try {
+        const p = window.location.pathname;
+        if (p && p.length > 0 && p !== '/') {
+          pathDisplay.textContent = p;
+        } else {
+          pathDisplay.textContent = 'this URL';
+        }
+      } catch {
+        pathDisplay.textContent = 'this URL';
+      }
+    }
+
     const canvas = document.getElementById('lander-canvas') as HTMLCanvasElement;
     if (!canvas) return;
 
@@ -116,11 +152,16 @@ import { url } from '../config';
     const resetBtn = document.getElementById('sim-reset-btn');
     const audioToggle = document.getElementById('sim-audio-toggle');
     const audioLabel = document.getElementById('sim-audio-label');
+    const sasToggle = document.getElementById('sim-sas-toggle');
+    const sasLabel = document.getElementById('sim-sas-label');
+    const recoveriesLabel = document.getElementById('sim-recoveries');
     const btnLeft = document.getElementById('sim-btn-left');
     const btnRight = document.getElementById('sim-btn-right');
     const btnThrust = document.getElementById('sim-btn-thrust');
 
     let soundEnabled = false;
+    let sasEnabled = true;
+    let recoveries = 0;
     let audioCtx: AudioContext | null = null;
     let thrustGain: GainNode | null = null;
     let thrustNoise: AudioBufferSourceNode | null = null;
@@ -146,6 +187,18 @@ import { url } from '../config';
       }
     }
 
+    function toggleSas() {
+      sasEnabled = !sasEnabled;
+      if (sasLabel) sasLabel.textContent = sasEnabled ? 'ON' : 'OFF';
+      if (sasToggle) {
+        if (sasEnabled) {
+          sasToggle.classList.add('active');
+        } else {
+          sasToggle.classList.remove('active');
+        }
+      }
+    }
+
     function playBeep(freq: number, type: OscillatorType, dur: number) {
       if (!soundEnabled || !audioCtx) return;
       try {
@@ -153,7 +206,7 @@ import { url } from '../config';
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -180,10 +233,10 @@ import { url } from '../config';
 
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(320, audioCtx.currentTime);
+        filter.frequency.setValueAtTime(260, audioCtx.currentTime);
 
         thrustGain = audioCtx.createGain();
-        thrustGain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+        thrustGain.gain.setValueAtTime(0.09, audioCtx.currentTime);
 
         thrustNoise.connect(filter);
         filter.connect(thrustGain);
@@ -207,9 +260,15 @@ import { url } from '../config';
       }
     }
 
-    // Vehicle state
-    const gravity = 0.055;
-    const pad = { x: 270, y: 285, width: 95 };
+    // Vehicle & Environment Tuning
+    // Gravity: floaty and forgiving (0.036 vs old 0.055)
+    const gravity = 0.036;
+    // Thrust: ample authority (~2.3:1 thrust-to-weight)
+    const thrustPower = 0.082;
+    // Rotation rate: smooth and controllable
+    const turnRate = 0.024;
+    // Landing pad: generous 150px wide target
+    const pad = { x: 235, y: 285, width: 155 };
 
     interface Particle {
       x: number;
@@ -219,16 +278,17 @@ import { url } from '../config';
       life: number;
       maxLife: number;
       color: string;
+      size: number;
     }
 
     let particles: Particle[] = [];
 
     const ship = {
-      x: 80,
-      y: 60,
-      vx: 1.1,
-      vy: 0.2,
-      angle: 0.15, // in radians
+      x: 100,
+      y: 55,
+      vx: 0.25,
+      vy: 0.05,
+      angle: 0.0, // in radians
       fuel: 100,
       thrusting: false,
       turningLeft: false,
@@ -237,11 +297,11 @@ import { url } from '../config';
     };
 
     function resetShip() {
-      ship.x = 75 + Math.random() * 50;
-      ship.y = 50 + Math.random() * 30;
-      ship.vx = 0.8 + Math.random() * 0.6;
-      ship.vy = 0.1;
-      ship.angle = (Math.random() - 0.5) * 0.2;
+      ship.x = 90 + Math.random() * 70;
+      ship.y = 45 + Math.random() * 25;
+      ship.vx = 0.2 + Math.random() * 0.25; // Gentle horizontal drift
+      ship.vy = 0.05;
+      ship.angle = 0; // Starts upright
       ship.fuel = 100;
       ship.thrusting = false;
       ship.turningLeft = false;
@@ -267,6 +327,7 @@ import { url } from '../config';
       keys[e.key.toLowerCase()] = true;
       if (e.key.toLowerCase() === 'r') resetShip();
       if (e.key.toLowerCase() === 'm') toggleAudio();
+      if (e.key.toLowerCase() === 's') toggleSas();
     });
 
     window.addEventListener('keyup', (e) => {
@@ -296,16 +357,17 @@ import { url } from '../config';
     bindBtn(btnThrust, () => { keys['arrowup'] = true; }, () => { keys['arrowup'] = false; });
     resetBtn?.addEventListener('click', resetShip);
     audioToggle?.addEventListener('click', toggleAudio);
+    sasToggle?.addEventListener('click', toggleSas);
 
     // Terrain profile
     const terrain = [
       { x: 0, y: 260 },
-      { x: 90, y: 285 },
-      { x: 190, y: 270 },
+      { x: 80, y: 280 },
+      { x: 170, y: 270 },
       { x: pad.x, y: pad.y },
       { x: pad.x + pad.width, y: pad.y },
-      { x: 440, y: 265 },
-      { x: 540, y: 290 },
+      { x: 450, y: 265 },
+      { x: 550, y: 290 },
       { x: 640, y: 275 },
     ];
 
@@ -322,9 +384,10 @@ import { url } from '../config';
     }
 
     let animationFrameId: number;
+    let beaconTick = 0;
 
     function loop() {
-      // Check prefers-reduced-motion
+      beaconTick++;
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       // Update inputs
@@ -334,32 +397,36 @@ import { url } from '../config';
         ship.thrusting = (keys['arrowup'] || keys['w'] || keys[' '] || false) && ship.fuel > 0;
 
         if (ship.turningLeft) {
-          ship.angle -= 0.045;
-          playBeep(440, 'triangle', 0.03);
-        }
-        if (ship.turningRight) {
-          ship.angle += 0.045;
-          playBeep(480, 'triangle', 0.03);
+          ship.angle -= turnRate;
+          playBeep(420, 'triangle', 0.025);
+        } else if (ship.turningRight) {
+          ship.angle += turnRate;
+          playBeep(460, 'triangle', 0.025);
+        } else if (sasEnabled) {
+          // SAS Attitude Hold: gently restore level orientation when pilot releases steering
+          ship.angle *= 0.94;
+          if (Math.abs(ship.angle) < 0.004) ship.angle = 0;
         }
 
         if (ship.thrusting) {
-          const power = 0.13;
-          ship.vx += Math.sin(ship.angle) * power;
-          ship.vy -= Math.cos(ship.angle) * power;
-          ship.fuel = Math.max(0, ship.fuel - 0.28);
+          ship.vx += Math.sin(ship.angle) * thrustPower;
+          ship.vy -= Math.cos(ship.angle) * thrustPower;
+          // Economical fuel consumption (gives ~17s of continuous burn)
+          ship.fuel = Math.max(0, ship.fuel - 0.10);
           startThrustSound();
 
           // Spawn engine exhaust particles
-          const exhaustAngle = ship.angle + Math.PI + (Math.random() - 0.5) * 0.35;
-          const speed = 2.5 + Math.random() * 2;
+          const exhaustAngle = ship.angle + Math.PI + (Math.random() - 0.5) * 0.3;
+          const speed = 2.2 + Math.random() * 1.8;
           particles.push({
             x: ship.x,
             y: ship.y + 10,
-            vx: Math.sin(exhaustAngle) * speed + ship.vx * 0.3,
-            vy: -Math.cos(exhaustAngle) * speed + ship.vy * 0.3,
+            vx: Math.sin(exhaustAngle) * speed + ship.vx * 0.2,
+            vy: -Math.cos(exhaustAngle) * speed + ship.vy * 0.2,
             life: 1,
-            maxLife: 18 + Math.random() * 10,
+            maxLife: 16 + Math.random() * 10,
             color: Math.random() > 0.4 ? '#E25835' : '#F5B041',
+            size: 2.5,
           });
         } else {
           stopThrustSound();
@@ -380,39 +447,78 @@ import { url } from '../config';
           ship.y = groundY - 12;
           stopThrustSound();
 
-          const onPad = ship.x >= pad.x + 8 && ship.x <= pad.x + pad.width - 8;
-          const softVertical = ship.vy < 1.75;
-          const softHorizontal = Math.abs(ship.vx) < 0.95;
-          const upright = Math.abs(ship.angle) < 0.22; // ~12 degrees
+          // Touchdown parameters
+          const onPad = ship.x >= pad.x + 6 && ship.x <= pad.x + pad.width - 6;
+          const softVertical = ship.vy < 2.0; // < 8.0 m/s
+          const softHorizontal = Math.abs(ship.vx) < 1.3; // < 5.2 m/s
+          const upright = Math.abs(ship.angle) < 0.35; // ~20 degrees
 
           if (onPad && softVertical && softHorizontal && upright) {
             ship.state = 'landed';
             ship.vx = 0;
             ship.vy = 0;
             ship.angle = 0;
-            playBeep(880, 'sine', 0.4);
-            setTimeout(() => playBeep(1174, 'sine', 0.5), 200);
+            recoveries++;
+            if (recoveriesLabel) recoveriesLabel.textContent = String(recoveries);
+
+            playBeep(880, 'sine', 0.3);
+            setTimeout(() => playBeep(1174, 'sine', 0.4), 180);
+
+            // Celebration sparks
+            for (let i = 0; i < 30; i++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = 1.2 + Math.random() * 3.5;
+              particles.push({
+                x: ship.x,
+                y: ship.y,
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                life: 1,
+                maxLife: 35 + Math.random() * 20,
+                color: Math.random() > 0.5 ? '#5CD068' : '#F5B041',
+                size: 3,
+              });
+            }
 
             if (banner) {
               banner.hidden = false;
               banner.innerHTML = `
                 <div class="banner-success">
-                  <strong>✔ TOUCHDOWN NOMINAL!</strong> Trajectory coordinates restored at Target Pad 404.<br/>
+                  <strong>✔ TOUCHDOWN NOMINAL!</strong>
+                  Airframe secured on Target Pad 404 with ${Math.round(ship.fuel)}% fuel remaining.<br/>
+                  <div class="banner-stats">
+                    <span>Descent: ${(ship.vy * 4).toFixed(1)} m/s</span>
+                    <span>Total Recoveries: ${recoveries}</span>
+                  </div>
                   <div class="banner-links">
                     <a href="${canvas.dataset.home || '/Site/'}" class="button primary">Enter Flight Deck →</a>
                     <a href="${canvas.dataset.writing || '/Site/writing/'}" class="text-link">Field Dispatches →</a>
+                    <button type="button" class="sim-retry-btn" id="banner-fly-again">↺ Fly Again (R)</button>
                   </div>
                 </div>
               `;
+              document.getElementById('banner-fly-again')?.addEventListener('click', resetShip);
             }
           } else {
             ship.state = 'crashed';
-            playBeep(140, 'sawtooth', 0.6);
+            playBeep(130, 'sawtooth', 0.5);
+
+            // Diagnostic feedback explaining WHY the crash happened
+            let crashReason = 'Structural overload: Exceeded flight envelope.';
+            if (!onPad) {
+              crashReason = 'Missed Target Pad 404: Touched down on uneven lunar rock.';
+            } else if (!softVertical) {
+              crashReason = `Hard landing: Descent rate ${(ship.vy * 4).toFixed(1)} m/s exceeded 8.0 m/s gear limit.`;
+            } else if (!softHorizontal) {
+              crashReason = `Lateral shear: Horizontal velocity ${(Math.abs(ship.vx) * 4).toFixed(1)} m/s exceeded 5.2 m/s limit.`;
+            } else if (!upright) {
+              crashReason = `Airframe rollover: Touchdown tilt (${Math.round(Math.abs(ship.angle) * 180 / Math.PI)}°) exceeded 20° stability envelope.`;
+            }
 
             // Explosion particles
             for (let i = 0; i < 28; i++) {
               const ang = Math.random() * Math.PI * 2;
-              const spd = 1 + Math.random() * 4;
+              const spd = 1 + Math.random() * 3.5;
               particles.push({
                 x: ship.x,
                 y: ship.y,
@@ -421,6 +527,7 @@ import { url } from '../config';
                 life: 1,
                 maxLife: 25 + Math.random() * 15,
                 color: Math.random() > 0.5 ? '#B83E18' : '#747065',
+                size: 2.5,
               });
             }
 
@@ -428,8 +535,13 @@ import { url } from '../config';
               banner.hidden = false;
               banner.innerHTML = `
                 <div class="banner-fail">
-                  <strong>⚠ IMPACT DEVIATION!</strong> Impact speed ${(ship.vy * 4).toFixed(1)} m/s exceeds airframe limit.
-                  <button type="button" class="sim-retry-btn" id="banner-retry">↺ Recalibrate Vector</button>
+                  <strong>⚠ TOUCHDOWN DEVIATION</strong>
+                  ${crashReason}<br/>
+                  <div class="banner-hint">Tip: Use short thrust bursts and let SAS auto-level your attitude.</div>
+                  <div class="banner-links">
+                    <button type="button" class="button primary" id="banner-retry">↺ Recalibrate Vector (R)</button>
+                    <a href="${canvas.dataset.home || '/Site/'}" class="text-link">Exit to Flight Deck →</a>
+                  </div>
                 </div>
               `;
               document.getElementById('banner-retry')?.addEventListener('click', resetShip);
@@ -443,6 +555,7 @@ import { url } from '../config';
       const inkColor = isDark ? '#EDE8DE' : '#1C1B18';
       const faintColor = isDark ? '#2E2C26' : '#E5DFD1';
       const accentColor = isDark ? '#E25835' : '#B83E18';
+      const safeColor = isDark ? '#5CD068' : '#1D8338';
       const bgColor = isDark ? '#161614' : '#F8F6F0';
 
       ctx.fillStyle = bgColor;
@@ -462,6 +575,22 @@ import { url } from '../config';
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
         ctx.stroke();
+      }
+
+      // Draw Landing Alignment Guide Beam when ship is over pad
+      if (ship.x >= pad.x && ship.x <= pad.x + pad.width && ship.state === 'flying') {
+        ctx.fillStyle = isDark ? 'rgba(92, 208, 104, 0.05)' : 'rgba(29, 131, 56, 0.05)';
+        ctx.fillRect(pad.x, 0, pad.width, pad.y);
+
+        ctx.strokeStyle = isDark ? 'rgba(92, 208, 104, 0.25)' : 'rgba(29, 131, 56, 0.25)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(pad.x, 0);
+        ctx.lineTo(pad.x, pad.y);
+        ctx.moveTo(pad.x + pad.width, 0);
+        ctx.lineTo(pad.x + pad.width, pad.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
 
       // Draw Terrain
@@ -487,16 +616,24 @@ import { url } from '../config';
 
       // Draw Landing Pad
       ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(pad.x, pad.y);
       ctx.lineTo(pad.x + pad.width, pad.y);
       ctx.stroke();
 
+      // Blinking Runway Beacons at Pad Edges
+      const beaconOn = Math.floor(beaconTick / 25) % 2 === 0;
+      ctx.fillStyle = beaconOn ? safeColor : faintColor;
+      ctx.beginPath();
+      ctx.arc(pad.x + 3, pad.y - 3, 3, 0, Math.PI * 2);
+      ctx.arc(pad.x + pad.width - 3, pad.y - 3, 3, 0, Math.PI * 2);
+      ctx.fill();
+
       // Pad Label
       ctx.fillStyle = accentColor;
       ctx.font = '10px monospace';
-      ctx.fillText('[TARGET PAD 404]', pad.x + 4, pad.y + 16);
+      ctx.fillText('[TARGET PAD 404 // CLEAR FOR RECOVERY]', pad.x + 6, pad.y + 16);
 
       // Update & Draw Particles
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -509,8 +646,19 @@ import { url } from '../config';
           continue;
         }
         ctx.fillStyle = p.color;
-        const size = Math.max(1, 3 * (1 - p.life / p.maxLife));
+        const size = Math.max(1, p.size * (1 - p.life / p.maxLife));
         ctx.fillRect(p.x, p.y, size, size);
+      }
+
+      // Draw Flight Vector Predictor
+      if (ship.state === 'flying') {
+        const vecSafe = ship.vy < 2.0 && Math.abs(ship.vx) < 1.3 && Math.abs(ship.angle) < 0.35;
+        ctx.strokeStyle = vecSafe ? safeColor : accentColor;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ship.x, ship.y);
+        ctx.lineTo(ship.x + ship.vx * 16, ship.y + ship.vy * 16);
+        ctx.stroke();
       }
 
       // Draw Ship
@@ -575,21 +723,29 @@ import { url } from '../config';
       ctx.font = '10.5px monospace';
       ctx.fillText(`ALT: ${Math.max(0, Math.round((pad.y - ship.y) * 4))} M`, 14, 22);
 
-      const vColor = ship.vy < 1.75 ? (isDark ? '#5CD068' : '#1D8338') : accentColor;
+      const vSafe = ship.vy < 2.0;
+      const vColor = vSafe ? safeColor : accentColor;
       ctx.fillStyle = vColor;
-      ctx.fillText(`V_VERT: ${ship.vy >= 0 ? '+' : ''}${(ship.vy * 4).toFixed(1)} M/S ${ship.vy < 1.75 ? '[SAFE]' : '[WARN]'}`, 14, 38);
+      ctx.fillText(`V_VERT: ${ship.vy >= 0 ? '+' : ''}${(ship.vy * 4).toFixed(1)} M/S ${vSafe ? '[SAFE]' : '[WARN]'}`, 14, 38);
 
-      const hColor = Math.abs(ship.vx) < 0.95 ? (isDark ? '#5CD068' : '#1D8338') : accentColor;
+      const hSafe = Math.abs(ship.vx) < 1.3;
+      const hColor = hSafe ? safeColor : accentColor;
       ctx.fillStyle = hColor;
-      ctx.fillText(`V_HORIZ: ${ship.vx >= 0 ? '+' : ''}${(ship.vx * 4).toFixed(1)} M/S`, 14, 54);
+      ctx.fillText(`V_HORIZ: ${ship.vx >= 0 ? '+' : ''}${(ship.vx * 4).toFixed(1)} M/S ${hSafe ? '[SAFE]' : '[WARN]'}`, 14, 54);
+
+      // Attitude tilt readout
+      const deg = Math.round(ship.angle * 180 / Math.PI);
+      const angleSafe = Math.abs(ship.angle) < 0.35;
+      ctx.fillStyle = angleSafe ? safeColor : accentColor;
+      ctx.fillText(`ATTITUDE: ${deg >= 0 ? '+' : ''}${deg}° ${angleSafe ? '[SAFE]' : '[WARN]'}`, 14, 70);
 
       // Fuel bar
       ctx.fillStyle = inkColor;
-      ctx.fillText(`FUEL: ${Math.round(ship.fuel)}%`, 14, 70);
+      ctx.fillText(`FUEL: ${Math.round(ship.fuel)}%`, 14, 86);
       ctx.strokeStyle = faintColor;
-      ctx.strokeRect(78, 62, 50, 8);
-      ctx.fillStyle = ship.fuel > 20 ? (isDark ? '#5CD068' : '#1D8338') : accentColor;
-      ctx.fillRect(79, 63, Math.max(0, (ship.fuel / 100) * 48), 6);
+      ctx.strokeRect(78, 78, 50, 8);
+      ctx.fillStyle = ship.fuel > 20 ? safeColor : accentColor;
+      ctx.fillRect(79, 79, Math.max(0, (ship.fuel / 100) * 48), 6);
 
       if (!prefersReduced) {
         animationFrameId = requestAnimationFrame(loop);
@@ -623,13 +779,100 @@ import { url } from '../config';
     flex-direction: column;
   }
 
+  /* 404 Headline & Badges */
+  .error-badge-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .error-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  .error-code {
+    font-size: 14px;
+    color: var(--accent);
+  }
+
+  .error-badge-divider {
+    opacity: 0.5;
+  }
+
+  .error-badge-label {
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .error-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
   .error-title {
-    margin: 16px 0 18px;
+    margin: 12px 0 16px;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    line-height: 1.15;
+  }
+
+  .page-description {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 24px;
+    max-width: 640px;
+  }
+
+  .missing-path-code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 3px;
+    color: var(--foreground);
+    word-break: break-all;
+  }
+
+  .error-quick-nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed var(--border);
   }
 
   /* Simulator Shell */
   .simulator-wrapper {
-    margin: 28px 0 36px;
+    margin: 0 0 32px;
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: 4px;
@@ -646,13 +889,16 @@ import { url } from '../config';
     padding: 8px 14px;
     font-family: var(--mono);
     font-size: 11px;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .sim-status-indicator {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     color: var(--muted);
+    flex-wrap: wrap;
   }
 
   .sim-blink-led {
@@ -673,8 +919,22 @@ import { url } from '../config';
     font-weight: 500;
   }
 
+  .sim-score-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10.5px;
+    color: var(--foreground);
+  }
+
+  .sim-score-chip strong {
+    color: var(--accent);
+  }
+
   .sim-tools {
     display: flex;
+    align-items: center;
     gap: 8px;
   }
 
@@ -682,16 +942,24 @@ import { url } from '../config';
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 3px;
-    padding: 3px 8px;
+    padding: 4px 10px;
     font-family: var(--mono);
-    font-size: 10.5px;
+    font-size: 11px;
     color: var(--foreground);
     cursor: pointer;
+    transition: all 0.15s ease;
   }
 
   .sim-ctrl-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
+  }
+
+  .sim-ctrl-btn.active {
+    background: var(--surface-2);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
   }
 
   .sim-display-container {
@@ -720,7 +988,7 @@ import { url } from '../config';
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(3px);
     padding: 20px;
     text-align: center;
@@ -729,10 +997,11 @@ import { url } from '../config';
   .banner-success, .banner-fail {
     background: var(--surface);
     border: 1px solid var(--border-strong);
-    padding: 18px 24px;
+    padding: 20px 24px;
     border-radius: 4px;
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 12.5px;
+    line-height: 1.5;
     max-width: 480px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   }
@@ -740,7 +1009,7 @@ import { url } from '../config';
   .banner-success strong {
     color: #1D8338;
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-size: 14px;
   }
 
@@ -751,34 +1020,54 @@ import { url } from '../config';
   .banner-fail strong {
     color: var(--accent);
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-size: 14px;
+  }
+
+  .banner-stats {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 10px 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .banner-hint {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
   }
 
   .banner-links {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 14px;
     margin-top: 14px;
   }
 
   .sim-retry-btn {
     display: inline-block;
-    margin-top: 12px;
     background: var(--foreground);
     color: var(--background);
     border: none;
     border-radius: 3px;
     padding: 6px 14px;
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 11.5px;
     cursor: pointer;
+  }
+
+  .sim-retry-btn:hover {
+    opacity: 0.9;
   }
 
   .sim-control-pad {
     display: grid;
-    grid-template-columns: 1fr 1.4fr 1fr;
+    grid-template-columns: 1fr 1.3fr 1fr;
     gap: 8px;
     padding: 12px 14px;
     background: var(--surface);
@@ -793,7 +1082,7 @@ import { url } from '../config';
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: 3px;
-    padding: 8px 12px;
+    padding: 10px 12px;
     font-family: var(--mono);
     font-size: 12px;
     color: var(--foreground);
@@ -803,12 +1092,12 @@ import { url } from '../config';
   }
 
   .sim-key-btn kbd {
-    font-size: 9px;
+    font-size: 9.5px;
     color: var(--muted);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 2px;
-    padding: 1px 4px;
+    padding: 1px 5px;
   }
 
   .sim-key-btn:active {
@@ -819,15 +1108,24 @@ import { url } from '../config';
   .sim-key-btn.primary-thrust {
     border-color: var(--accent-border);
     color: var(--accent);
+    font-weight: 600;
   }
 
   .sim-instructions {
-    padding: 8px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px 12px;
     font-family: var(--mono);
     font-size: 10.5px;
     color: var(--muted);
     border-top: 1px solid var(--border);
     background: var(--surface);
+  }
+
+  .pad-pill {
+    color: var(--accent);
+    font-weight: 600;
   }
 
   .spec-val {
@@ -855,6 +1153,7 @@ import { url } from '../config';
     justify-content: space-between;
     align-items: center;
     color: var(--muted);
+    gap: 12px;
   }
 
   .telemetry-warn {
@@ -862,21 +1161,18 @@ import { url } from '../config';
     font-weight: 600;
   }
 
-  .error-actions {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
   @media (max-width: 600px) {
     .sim-terminal-bar {
       flex-direction: column;
       align-items: flex-start;
-      gap: 8px;
     }
     .sim-control-pad {
       grid-template-columns: 1fr;
+    }
+    .telemetry-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
     }
   }
 </style>
