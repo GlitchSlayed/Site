@@ -5,7 +5,7 @@
  * Supports reduced-motion preferences without stopping rendering.
  */
 
-import type { GameConfig, LandingEvaluation, PadConfig, Point, ShipState, TerrainSegment } from './physics';
+import type { GameConfig, ShipState } from './physics';
 
 export interface VisualParticle {
   x: number;
@@ -44,7 +44,6 @@ export interface Palette {
 export class LanderRenderer {
   private dpr = 1;
   private cssWidth = 640;
-  private cssHeight = 320;
   private palette!: Palette;
   private themeObserver: MutationObserver | null = null;
   private resizeObserver: ResizeObserver | null = null;
@@ -91,7 +90,6 @@ export class LanderRenderer {
   public resizeBackingStore(): void {
     const rect = this.canvas.getBoundingClientRect();
     this.cssWidth = rect.width || 640;
-    this.cssHeight = rect.height || 320;
 
     const targetW = Math.round(640 * this.dpr);
     const targetH = Math.round(320 * this.dpr);

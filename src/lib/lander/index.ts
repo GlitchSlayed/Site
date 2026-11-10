@@ -85,6 +85,10 @@ export class LanderGame {
       signal,
     });
 
+    options.resetBtn?.addEventListener('click', () => this.reset(true), { signal });
+    options.audioToggle?.addEventListener('click', () => this.toggleAudio(), { signal });
+    options.sasToggle?.addEventListener('click', () => this.toggleSas(), { signal });
+
     this.allTimeBest = this.loadAllTimeBest();
     this.checkReducedMotion(signal);
     this.setupIntersectionObserver(signal);
@@ -218,14 +222,6 @@ export class LanderGame {
     this.lastTimestamp = performance.now();
     this.loop = this.loop.bind(this);
     this.animationFrameId = requestAnimationFrame(this.loop);
-  }
-
-  private stopLoop(): void {
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
-    this.audio.silenceContinuous();
   }
 
   private loop(now: number): void {
@@ -460,6 +456,7 @@ export class LanderGame {
     links.append(btnAgain, homeLink, writingLink);
     card.append(title, desc, stats, links);
     banner.append(card);
+    banner.style.display = '';
     banner.hidden = false;
   }
 
@@ -518,11 +515,13 @@ export class LanderGame {
     links.append(btnRetry, homeLink);
     card.append(title, desc, hint, links);
     banner.append(card);
+    banner.style.display = '';
     banner.hidden = false;
   }
 
   private hideBanner(): void {
     if (this.options.banner) {
+      this.options.banner.style.display = 'none';
       this.options.banner.hidden = true;
       while (this.options.banner.firstChild) {
         this.options.banner.removeChild(this.options.banner.firstChild);
