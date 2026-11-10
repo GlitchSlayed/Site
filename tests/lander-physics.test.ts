@@ -7,7 +7,6 @@ import {
   type ShipState,
   createTerrain,
   evaluateLanding,
-  getShipFootPositions,
   step,
   updatePhysicsAccumulator,
 } from '../src/lib/lander/physics';
@@ -111,7 +110,7 @@ describe('Lander Physics Engine', () => {
         state: 'flying',
       };
 
-      const result = evaluateLanding(state, pad, terrain);
+      const result = evaluateLanding(state, pad);
       expect(result.success).toBe(true);
       expect(result.reason).toBeNull();
       expect(result.descentRate).toBe(1.2);
@@ -132,7 +131,7 @@ describe('Lander Physics Engine', () => {
         state: 'flying',
       };
 
-      const result = evaluateLanding(state, pad, terrain);
+      const result = evaluateLanding(state, pad);
       expect(result.success).toBe(false);
       expect(result.reason).toBe('hard-vertical');
     });
@@ -148,7 +147,7 @@ describe('Lander Physics Engine', () => {
         state: 'flying',
       };
 
-      const result = evaluateLanding(state, pad, terrain);
+      const result = evaluateLanding(state, pad);
       expect(result.success).toBe(false);
       expect(result.reason).toBe('hard-lateral');
     });
@@ -164,7 +163,7 @@ describe('Lander Physics Engine', () => {
         state: 'flying',
       };
 
-      const result = evaluateLanding(state, pad, terrain);
+      const result = evaluateLanding(state, pad);
       expect(result.success).toBe(false);
       expect(result.reason).toBe('excessive-tilt');
     });
@@ -180,7 +179,7 @@ describe('Lander Physics Engine', () => {
         state: 'flying',
       };
 
-      const result = evaluateLanding(state, pad, terrain);
+      const result = evaluateLanding(state, pad);
       expect(result.success).toBe(false);
       expect(result.reason).toBe('missed-pad');
     });
@@ -198,7 +197,7 @@ describe('Lander Physics Engine', () => {
         state: 'flying',
       };
 
-      const result = evaluateLanding(state, pad, terrain);
+      const result = evaluateLanding(state, pad);
       expect(result.bothFeetOnPad).toBe(false);
       expect(result.success).toBe(false);
       expect(result.reason).toBe('missed-pad');
