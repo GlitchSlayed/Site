@@ -11,7 +11,7 @@ tags:
   - Open Source
 date: 2026-10-24
 art: code
-featured: true
+featured: false
 draft: false
 visual: dither
 visualAccent: "#739cda"
