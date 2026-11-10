@@ -1,4 +1,6 @@
 import { defineConfig, fontProviders } from 'astro/config';
+import fs from 'node:fs';
+import path from 'node:path';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { satteri } from '@astrojs/markdown-satteri';
@@ -6,6 +8,34 @@ import { satteriKatex } from 'satteri-katex';
 import { satteriEngineeringAnnotations } from './src/lib/satteri/satteriEngineeringAnnotations.ts';
 import react from '@astrojs/react';
 import pagefind from 'astro-pagefind';
+
+function loadContentDates() {
+  const dates = new Map();
+  let latest = new Date('2026-11-09T00:00:00Z');
+
+  function scan(dir, prefix) {
+    if (!fs.existsSync(dir)) return;
+    for (const file of fs.readdirSync(dir)) {
+      if (!file.endsWith('.md') && !file.endsWith('.mdx')) continue;
+      const id = file.replace(/\.(md|mdx)$/, '');
+      const raw = fs.readFileSync(path.join(dir, file), 'utf8');
+      const updatedMatch = raw.match(/^updated:\s*([^\n\r]+)/m);
+      const dateMatch = raw.match(/^date:\s*([^\n\r]+)/m);
+      const str = (updatedMatch ? updatedMatch[1] : (dateMatch ? dateMatch[1] : '')).trim();
+      if (str) {
+        const d = new Date(str);
+        dates.set(`${prefix}${id}/`.toLowerCase(), d);
+        if (d > latest) latest = d;
+      }
+    }
+  }
+
+  scan('./src/content/writing', 'writing/');
+  scan('./src/content/projects', 'projects/');
+  return { dates, latest };
+}
+
+const { dates: contentDates, latest: latestDate } = loadContentDates();
 
 export default defineConfig({
   prefetch: { prefetchAll: true },
@@ -55,7 +85,24 @@ export default defineConfig({
   integrations: [
     mdx(),
     sitemap({
-      filter: (page) => !page.includes('/og/'),
+      filter: (page) =>
+        !page.includes('/og/') &&
+        !page.includes('/404') &&
+        !page.includes('/__checks/'),
+      serialize(item) {
+        try {
+          const urlObj = new URL(item.url);
+          const subpath = urlObj.pathname
+            .replace(/^\/Site\//, '')
+            .replace(/^\//, '')
+            .toLowerCase();
+          const matched = contentDates.get(subpath);
+          item.lastmod = (matched || latestDate).toISOString();
+        } catch {
+          item.lastmod = latestDate.toISOString();
+        }
+        return item;
+      },
     }),
     react(),
     ...(process.env.FAST_BUILD === '1' ? [] : [pagefind()]),

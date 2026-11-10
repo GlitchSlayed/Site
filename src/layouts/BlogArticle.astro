@@ -5,7 +5,7 @@ import Base from './Base.astro';
 import Comments from '../components/Comments.astro';
 import SourceShelf from '../components/SourceShelf.astro';
 import { url, dateLabel } from '../config';
-import { readingMinutes } from '../lib/editorial';
+import { readingMinutes, slugifyTag } from '../lib/editorial';
 interface Props {entry:any;headings?:MarkdownHeading[];}
 const {entry,headings=[]}=Astro.props;
 const {data}=entry;
@@ -14,8 +14,8 @@ const related=(await getCollection('writing',({data:d})=>!d.draft&&!d.sample)).f
 <Base title={`${data.title} | Vansh’s Notebook`} description={data.description} ogType="article" ogImagePath={`og/writing/${entry.id}.png`} ogImageAlt={data.title}>
 <div class="reader reader-shell" id="reader" data-mode="continuous">
 <nav class="reader-toolbar" aria-label="Reading controls"><a href={url('writing/')}>← The Notebook</a><div class="reader-enhancements" hidden><div class="reader-modes" role="group" aria-label="Page layout"><button type="button" data-mode="spread" aria-pressed="false">Facing pages</button><button type="button" data-mode="continuous" aria-pressed="true">Scroll</button></div><button type="button" id="type-down" aria-label="Smaller article text">A−</button><button type="button" id="type-up" aria-label="Larger article text">A+</button><button type="button" id="print-story">Print</button></div></nav>
-<header class="journal-masthead reader-masthead"><div class="journal-edition"><span>Vansh Datta / {data.tags[0]||'Notes'}</span><time datetime={data.date.toISOString()}>{dateLabel(data.date)}</time></div><a href={url('writing/')} class="journal-name">The Notebook</a><p>A personal publication about aerospace, making things, and computing.</p></header>
-<header class="story-header"><p class="small-label">{data.tags.join(' / ')}{data.sample?' / Sample article':''}</p><h1>{data.title}</h1><p class="story-deck">{data.description}</p><div class="story-byline"><a href={url('about/')}>By Vansh Datta</a><span>{readingMinutes(entry.body)} min read</span><time datetime={data.date.toISOString()}>{dateLabel(data.date)}</time></div></header>
+<header class="journal-masthead reader-masthead"><div class="journal-edition"><span>Vansh Datta / <a href={url(`writing/tags/${slugifyTag(data.tags[0]||'Notes')}/`)}>{data.tags[0]||'Notes'}</a></span><time datetime={data.date.toISOString()}>{dateLabel(data.date)}</time></div><a href={url('writing/')} class="journal-name">The Notebook</a><p>A personal publication about aerospace, making things, and computing.</p></header>
+<header class="story-header"><p class="small-label">{data.tags.map((t: string, idx: number) => <Fragment key={t}><a href={url(`writing/tags/${slugifyTag(t)}/`)}>{t}</a>{idx < data.tags.length - 1 ? ' / ' : ''}</Fragment>)}{data.sample?' / Sample article':''}</p><h1>{data.title}</h1><p class="story-deck">{data.description}</p><div class="story-byline"><a href={url('about/')}>By Vansh Datta</a><span>{readingMinutes(entry.body)} min read</span><time datetime={data.date.toISOString()}>{dateLabel(data.date)}</time></div></header>
 {headings.some(h=>h.depth===2)&&<details class="reader-contents"><summary>Inside this article</summary><nav aria-label="Article sections">{headings.filter(h=>h.depth===2).map(h=><a href={`#${h.slug}`}>{h.text}</a>)}</nav></details>}
 <article id="story-body" class="story-body prose" data-pagefind-body><slot /></article>
 <nav class="reader-pagination" aria-label="Article pages" hidden><button type="button" id="reader-prev">← Previous</button><span id="reader-position" role="status"></span><button type="button" id="reader-next">Next →</button></nav>

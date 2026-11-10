@@ -20,6 +20,7 @@ const {
   ogType = 'website',
   ogImagePath = 'og/home.png',
   ogImageAlt = title,
+  noindex = false,
 } = Astro.props;
 const pathname = Astro.url.pathname;
 const siteBase = Astro.site ? new URL(import.meta.env.BASE_URL, Astro.site) : undefined;
@@ -38,6 +39,7 @@ const commitHash = getCommitHash();
     <meta name="description" content={description} />
     <meta name="theme-color" content="#F8F7F3" id="meta-theme-color" />
     <title>{title}</title>
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
     <Font cssVariable="--serif-display" preload={[{ weight: 400, style: 'normal' }]} />
     <Font cssVariable="--serif" preload={[{ weight: 400, style: 'normal' }]} />

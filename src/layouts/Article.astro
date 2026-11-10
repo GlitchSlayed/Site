@@ -9,7 +9,7 @@ import EngineeringBrief from '../components/EngineeringBrief.astro';
 import TechnicalPlate from '../components/drawings/TechnicalPlate.astro';
 import SourceShelf from '../components/SourceShelf.astro';
 import { url, dateLabel } from '../config';
-import { readingMinutes } from '../lib/editorial';
+import { readingMinutes, slugifyTag } from '../lib/editorial';
 import Comments from '../components/Comments.astro';
 import { getCollection } from 'astro:content';
 
@@ -80,7 +80,7 @@ const statusNotes: Record<string, string> = {
         <p class="abstract-text">{data.description}</p>
         <div class="abstract-keywords">
           <span class="keywords-label">KEYWORDS:</span>
-          {data.tags.map((tag: string) => <span class="keyword-tag">{tag}</span>)}
+          {data.tags.map((tag: string) => <a href={url(`writing/tags/${slugifyTag(tag)}/`)} class="keyword-tag">{tag}</a>)}
         </div>
       </div>
 

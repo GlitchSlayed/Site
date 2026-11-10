@@ -1,0 +1,156 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { url } from '../../../config';
+import { slugifyTag } from '../../../lib/editorial';
+
+const posts = await getCollection('writing', ({ data }) => !data.draft && !data.sample);
+const counts = new Map<string, number>();
+
+for (const p of posts) {
+  for (const t of p.data.tags) {
+    counts.set(t, (counts.get(t) || 0) + 1);
+  }
+}
+
+const tags = Array.from(counts.entries()).sort((a, b) => {
+  // Sort by count desc, then alphabetically
+  return b[1] - a[1] || a[0].localeCompare(b[0]);
+});
+---
+
+<Base
+  title="Topics & Tags | The Notebook"
+  description="Explore articles and field dispatches across aerospace, propulsion, Linux systems, and manufacturing."
+  ogImagePath="og/writing.png"
+>
+  <section class="shell page-section tags-index-section">
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb navigation">
+      <a href={url('writing/')}>← The Notebook</a>
+    </nav>
+
+    <header class="tags-header">
+      <p class="small-label">Topic Index</p>
+      <h1 class="tags-title">All Topics</h1>
+      <p class="tags-deck">
+        Cross-reference articles by engineering discipline, project, or domain.
+      </p>
+    </header>
+
+    <div class="tags-cloud">
+      {
+        tags.map(([t, count]) => (
+          <a class="tag-chip" href={url(`writing/tags/${slugifyTag(t)}/`)}>
+            <span class="chip-name">{t}</span>
+            <span class="chip-count">{count}</span>
+          </a>
+        ))
+      }
+    </div>
+
+    <footer class="tags-footer">
+      <a href={url('writing/')} class="text-link">← Return to all articles</a>
+    </footer>
+  </section>
+</Base>
+
+<style>
+  .tags-index-section {
+    padding-top: 40px;
+    padding-bottom: 72px;
+  }
+
+  .breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .breadcrumb-nav a:hover {
+    color: var(--accent);
+  }
+
+  .tags-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+
+  .tags-title {
+    font-family: var(--serif-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 550;
+    margin: 8px 0 10px;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+
+  .tags-deck {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 36px 0;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--foreground);
+    text-decoration: none;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .tag-chip:hover {
+    background: var(--hover);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .chip-name {
+    font-weight: 500;
+  }
+
+  .chip-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 7px;
+    color: var(--muted);
+  }
+
+  .tag-chip:hover .chip-count {
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .tags-footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+</style>

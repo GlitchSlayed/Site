@@ -4,8 +4,8 @@ export const site = {
   description: 'Notes, projects, and experiments in aerospace, engineering, and technology.',
   // Fill these in to show contact links. Empty values hide the links.
   github: 'https://github.com/GlitchSlayed',
-  linkedin: '',
-  email: '',
+  linkedin: 'https://www.linkedin.com/in/dattavansh/',
+  email: 'dattavansh@gmail.com',
 };
 export const url = (path = '') => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 export const dateLabel = (date: Date) => date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});

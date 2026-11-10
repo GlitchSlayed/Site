@@ -1,0 +1,176 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { url, dateLabel } from '../../../config';
+import { readingMinutes, slugifyTag } from '../../../lib/editorial';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('writing', ({ data }) => !data.draft && !data.sample);
+  const tagsMap = new Map<string, { tag: string; posts: CollectionEntry<'writing'>[] }>();
+
+  for (const post of posts) {
+    for (const t of post.data.tags) {
+      const slug = slugifyTag(t);
+      if (!tagsMap.has(slug)) {
+        tagsMap.set(slug, { tag: t, posts: [] });
+      }
+      tagsMap.get(slug)!.posts.push(post);
+    }
+  }
+
+  return Array.from(tagsMap.entries()).map(([slug, { tag, posts }]) => ({
+    params: { tag: slug },
+    props: {
+      tag,
+      slug,
+      posts: posts.sort((a, b) => +b.data.date - +a.data.date),
+    },
+  }));
+}
+
+interface Props {
+  tag: string;
+  slug: string;
+  posts: CollectionEntry<'writing'>[];
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<Base
+  title={`${tag} | The Notebook`}
+  description={`Field dispatches, research notes, and engineering write-ups tagged with ${tag}.`}
+  ogImagePath="og/writing.png"
+>
+  <section class="shell page-section tag-archive-section">
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb navigation">
+      <a href={url('writing/')}>← The Notebook</a>
+      <span class="breadcrumb-separator">/</span>
+      <a href={url('writing/tags/')}>All topics</a>
+    </nav>
+
+    <header class="tag-header">
+      <p class="small-label">Topic archive</p>
+      <h1 class="tag-title"><span class="tag-hash">#</span>{tag}</h1>
+      <p class="tag-meta">
+        {posts.length} {posts.length === 1 ? 'article' : 'articles'} filed under this topic.
+      </p>
+    </header>
+
+    <div class="journal-archive">
+      {
+        posts.map((p, i) => (
+          <article class="journal-entry">
+            <div class="entry-date">
+              <span class="entry-number">{String(i + 1).padStart(2, '0')}</span>
+              <time datetime={p.data.date.toISOString()}>{dateLabel(p.data.date)}</time>
+            </div>
+            <div>
+              <p class="small-label">
+                {p.data.tags.map((t, idx) => (
+                  <Fragment key={t}>
+                    <a
+                      href={url(`writing/tags/${slugifyTag(t)}/`)}
+                      class={t.toLowerCase() === tag.toLowerCase() ? 'active-tag' : 'tag-link'}
+                    >
+                      {t}
+                    </a>
+                    {idx < p.data.tags.length - 1 ? ' / ' : ''}
+                  </Fragment>
+                ))}
+              </p>
+              <h3>
+                <a href={url(`writing/${p.id}/`)}>{p.data.title}</a>
+              </h3>
+              <p>{p.data.description}</p>
+              <span class="small-label">{readingMinutes(p.body)} min read</span>
+            </div>
+            <a class="entry-open" href={url(`writing/${p.id}/`)} aria-label={`Read ${p.data.title}`}>
+              ↗
+            </a>
+          </article>
+        ))
+      }
+    </div>
+
+    <footer class="tag-footer">
+      <a href={url('writing/tags/')} class="text-link">Explore all topics →</a>
+      <a href={url('writing/')} class="text-link">Return to full notebook →</a>
+    </footer>
+  </section>
+</Base>
+
+<style>
+  .tag-archive-section {
+    padding-top: 40px;
+    padding-bottom: 72px;
+  }
+
+  .breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .breadcrumb-nav a:hover {
+    color: var(--accent);
+  }
+
+  .breadcrumb-separator {
+    color: var(--border-strong);
+  }
+
+  .tag-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+
+  .tag-title {
+    font-family: var(--serif-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 550;
+    margin: 8px 0 10px;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+
+  .tag-hash {
+    color: var(--accent);
+    margin-right: 4px;
+    font-weight: 400;
+  }
+
+  .tag-meta {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .active-tag {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tag-link:hover,
+  .active-tag:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .tag-footer {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+</style>
