@@ -101,4 +101,24 @@ Migrations like this often sound like chores, but when done methodically, the de
 2. **Rust-based compilers make a visible dent.** Moving Markdown compilation from JavaScript AST trees to Rust cut markdown processing time by 90%.
 3. **Always measure with real output diffs.** Having an exact baseline directory meant I never had to guess whether an equation was missing a CSS class or an annotation was skipped.
 
-Everything is committed on our `perf/bun-satteri-ci` branch and ready for review.
+Everything was verified on our dedicated performance branch, merged into `main`, and deployed.
+
+## Addendum: Real-world CI numbers and second-pass tweaks
+
+Shortly after merging to `main`, the first production deployment ran through GitHub Actions. Seeing real CI logs confirmed that the local gains translated cleanly to cloud runners:
+
+| Pipeline step | Baseline CI run | Post-migration CI run | Result |
+| :--- | :--- | :--- | :--- |
+| **Dependency install** | 14.2s (`npm ci`) | **1.15s** (`bun install --frozen-lockfile`) | **~12x faster** |
+| **Site build step** | 6.5s | **3.4s** | **~1.9x faster** |
+| **Total `build` job** | 30s | **14s** | **More than 2x faster** |
+| **Pages `deploy` job** | 18s | **10s** | **Nearly 2x faster** |
+| **Total deployment time** | 58s | **33s** | **43% reduction overall** |
+
+A few small second-pass refinements followed:
+
+1. **Sharp PNG compression level**: In our OpenGraph generator (`src/pages/og/[...slug].png.ts`), we were originally using `compressionLevel: 9` for max zlib compression. Profiling showed level 9 spent 62ms per card doing diminishing-return compression passes. Dropping to `compressionLevel: 7` cut generation time to **29ms per card** (more than 2x faster) with only a negligible 2KB file size difference on a 1200x630 canvas. That shaved another ~500ms of CPU time across all 15 preview cards, bringing page generation time down to **706ms** and local quick builds down to **3.05 seconds**.
+2. **Latest GitHub Actions**: Upgraded all action components across `check.yml` and `pages.yml` to their newest major releases (`actions/checkout@v7`, `actions/setup-node@v7`, `actions/cache@v6`, `actions/configure-pages@v6`, `actions/upload-pages-artifact@v5`, and `actions/deploy-pages@v5`), taking advantage of streamlined Node runner runtimes and direct artifact streaming.
+3. **Shallow checkouts**: In `check.yml`, we replaced a full-history clone (`fetch-depth: 0`) with a default shallow clone, fetching just one commit from the base branch on pull requests. That avoids pulling hundreds of historical commits and git blobs on routine checks.
+
+The entire deployment now runs in about 30 seconds from `git push` to live production.
