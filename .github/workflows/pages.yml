@@ -6,7 +6,10 @@ on:
     paths-ignore:
       - "**/*.md"
       - "!src/content/**/*.md"
+      - "!src/content/**/*.mdx"
       - "START_HERE.txt"
+      - "biome.json"
+      - ".gitignore"
   workflow_dispatch:
 
 permissions:

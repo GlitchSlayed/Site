@@ -27,7 +27,7 @@ export async function getStaticPaths() {
 }
 
 export async function GET({ props }: { props: Card }) {
-  const png = await sharp(Buffer.from(socialCardSvg(props))).png({ compressionLevel: 9 }).toBuffer();
+  const png = await sharp(Buffer.from(socialCardSvg(props))).png({ compressionLevel: 7 }).toBuffer();
   return new Response(new Uint8Array(png), {
     headers: {
       'Content-Type': 'image/png',
