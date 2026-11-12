@@ -71,18 +71,21 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
     if (!ann) return null;
     // Validate the annotation looks like a percentage: (+15.1%), (-8.4%), (±2.0%), +5%, -3%
     const normalized = ann.trim();
+    let res: string | null = null;
     if (/^\([+-]?\d+(\.\d+)?%\)$/.test(normalized) || /^\(±\d+(\.\d+)?%\)$/.test(normalized)) {
-      return normalized;
+      res = normalized;
+    } else if (/^[+-]?\d+(\.\d+)?%$/.test(normalized)) {
+      res = `(${normalized})`;
     }
-    if (/^[+-]?\d+(\.\d+)?%$/.test(normalized)) {
-      return `(${normalized})`;
+    // Only return annotation if there is a non-zero difference (+0% is uninformative noise)
+    if (res === '(+0%)' || res === '(-0%)' || res === '(0%)' || res === '(+0.0%)' || res === '(-0.0%)') {
+      return null;
     }
-    return null;
+    return res;
   };
 
   return (
     <section className={`eng-comparison ${className || ''}`} aria-label="Engineering comparison">
-      {config.title && <h2 className="eng-comparison-title">{config.title}</h2>}
       <div className="eng-comparison-wrapper">
         <table className="eng-comparison-table">
           <caption className="eng-comparison-caption">{config.title || 'Comparison'}</caption>

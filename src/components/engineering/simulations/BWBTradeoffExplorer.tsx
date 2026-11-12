@@ -126,15 +126,15 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     {
       id: 'weight',
       label: 'Weight',
-      unit: 'N',
-      values: [conventional.weight.value, adjustable.weight.value],
+      unit: 'kN',
+      values: [conventional.weight.value / 1000, adjustable.weight.value / 1000],
       ...(formatPercentageChange(adjustable.weight.value, conventional.weight.value)
         ? { annotations: { 1: formatPercentageChange(adjustable.weight.value, conventional.weight.value)! } }
         : {}),
     },
     {
       id: 'cl',
-      label: 'Lift coefficient C_L',
+      label: 'Lift coefficient $C_L$',
       unit: '-',
       values: [conventional.cl.value, adjustable.cl.value],
       ...(formatPercentageChange(adjustable.cl.value, conventional.cl.value)
@@ -143,7 +143,7 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     },
     {
       id: 'cd',
-      label: 'Drag coefficient C_D',
+      label: 'Drag coefficient $C_D$',
       unit: '-',
       values: [conventional.cd.value, adjustable.cd.value],
       ...(formatPercentageChange(adjustable.cd.value, conventional.cd.value)
@@ -152,7 +152,7 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     },
     {
       id: 'ld',
-      label: 'Lift-to-drag ratio L/D',
+      label: 'Lift-to-drag ratio $L/D$',
       unit: '-',
       values: [conventional.ld.value, adjustable.ld.value],
       highlight: true,
@@ -163,8 +163,8 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     {
       id: 'drag',
       label: 'Drag',
-      unit: 'N',
-      values: [conventional.drag.value, adjustable.drag.value],
+      unit: 'kN',
+      values: [conventional.drag.value / 1000, adjustable.drag.value / 1000],
       ...(formatPercentageChange(adjustable.drag.value, conventional.drag.value)
         ? { annotations: { 1: formatPercentageChange(adjustable.drag.value, conventional.drag.value)! } }
         : {}),
@@ -172,8 +172,8 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
     {
       id: 'thrust',
       label: 'Thrust required',
-      unit: 'N',
-      values: [conventional.thrust.value, adjustable.thrust.value],
+      unit: 'kN',
+      values: [conventional.thrust.value / 1000, adjustable.thrust.value / 1000],
       ...(formatPercentageChange(adjustable.thrust.value, conventional.thrust.value)
         ? { annotations: { 1: formatPercentageChange(adjustable.thrust.value, conventional.thrust.value)! } }
         : {}),
@@ -183,8 +183,8 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
   const comparisonConfig: EngineeringComparisonConfig = {
     title: 'Conventional reference vs. adjustable aircraft',
     configurations: [
-      { id: 'conventional', label: 'Conventional reference', color: '#99999f' },
-      { id: 'adjustable', label: 'Adjustable aircraft (live)', color: '#ff603b' },
+      { id: 'conventional', label: 'Conventional baseline', color: '#99999f' },
+      { id: 'adjustable', label: 'BWB (adjustable live)', color: '#ff603b' },
     ],
     rows,
     referenceConfigId: 'conventional',
@@ -319,10 +319,10 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
               inspectable
               inspectorMetrics={[
                 { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
-                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-                { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-                { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+                { id: 'cl', label: 'Lift coefficient $C_L$', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient $C_D$', unit: '-', significantFigures: 4 },
+                { id: 'ld', label: 'Lift-to-drag $L/D$', unit: '-', significantFigures: 3 },
+                { id: 'thrust', label: 'Thrust required', unit: 'kN', significantFigures: 4 },
               ]}
             />
           </ErrorBoundary>
@@ -338,10 +338,10 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
               inspectable
               inspectorMetrics={[
                 { id: 'velocity', label: 'Airspeed V', unit: 'm/s', significantFigures: 3 },
-                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-                { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-                { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+                { id: 'cl', label: 'Lift coefficient $C_L$', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient $C_D$', unit: '-', significantFigures: 4 },
+                { id: 'ld', label: 'Lift-to-drag $L/D$', unit: '-', significantFigures: 3 },
+                { id: 'thrust', label: 'Thrust required', unit: 'kN', significantFigures: 4 },
               ]}
             />
           </ErrorBoundary>
@@ -357,10 +357,10 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
               inspectable
               inspectorMetrics={[
                 { id: 'structuralPenalty', label: 'Structural penalty Δm/m', unit: '-', significantFigures: 3 },
-                { id: 'cl', label: 'Lift coefficient C_L', unit: '-', significantFigures: 4 },
-                { id: 'cd', label: 'Drag coefficient C_D', unit: '-', significantFigures: 4 },
-                { id: 'ld', label: 'Lift-to-drag L/D', unit: '-', significantFigures: 3 },
-                { id: 'thrust', label: 'Thrust required', unit: 'N', significantFigures: 4 },
+                { id: 'cl', label: 'Lift coefficient $C_L$', unit: '-', significantFigures: 4 },
+                { id: 'cd', label: 'Drag coefficient $C_D$', unit: '-', significantFigures: 4 },
+                { id: 'ld', label: 'Lift-to-drag $L/D$', unit: '-', significantFigures: 3 },
+                { id: 'thrust', label: 'Thrust required', unit: 'kN', significantFigures: 4 },
               ]}
             />
           </ErrorBoundary>

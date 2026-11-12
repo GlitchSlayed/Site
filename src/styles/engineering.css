@@ -1047,8 +1047,13 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   background: var(--surface);
 }
 
+.prose .eng-comparison-table,
 .eng-comparison-table {
   width: 100%;
+  margin: 0 !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
@@ -1066,7 +1071,9 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   border-bottom: 1px solid var(--border);
 }
 
+.prose .eng-comparison-table th,
 .eng-comparison-table th,
+.prose .eng-comparison-table td,
 .eng-comparison-table td {
   padding: 11px 14px;
   text-align: left;
@@ -1074,13 +1081,16 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   border-right: 1px solid var(--border);
 }
 
+.prose .eng-comparison-table th:last-child,
 .eng-comparison-table th:last-child,
+.prose .eng-comparison-table td:last-child,
 .eng-comparison-table td:last-child {
   border-right: none;
 }
 
+.prose .eng-comparison-table tbody tr:last-child td,
 .eng-comparison-table tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 .eng-comparison-table th {
