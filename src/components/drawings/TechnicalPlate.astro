@@ -1,5 +1,4 @@
 ---
-import { randomUUID } from 'node:crypto';
 import { drawingInfo, drawingSvg, type DrawingKind } from '../../lib/drawings';
 interface Props { kind?: DrawingKind; hero?: boolean; caption?: boolean; }
 const {kind='wing',hero=false,caption=true}=Astro.props;
@@ -8,7 +7,7 @@ const info=drawingInfo[kind];
 <figure class:list={['technical-plate',{'technical-plate-hero':hero}]}>
  <div class="technical-plate-field" data-technical-surface={hero || undefined} data-motion={hero?'true':'false'}>
   {hero && <canvas class="technical-surface" aria-hidden="true"></canvas>}
-  <Fragment set:html={drawingSvg(kind,randomUUID())} />
+  <Fragment set:html={drawingSvg(kind,crypto.randomUUID())} />
  </div>
  {caption&&<figcaption><span>{info.label}</span><span>{info.caption}</span></figcaption>}
 </figure>

@@ -117,7 +117,9 @@ html[data-texture='off'] .technical-plate-field {
 }
 
 .question-board {
-  padding-block:2rem 3rem
+  padding-block:2rem 3rem;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 350px;
 }
 
 .question-board>div:last-child {

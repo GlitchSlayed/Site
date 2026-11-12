@@ -209,6 +209,8 @@
   border-top: 1px solid var(--border-strong);
   margin-block: 2.5rem;
   align-items: center;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 450px;
 }
 
 .combined-copy h2 {
@@ -402,6 +404,8 @@ summary {
 
 .related-stories {
   margin-block: 3rem;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
 }
 
 .about-facts {
