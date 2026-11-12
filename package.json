@@ -8,11 +8,11 @@
     "tests/browser"
   ],
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "build:quick": "FAST_BUILD=1 astro build",
-    "preview": "astro preview",
-    "check": "astro check",
+    "dev": "bunx --bun astro dev",
+    "build": "bunx --bun astro build",
+    "build:quick": "FAST_BUILD=1 bunx --bun astro build",
+    "preview": "bunx --bun astro preview",
+    "check": "bunx --bun astro check",
     "test": "vitest run",
     "test:core": "node --test tests/*.test.mjs",
     "test:browser": "node tests/browser/run.mjs",
