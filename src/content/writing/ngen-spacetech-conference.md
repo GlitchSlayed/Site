@@ -1,6 +1,6 @@
 ---
-title: "It's Not Just About Rockets"
-description: "A day in New York with the Hofstra AIAA chapter: panels on where aerospace is going, Matt Desch on rebuilding Iridium, protein grown in orbit, and a phased array lesson from Kevin Bell in a bar after hours."
+title: "A Day at NGEN SpaceTech with Hofstra AIAA"
+description: "Satellite communications, manufacturing in orbit, and conversations with people working in the space industry at the NGEN SpaceTech Conference in New York."
 date: 2026-11-07
 tags: ["Aerospace", "SpaceTech", "Conference", "AIAA"]
 draft: false
@@ -8,54 +8,52 @@ sample: false
 featured: false
 ---
 
-On Friday, November 6, I went into New York City with a group from our Hofstra AIAA chapter for the NGEN SpaceTech Conference. Our co-president Adriel Ventura was there, our VP Kimberly Tapia was there, and a good number of our members made the trip. NGEN is a student founder network, around 20,000 student founders across more than 15 campuses, and this was their space focused day: panels, a keynote, an interactive session, a $150K pitch competition, and networking after. Harsha Ravindran, one of NGEN's co-founders, had invited our chapter.
+On Friday, November 6, I attended the NGEN SpaceTech Conference in New York City with members of Hofstra's AIAA chapter, including our co-president Adriel Ventura and VP Kimberly Tapia. Harsha Ravindran, one of NGEN's co-founders, had invited our chapter. I went mainly to learn more about where the industry was headed and to meet people working in it.
 
-I went in thinking of the space industry as a fairly narrow thing. Big companies, big rockets, NASA. I came out with a very different picture, and most of this post is about that.
+I knew there was a lot happening across the space industry, but I hadn't realized the range of work going on in biology and manufacturing, or how much activity there was around satellite telecommunications. Those topics came up throughout the panels and in conversations afterward.
 
-## The trajectory panel
+## Where the industry is headed
 
-The first panel, The Trajectory of Aerospace, had John Plumb from K2 Space, Kevin Bell from The Aerospace Corporation, and Kristin Houston from Rocketdyne. The main thread was a shift in how space systems get built. The old model was a small number of huge, specialized satellites, things like GPS and weather satellites. The new model is proliferated constellations, Starlink and Amazon Leo on the commercial side and the Space Force doing the same thing, mostly for resiliency. If you have hundreds of satellites, losing one matters a lot less.
+The first panel, The Trajectory of Aerospace, featured John Plumb, Kevin Bell, and Kristin Houston. Much of the discussion focused on satellite constellations and what it takes to build and support them. The panelists discussed the resilience offered by distributing capabilities across more spacecraft, along with the manufacturing and launch capacity needed to support that approach.
 
-That shift has a cost. Hundreds of satellites means a lot more spacecraft to build and a lot more launch capacity to put them up. Several people on the panel kept coming back to production and infrastructure as the real bottleneck, and to the hope that the industry is biting off more than it can chew, because demand outrunning supply is what forces the infrastructure to get built.
+They also talked about the balance between competition and collaboration. Companies are competing for customers and contracts while depending on a wider network of suppliers and partners. Production capacity and infrastructure were recurring topics in that discussion.
 
-The panel also spent time on whether companies should collaborate or race. The answer was basically both. Competition pushes everyone, government customers want more than one supplier, and nobody solves the whole problem alone.
+There was advice for students too. Bell talked about how much engineering depends on teamwork and communication, and emphasized passion, curiosity, and grit. Houston offered her ABCs: be authentic, be bold, and be curious.
 
-The part of the panel aimed at students stuck with me more than the industry analysis. Mr. Bell said he wished he had understood in college how much engineering is team work. You never work alone again after school, so you may as well learn to communicate well now. His three traits were passion, curiosity, and grit. Kristin Houston gave her ABCs: be authentic, be bold, be curious. And the line I wrote down with stars next to it came from the Navy, by way of the panel: do not bring the problem. If you see something worth complaining about, figure out how to make it better, and then help make it better.
+Bell also gave us homework: look up RF phased array antennas. I wanted to hear more about them from him, and later in the day I got the chance.
 
-Mr. Bell also gave the audience homework. He told us to go home that night and look up what an RF phased array antenna is, just to be curious about it. I ended up getting that lesson in person instead. More on that below.
+## Matt Desch on Iridium
 
-## Matt Desch and the Iridium story
+The keynote was a conversation with Matt Desch, CEO of Iridium. He talked about taking over the company after its earlier bankruptcy and the process of financing and launching a replacement satellite constellation.
 
-The keynote was a conversation with Matt Desch, the CEO of Iridium. Iridium runs the only satellite network that covers the whole planet, and Desch has run it for 20 years. What I did not know is the state the company was in when he arrived. Iridium had gone through the largest bankruptcy in history at the time, he had publicly criticized it as a bad idea earlier in his career, and by 2006 it had burned through five CEOs in five years. His first reaction to the job offer, by his own telling, was surprise that the company was still alive.
+The bankruptcy and the effort to rebuild the company were the parts of his story I was most interested in. He described raising money during the financial crisis and waiting for the first launch of the new satellites, with years of work depending on that launch going well.
 
-He described the survival of the company as a series of consecutive miracles that did not feel like miracles at the time. At the time they just felt like persistence. The government kept the network alive because it covered the entire globe. He raised money for the next generation of satellites during the 2008 and 2009 downturn, on the day Bear Stearns went under at one point in the process, and the first launch of the new constellation put $250 million worth of satellites on a rocket whose previous flight had exploded on the pad. He stood at Vandenberg and knew that about 90 seconds of flight would decide a lot of his future.
+I also liked how blunt his advice was. He emphasized that interesting technology needs a viable business behind it, and that a company needs to give customers a clear reason to choose its product. That felt real to me, especially alongside his account of Iridium's financial difficulties and recovery. He was direct about how difficult building a business can be and how much patience it takes.
 
-Two of his points are worth writing down for anyone who wants to build things. First, if you are going to do something, do it far better than everyone else and be clearly different from them, because "good" is not a position. Second, technology alone is not a business. Companies in this industry are getting a lot of money and attention right now, and his view was that the ones that survive will be the ones with a real business plan, not just cool technology. The technology this industry needs most, he said, is patience.
+## Biology and manufacturing in space
 
-He also said that when he looks back, he will remember the people more than the milestones. For a CEO talking to a room full of student founders, that landed.
+The Frontier Tech panel covered some of the work I was less familiar with. One speaker discussed a medical application involving proteins and work in space. I couldn't hear her clearly enough to follow the whole explanation, but the connection between biology and manufacturing in space caught my attention.
 
-## The parts in between
+<!-- Author recalls references to eyes, composites, and protein layering. Identify the speaker and confirm the process before adding technical detail; these recollections may refer to separate points. -->
 
-At midday there was an interactive space colony session with randomized teams. My team worked on healthcare and medical services in space and built a presentation we never got to give, because earlier segments ran overtime and the presentations got cut. I was annoyed for about a minute. The randomized groups turned the session into a mixer instead, and I met more new people in that hour than I would have listening to presentations, so it worked out.
+The panel also covered commercial space stations and satellite technologies. These discussions gave me a better sense of the different kinds of work companies are pursuing in space. The biology and manufacturing applications in particular were areas I hadn't known much about before attending.
 
-The Frontier Tech panel was the part that connected most directly to my own background. My favorite piece was the protein layering work, growing protein layers in space, with the goal of helping treat people back on Earth. I did a manufacturing co-op at Arkwin, building fixtures for aerospace hardware, and I spend a lot of time thinking about how things actually get made. Seeing manufacturing treated as a space technology in its own right, not just a support function for the exciting parts, was the best surprise of the afternoon. The panel also covered a new commercial station being developed out of Ohio with a 2028 target, satellites flying at 200 km instead of the usual 500 km for better communications and missile detection, and a compression system from Steven P. Shepard, co-founder and CEO of Vaxon Space.
+## Meeting other students
 
-Later in the day was the $150K pitch competition, and after the conference ended, a group of us went to the networking mixer near Penn Station.
+I spent much of the day with our Hofstra group, but I also talked with students from a range of other schools, including several Ivy League universities. I made a few friends over the course of the day, and the group activities helped introduce me to more people.
 
-## Mr. Bell, after hours
+One of those activities was an interactive space colony session with randomly assigned teams. My group worked on healthcare and medical services. We put together a presentation, but earlier sessions ran over time and the presentations were cut. Even without presenting, we had time to work together and get to know students outside our own schools.
 
-The best conversation of my day happened after the conference, at the mixer.
+Later came the pitch competition. I was also socializing during that part of the event, spending time with our group and talking to other attendees. After the conference, we went to a networking mixer near Penn Station.
 
-I joined a conversation between Kevin Bell and Akmal Shaik, a student from Brown University. Akmal is working on CubeSats that would use several different measuring instruments to map black holes, built to sample fast enough that the data could be assembled into something close to video of an environment nobody can visit. It is a work in progress, and Mr. Bell was giving it serious technical attention, which says a lot about both of them.
+## Talking with Kevin Bell
 
-Afterwards, Mr. Bell took the time to explain phased array satellites to me and a few of us from Hofstra, following up on the homework he had assigned from the stage that morning. The simple version is this. Instead of one huge dish talking to everyone in its footprint at once, you use clusters of smaller satellites working together. The array can steer its signal so precisely that it can deliver a short burst of data, at one specific frequency, in a window of something like 10 to 20 milliseconds, to one specific receiver, even with many other receivers in range. It behaves almost like encryption, because the data is only really there for the person it was aimed at, at the moment it was aimed.
+At the mixer, I joined a conversation between Bell and Akmal Shaik, a student from Brown University. Akmal was working on a CubeSat project involving observations of black holes. I enjoyed talking with him about it and hearing his discussion with Bell. Afterward, Bell spoke with me and a few other Hofstra students about the phased array antennas he had mentioned during the panel.
 
-He told us to pay attention to this part of the industry because it is growing fast and will be a big part of where satellites go next. Having a senior vice president from The Aerospace Corporation explain antenna arrays to a group of students in a bar, hours after his panel ended, is not something I will forget soon. It is also the whole argument for going to events like this in person.
+He seemed like someone I could learn a lot from, and I wanted to hear his explanation of the homework he had given us. What caught my attention was how many smaller antenna elements could work together to direct a signal toward a particular receiver. He explained how phased arrays steer their beams electronically, and how that ability is used in satellite telecommunications, including satellite internet services.
 
-## What I took home
+What interested me most was how precisely the array could direct those signals. Bell also talked about how satellite internet providers were driving work in this field. I hadn't realized how large an area of aerospace research and development it had become.
 
-The thing I keep coming back to is how diverse this industry actually is. In one day I heard from a satellite network CEO, a panel on defense and commercial constellations, researchers growing protein in orbit, students pitching startups, and a Brown student trying to film black holes with CubeSats. Before Friday I could not have mapped who does what in this industry. Now I have at least a rough map, and the map is much bigger than rockets.
+I went to the conference to learn about where the industry was headed and meet people working in it. Getting to ask Bell about something he had brought up during his panel was a highlight of the evening.
 
-That matters for our AIAA chapter, not just for me. Part of running the chapter is deciding what we focus on, what we teach, and what we show people about where the industry is going. Friday gave me a better answer to that than a semester of guessing would have. The pipelines into this industry are not fixed the way they are in other fields, the panelists said that plainly, and the industry needs people who find their own angle in.
-
-So that is my angle, for now: show up, ask questions, and do the homework the panel assigns. Sometimes the person who assigned it will teach it to you in person.
+<!-- Technical reference for electronic beam steering: https://www.esa.int/ESA_Multimedia/Images/2025/11/Paving_the_way_for_next-generation_antennas -->
