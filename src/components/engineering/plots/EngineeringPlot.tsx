@@ -134,15 +134,6 @@ function formatTick(val: number, sigFigs: number): string {
   return formatNumber(val, { sigFigs, thousands: true });
 }
 
-/** Estimate text width using canvas font metrics. */
-function measureTextWidth(text: string, fontSize: number): number {
-  if (typeof document === 'undefined') return text.length * fontSize * 0.6;
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return text.length * fontSize * 0.6;
-  ctx.font = `${fontSize}px ${getComputedStyle(document.documentElement).fontFamily || 'system-ui'}`;
-  return ctx.measureText(text).width;
-}
 
 /** Compute the [min, max] extent of X and all finite Y values across series.
  *  Used as the autoscale target so both axes fit the data (uPlot only
@@ -165,7 +156,7 @@ export function EngineeringPlot({
   config,
   className,
   height = 400,
-  toolbar = 'floating',
+  toolbar = 'compact',
   onPointSelect,
   inspectable = false,
   inspectorSeriesIndex = 0,
@@ -429,11 +420,14 @@ export function EngineeringPlot({
     const cleanMath = (s: string) => s.replace(/\$([^\$]+)\$/g, '$1');
     const xUnit = config.xAxis.unit && config.xAxis.unit !== '-' ? ` (${cleanMath(config.xAxis.unit)})` : '';
     const yUnit = config.yAxis.unit && config.yAxis.unit !== '-' ? ` (${cleanMath(config.yAxis.unit)})` : '';
-    const xTitle = `${cleanMath(config.xAxis.title)}${xUnit}`;
-    const yTitle = `${cleanMath(config.yAxis.title)}${yUnit}`;
+    const xTitle = config.xAxis.title ? `${cleanMath(config.xAxis.title)}${xUnit}` : '';
+    const yTitle = config.yAxis.title ? `${cleanMath(config.yAxis.title)}${yUnit}` : '';
 
-    const xAxisSize = Math.max(24, measureTextWidth(xTitle, 12) * 0.5 + 14);
-    const yAxisSize = Math.max(48, measureTextWidth(yTitle, 12) * 0.5 + 14);
+    // Proportional axis margin reservations:
+    // X axis (horizontal): tick marks (5px) + values (~14px) + label (~16px) + padding = 44px
+    const xAxisSize = xTitle ? 44 : 26;
+    // Y axis (vertical): rotated label (~14px) + values (~32-38px) + padding = 56px
+    const yAxisSize = yTitle ? 56 : 40;
     xAxisSizeRef.current = xAxisSize;
     yAxisSizeRef.current = yAxisSize;
 
@@ -444,24 +438,26 @@ export function EngineeringPlot({
         show: true,
         stroke: themeText(theme),
         grid: { stroke: gridStroke, width: 1 },
-        ticks: { stroke: gridStroke, width: 1 },
+        ticks: { stroke: gridStroke, width: 1, size: 5 },
         size: xAxisSize,
+        gap: 6,
         label: xTitle,
         labelSize: 14,
-        labelFont: '12px system-ui, sans-serif',
-        font: '11px system-ui, sans-serif',
+        labelFont: '11px system-ui, -apple-system, sans-serif',
+        font: '10.5px system-ui, -apple-system, sans-serif',
         values: (_u: any, vals: number[]) => vals.map((v) => formatTick(v, sigFigs)),
       },
       {
         show: true,
         stroke: themeText(theme),
         grid: { stroke: gridStroke, width: 1 },
-        ticks: { stroke: gridStroke, width: 1 },
+        ticks: { stroke: gridStroke, width: 1, size: 5 },
         size: yAxisSize,
+        gap: 6,
         label: yTitle,
         labelSize: 14,
-        labelFont: '12px system-ui, sans-serif',
-        font: '11px system-ui, sans-serif',
+        labelFont: '11px system-ui, -apple-system, sans-serif',
+        font: '10.5px system-ui, -apple-system, sans-serif',
         values: (_u: any, vals: number[]) => vals.map((v) => formatTick(v, sigFigs)),
       },
     ];
@@ -680,13 +676,21 @@ export function EngineeringPlot({
         ],
         drawClear: [
           (u: PlotInstance) => {
-            const shaded = configRef.current.shadedRegions;
-            if (!shaded || shaded.length === 0) return;
             const ctx = u.ctx;
             if (!ctx || typeof ctx.save !== 'function') return;
             const bbox = u.bbox;
             if (!bbox) return;
             const { left, top, width, height } = bbox;
+            const theme = themeRef.current;
+
+            // Fill plot area background
+            ctx.save();
+            ctx.fillStyle = theme === 'dark' ? '#1c1b18' : '#ffffff';
+            ctx.fillRect(left, top, width, height);
+            ctx.restore();
+
+            const shaded = configRef.current.shadedRegions;
+            if (!shaded || shaded.length === 0) return;
 
             ctx.save();
             ctx.beginPath();
@@ -829,6 +833,13 @@ export function EngineeringPlot({
               }
               ctx.restore();
             }
+
+            // 3. Crisp Plot Bounding Frame around the plot area
+            ctx.save();
+            ctx.strokeStyle = themeGrid(theme);
+            ctx.lineWidth = 1;
+            ctx.strokeRect(left, top, width, height);
+            ctx.restore();
           },
         ],
       },
@@ -1539,6 +1550,10 @@ export function EngineeringPlot({
     </div>
   );
 
+  const xUnit = config.xAxis.unit && config.xAxis.unit !== '-' ? config.xAxis.unit : '';
+  const yUnit = config.yAxis.unit && config.yAxis.unit !== '-' ? config.yAxis.unit : '';
+  const hasDimensionalUnits = Boolean(xUnit || yUnit);
+
   return (
     <section className={`eng-plot ${className || ''}`} aria-label={config.title || 'Engineering plot'}>
       {initError && <div className="eng-plot-error" role="alert">
@@ -1549,12 +1564,15 @@ export function EngineeringPlot({
       <header className="eng-plot-header">
         <div className="eng-plot-header-main">
           {config.title && <h2 className="eng-plot-title">{renderMathText(config.title)}</h2>}
-          {toolbar === 'compact' && renderModebar()}
+          {toolbar !== 'none' && renderModebar()}
         </div>
-        <div className="eng-plot-units">
-          {renderMathText(config.xAxis.title)}{config.xAxis.unit && config.xAxis.unit !== '-' ? ` [${config.xAxis.unit}]` : ''}&nbsp;·&nbsp;
-          {renderMathText(config.yAxis.title)}{config.yAxis.unit && config.yAxis.unit !== '-' ? ` [${config.yAxis.unit}]` : ''}
-        </div>
+        {hasDimensionalUnits && (
+          <div className="eng-plot-units">
+            {xUnit ? `${renderMathText(config.xAxis.title)} [${xUnit}]` : renderMathText(config.xAxis.title)}
+            &nbsp;·&nbsp;
+            {yUnit ? `${renderMathText(config.yAxis.title)} [${yUnit}]` : renderMathText(config.yAxis.title)}
+          </div>
+        )}
         {config.description && <p className="eng-plot-description">{renderMathText(config.description)}</p>}
       </header>
 
@@ -1571,7 +1589,6 @@ export function EngineeringPlot({
           style={{ width: '100%', minHeight: height, position: 'relative', visibility: initError ? 'hidden' : 'visible' }}
           aria-hidden="true"
         />
-        {(toolbar === 'floating' || toolbar === 'minimal') && renderModebar()}
       </div>
 
       {tooltipsEnabled && (

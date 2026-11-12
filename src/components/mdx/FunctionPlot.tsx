@@ -45,7 +45,7 @@ export const FunctionPlot: React.FC<FunctionPlotProps> = ({
   samples = 250,
   params: initialParams = {},
   scopeId,
-  toolbar = 'floating',
+  toolbar = 'compact',
   xLabel = 'x',
   xUnit = '',
   xScale = 'linear',

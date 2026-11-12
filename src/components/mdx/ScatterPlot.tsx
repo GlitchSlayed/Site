@@ -44,7 +44,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({
   description,
   points,
   series: directSeries,
-  toolbar = 'floating',
+  toolbar = 'compact',
   xLabel = 'X',
   xUnit = '',
   xScale = 'linear',

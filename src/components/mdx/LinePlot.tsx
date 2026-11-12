@@ -39,7 +39,7 @@ export const LinePlot: React.FC<LinePlotProps> = ({
   description,
   x: sharedX,
   series,
-  toolbar = 'floating',
+  toolbar = 'compact',
   xLabel = 'X',
   xUnit = '',
   xScale = 'linear',
