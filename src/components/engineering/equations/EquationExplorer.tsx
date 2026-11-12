@@ -20,6 +20,8 @@ interface EquationExplorerProps {
   className?: string;
   height?: number;
   showParameters?: boolean;
+  unit?: string;
+  displayUnit?: string;
 }
 
 export function EquationExplorer({
@@ -34,6 +36,8 @@ export function EquationExplorer({
   className,
   height = 300,
   showParameters = true,
+  unit: propUnit,
+  displayUnit,
 }: EquationExplorerProps) {
   const model = getModel(modelId);
   const katexElRef = useRef<HTMLSpanElement>(null);
@@ -86,14 +90,17 @@ export function EquationExplorer({
     }
   }, [model, inputs]);
 
+  const outputDef = model?.outputs?.[resultOutputId];
   const result = outputs[resultOutputId];
+  const resolvedUnit = propUnit ?? result?.unit ?? outputDef?.unit;
 
   const formatted = formatResult({
     value: result?.value,
-    unit: result?.unit,
-    label: result?.label,
-    significantFigures: result?.significantFigures ?? sigFigs,
-    engineeringNotation: result?.engineeringNotation,
+    unit: resolvedUnit,
+    displayUnit,
+    label: result?.label ?? outputDef?.label,
+    significantFigures: result?.significantFigures ?? outputDef?.significantFigures ?? sigFigs,
+    engineeringNotation: result?.engineeringNotation ?? outputDef?.engineeringNotation,
   });
 
   return (
@@ -118,7 +125,9 @@ export function EquationExplorer({
           <h4>Result</h4>
           <div className="eng-result-value">
             <span className="eng-result-number">{formatted.value}</span>
-            {formatted.unit && <span className="eng-result-unit">[{formatted.unit}]</span>}
+            {((formatted.symbol && formatted.symbol !== '-') || (formatted.unit && formatted.unit !== '-')) && (
+              <span className="eng-result-unit">{formatted.symbol || formatted.unit}</span>
+            )}
           </div>
           {result?.label && <p className="eng-result-label">{result.label}</p>}
           {!result && !model ? <p className="eng-result-empty">No result available.</p> : null}

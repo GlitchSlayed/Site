@@ -53,10 +53,11 @@
   margin: 0 0 8px 0;
 }
 
+.prose .eng-demo-purpose,
 .eng-demo-purpose {
   font-size: 14px;
   color: var(--muted);
-  margin: 0 0 16px 0;
+  margin: 0 0 16px 0 !important;
   max-width: 760px;
   line-height: 1.7;
 }
@@ -95,14 +96,16 @@
   margin-top: 0;
 }
 
+.prose .eng-parameters-label,
 .eng-parameters-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 0 0 10px 0;
-  padding-left: 2px;
+  margin: 0 0 10px 0 !important;
+  padding: 0 0 0 2px !important;
+  border-bottom: none !important;
 }
 
 .eng-parameter-grid {
@@ -347,9 +350,14 @@
   margin-bottom: 16px;
 }
 
+.prose .eng-equation-title,
 .eng-equation-title {
   font-size: 15px;
-  margin: 0 0 8px 0;
+  font-weight: 600;
+  margin: 0 0 8px 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
+  line-height: 1.25;
 }
 
 .eng-equation > span {
@@ -379,18 +387,31 @@
   max-height: none;
 }
 
+.prose .eng-equation-result h4,
+.eng-equation-result h4 {
+  margin: 0 0 4px 0 !important;
+  padding: 0 !important;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: none !important;
+}
+
 .eng-result-value {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: baseline;
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
 .eng-result-number {
   font-family: var(--mono);
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--accent);
+  line-height: 1.1;
 }
 
 .eng-result-symbol {
@@ -401,7 +422,8 @@
 
 .eng-result-unit {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -460,7 +482,7 @@
   flex-direction: column;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
   padding: 16px;
   background: var(--surface);
 }
@@ -481,12 +503,16 @@
   flex-wrap: wrap;
 }
 
+.prose .eng-plot-title,
 .eng-plot-title {
   font-family: var(--serif-display);
   font-size: 18px;
   font-weight: 550;
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
   letter-spacing: -0.3px;
+  line-height: 1.25;
 }
 
 .eng-plot-units {
@@ -499,10 +525,12 @@
   font-family: var(--mono);
 }
 
+.prose .eng-plot-description,
 .eng-plot-description {
   font-size: 13px;
   color: var(--muted);
-  margin: 0;
+  margin: 0 !important;
+  line-height: 1.4;
 }
 
 .eng-plot-loading,
@@ -1195,9 +1223,12 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   margin-top: 16px;
 }
 
+.prose .eng-comparison-notes h3,
 .eng-comparison-notes h3 {
   font-size: 14px;
-  margin: 0 0 10px 0;
+  margin: 0 0 10px 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
 }
 
 .eng-note {
@@ -1271,10 +1302,11 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 0;
-  padding: 4px;
+  padding: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
+  align-items: stretch;
 }
 
 .eng-demo-scenario-toggle {
@@ -1317,10 +1349,11 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
 }
 
 .eng-demo-viz-tab {
+  flex: 1 1 auto;
   font: inherit;
   font-size: 12px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 7px 14px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -1328,6 +1361,10 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .eng-demo-viz-tab:hover {
@@ -1368,9 +1405,12 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   border-radius: 8px;
 }
 
+.prose .eng-demo-assumptions h2,
 .eng-demo-assumptions h2 {
   font-size: 16px;
-  margin: 0 0 10px 0;
+  margin: 0 0 10px 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
 }
 
 .eng-demo-assumptions ul {
@@ -1464,11 +1504,14 @@ html[data-theme="light"] .eng-viewer-toolbar button {
   background: var(--hover);
 }
 
+.prose .eng-inspector-title,
 .eng-inspector-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--foreground);
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
   flex: 1;
 }
 
@@ -1682,8 +1725,11 @@ html[data-theme="light"] .eng-inspector-indicator {
   margin-bottom: 14px;
 }
 
+.prose .eng-playground-title,
 .eng-playground-title {
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
   font-size: 15px;
   font-weight: 600;
   color: var(--foreground);
@@ -2033,8 +2079,11 @@ html[data-theme="light"] .eng-inspector-indicator {
   flex-wrap: wrap;
 }
 
+.prose .eng-table-title,
 .eng-table-title {
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: none !important;
   font-size: 14px;
   font-weight: 600;
   color: var(--foreground);

@@ -244,6 +244,7 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
             scopeId={SCOPE_ID}
             resultOutputId="lift"
             resultLabel="Lift (steady level flight)"
+            displayUnit="kN"
             significantFigures={4}
             showParameters={false}
           />
@@ -254,10 +255,10 @@ export function BWBTradeoffExplorer({ className }: BWBTradeoffExplorerProps = {}
         <div className="eng-demo-viz-tabs" role="tablist" aria-label="Select plot view">
           {[
             { id: 'all', label: 'All 4 Plots' },
-            { id: 'dragPolar', label: 'Drag Polar (CD vs CL)' },
+            { id: 'dragPolar', label: 'Drag Polar' },
             { id: 'ldVsSpeed', label: 'L/D vs Airspeed' },
             { id: 'thrustVsSpeed', label: 'Thrust Required' },
-            { id: 'ldVsMassPenalty', label: 'Mass Penalty Sensitivity' },
+            { id: 'ldVsMassPenalty', label: 'Mass Sensitivity' },
           ].map((tab) => (
             <button
               key={tab.id}

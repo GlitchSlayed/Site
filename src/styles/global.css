@@ -1362,7 +1362,7 @@ h1, h2, h3 {
   margin-bottom: 0.5em;
 }
 
-.prose h2 {
+.prose h2:not(:is(.eng-demo, .eng-plot, .eng-equation-explorer, .eng-equation, .eng-comparison, .eng-viewer, .eng-inspector, .eng-param-playground, .eng-data-table-wrapper, .eng-metric-card, .mdx-note, .mdx-equation, .mdx-measurement) *) {
   font-family: var(--serif-display);
   font-size: 24px;
   font-weight: 550;
@@ -1373,7 +1373,7 @@ h1, h2, h3 {
   color: var(--foreground);
 }
 
-.prose h3 {
+.prose h3:not(:is(.eng-demo, .eng-plot, .eng-equation-explorer, .eng-equation, .eng-comparison, .eng-viewer, .eng-inspector, .eng-param-playground, .eng-data-table-wrapper, .eng-metric-card, .mdx-note, .mdx-equation, .mdx-measurement) *) {
   font-family: var(--serif-display);
   font-size: 19px;
   font-weight: 550;
