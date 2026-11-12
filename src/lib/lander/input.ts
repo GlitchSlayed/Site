@@ -165,10 +165,11 @@ export class InputManager {
 
         if (!isGameKey) return;
 
-        // Prevent page scroll only if game is focused/active
+        // Prevent page scroll if game is focused or active
         const isGameFocused =
           document.activeElement === canvas ||
-          container.contains(document.activeElement);
+          container.contains(document.activeElement) ||
+          this.gameActive;
 
         if (isGameFocused && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
           e.preventDefault();

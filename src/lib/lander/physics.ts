@@ -155,7 +155,6 @@ export function getShipFootPositions(
 export function evaluateLanding(
   state: ShipState,
   pad: PadConfig,
-  terrain: TerrainSegment[],
   maxDescentRate = 2.0,
   maxLateralRate = 1.3,
   maxTiltRad = 0.35
@@ -297,7 +296,6 @@ export function step(state: ShipState, input: LanderInput, config: GameConfig): 
     const evaluation = evaluateLanding(
       impactState,
       config.pad,
-      config.terrain,
       config.maxDescentRate,
       config.maxLateralRate,
       config.maxTiltRad
