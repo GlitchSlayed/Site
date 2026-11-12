@@ -103,7 +103,7 @@ Migrations like this often sound like chores, but when done methodically, the de
 
 Everything was verified on our dedicated performance branch, merged into `main`, and deployed.
 
-## Addendum: Real-world CI numbers and second-pass tweaks
+## Addendum #1: Real-world CI numbers and second-pass tweaks
 
 Shortly after merging to `main`, the first production deployment ran through GitHub Actions. Seeing real CI logs confirmed that the local gains translated cleanly to cloud runners:
 
@@ -122,3 +122,58 @@ A few small second-pass refinements followed:
 3. **Shallow checkouts**: In `check.yml`, we replaced a full-history clone (`fetch-depth: 0`) with a default shallow clone, fetching just one commit from the base branch on pull requests. That avoids pulling hundreds of historical commits and git blobs on routine checks.
 
 The entire deployment now runs in about 30 seconds from `git push` to live production.
+
+## Addendum #2: Running Astro directly on Bun's runtime (`--bun`)
+
+In my initial takeaways, I recommended keeping Node as the runtime because Astro ships with `#!/usr/bin/env node` in its binary header, and because complex native dependencies like Sharp can occasionally cause friction under alternative runtimes.
+
+However, Bun explicitly documents running Astro via its runtime instead of just using Bun for package management:
+
+```bash
+bunx --bun astro dev
+bunx --bun astro build
+```
+
+When you execute `bun run build` with standard scripts (`"build": "astro build"`), Bun respects the shebang inside `node_modules/.bin/astro` and spawns Node.js under the hood. Adding the `--bun` flag forces Bun to bypass Node and execute the script directly on Bun's JavaScriptCore runtime.
+
+I spun up a separate branch (`perf/bun-runtime-astro`) to benchmark whether running Astro on Bun delivered measurable improvements over Node 24, and whether Sharp and our dynamic OpenGraph pipeline remained stable.
+
+### The benchmarks: Node 24 vs. Bun runtime
+
+Across multiple cold runs (cleaning `dist/` and `.astro/` before each iteration), the performance delta was immediately apparent:
+
+| Metric | Node 24 runtime (`astro build`) | Bun runtime (`bunx --bun astro build`) | Improvement |
+| :--- | :--- | :--- | :--- |
+| **Dev server cold start** | 1,268 ms | **312 ms** | **4x faster startup** |
+| **Static page generation** | 438 ms avg | **307 ms avg** | **~30% faster** |
+| **Astro reported build** | 1,532 ms avg | **1,184 ms avg** | **23% faster** |
+| **Total wall-clock build time** | 2,276 ms avg | **1,613 ms avg** | **29% faster (-663ms)** |
+| **Quick build (`FAST_BUILD=1`)** | 2,240 ms avg | **1,571 ms avg** | **30% faster (-669ms)** |
+
+The biggest developer quality-of-life win is local dev startup: dropping from 1.27 seconds to just 312 milliseconds makes restarting the dev server feel instant.
+
+### Verifying output parity
+
+Just like with the Satteri migration, faster numbers mean nothing if the output drifts. I ran a directory diff between the output of Node and Bun builds:
+
+1. **Static HTML structure**: All 36 static pages (including mathematical proofs with KaTeX, interactive data tables, and syntax-highlighted code blocks) matched byte for byte. The only diffs were dynamic runtime IDs (random SVG illustration UUIDs) and Vite asset chunk hashes.
+2. **Sharp OpenGraph generation**: All 15 dynamic social preview cards rendered without missing layers, canvas corruption, or font shifts.
+3. **Automated tests**: All 123 Vitest unit tests and 12 Node core tests passed without modification.
+
+### Updating our package scripts
+
+Because the results were so clean, we updated `package.json` to route all Astro lifecycle scripts through Bun's runtime by default:
+
+```json
+{
+  "scripts": {
+    "dev": "bunx --bun astro dev",
+    "build": "bunx --bun astro build",
+    "build:quick": "FAST_BUILD=1 bunx --bun astro build",
+    "preview": "bunx --bun astro preview",
+    "check": "bunx --bun astro check"
+  }
+}
+```
+
+This ensures that developers and CI jobs get the full benefit of Bun's runtime without needing to remember extra flags.
