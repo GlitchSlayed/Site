@@ -366,7 +366,7 @@ Do not invent the author's feelings, childhood stories, collaborations, complete
 
 ## 11. Build, preview, and deployment
 
-The established local environment uses Node 24 and Bun (as package manager and script runner). The repository lockfile (`bun.lock`) should be committed.
+The established local environment uses Bun 1.4+ (as native runtime, package manager, script runner, and test runner). Node is no longer required. The repository lockfile (`bun.lock`) should be committed.
 
 ```bash
 bun install
@@ -407,7 +407,7 @@ Do not suggest forced audit fixes as a default repair. Review the actual advisor
 | `art: Required` | A project lacks its required illustration selector | Add one of `wing`, `orbit`, `code` |
 | Draft still fails validation | Draft filtering occurs after collection validation | Fix the metadata; do not rely on draft status |
 | `z` already declared | Two imports declare the same identifier | Import `z` once from `astro/zod` |
-| Config import-analysis failure | Broken JavaScript syntax in `astro.config.mjs` | Run `node --check astro.config.mjs` |
+| Config import-analysis failure | Broken JavaScript syntax in `astro.config.mjs` | Run `bun --check astro.config.mjs` |
 | Deprecated Markdown plugin settings | Plugins are placed outside `unified()` options | Move remark/rehype plugins into `unified({...})` |
 | Page or image links break only on Pages | Root-relative URL ignores repository base | Inspect generated routes and link resolution |
 | Unsupported custom frontmatter does nothing | Layout/schema has no corresponding implementation | Use body content or propose a separate code change |

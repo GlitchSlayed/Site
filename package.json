@@ -14,8 +14,8 @@
     "preview": "bunx --bun astro preview",
     "check": "bunx --bun astro check",
     "test": "vitest run",
-    "test:core": "node --test tests/*.test.mjs",
-    "test:browser": "node tests/browser/run.mjs",
+    "test:core": "bun test tests/*.test.mjs",
+    "test:browser": "bun tests/browser/run.mjs",
     "format": "biome format --write src tests"
   },
   "dependencies": {
@@ -52,7 +52,7 @@
     "vitest": "^5.0.5"
   },
   "engines": {
-    "node": ">=24"
+    "bun": ">=1.4.0"
   },
   "trustedDependencies": [
     "sharp",

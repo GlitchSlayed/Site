@@ -1,9 +1,13 @@
-// Runs with Node 24 alone, even when dependency installation is unavailable.
+// Runs with Bun or Node 24 alone, even when dependency installation is unavailable.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { stripTypeScriptTypes } from 'node:module';
+
 async function source(name) {
+  if (process.versions.bun) {
+    return import(`../src/lib/engineering/${name}.ts`);
+  }
+  const { readFile } = await import('node:fs/promises');
+  const { stripTypeScriptTypes } = await import('node:module');
   const text = await readFile(new URL(`../src/lib/engineering/${name}.ts`, import.meta.url), 'utf8');
   return import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(text)).toString('base64')}`);
 }

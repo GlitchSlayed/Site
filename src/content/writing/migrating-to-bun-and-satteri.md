@@ -97,7 +97,7 @@ Faster builds are useless if the output silently breaks. After finishing the cha
 
 Migrations like this often sound like chores, but when done methodically, the developer experience payoff is immediate:
 
-1. **Keep Node as the runtime if you rely on native packages.** You do not need to rewrite your application for Bun's runtime to enjoy Bun's package manager speed.
+1. **Start with Bun as package manager, then upgrade the runtime.** You do not need to rewrite your application to enjoy Bun's package manager speed, and as shown in Addendum #2 below, running Astro directly on Bun's runtime via `--bun` cuts build times by another ~30% and eliminates Node from CI and local environments entirely.
 2. **Rust-based compilers make a visible dent.** Moving Markdown compilation from JavaScript AST trees to Rust cut markdown processing time by 90%.
 3. **Always measure with real output diffs.** Having an exact baseline directory meant I never had to guess whether an equation was missing a CSS class or an annotation was skipped.
 
@@ -171,9 +171,10 @@ Because the results were so clean, we updated `package.json` to route all Astro 
     "build": "bunx --bun astro build",
     "build:quick": "FAST_BUILD=1 bunx --bun astro build",
     "preview": "bunx --bun astro preview",
-    "check": "bunx --bun astro check"
+    "check": "bunx --bun astro check",
+    "test:core": "bun test tests/*.test.mjs"
   }
 }
 ```
 
-This ensures that developers and CI jobs get the full benefit of Bun's runtime without needing to remember extra flags.
+This ensures that developers and CI jobs get the full benefit of Bun's runtime without needing to remember extra flags. Following this, we removed `actions/setup-node` from our GitHub Actions workflows entirely—making the entire CI/CD pipeline 100% Bun native and shaving setup overhead off every run.

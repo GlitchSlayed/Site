@@ -6,8 +6,8 @@ Built with a minimal layout, light and dark themes, and subtle red-orange accent
 
 ## Stack
 
-- **Bun:** package manager and script runner
-- **Astro 7:** static site generation and client link prefetching
+- **Bun:** native runtime, package manager, script runner, and test runner
+- **Astro 7:** static site generation and client link prefetching via Bun runtime (`--bun`)
 - **TypeScript:** typed configuration and application code
 - **Markdown / MDX:** articles and project pages with Satteri Rust compiler
 - **KaTeX:** mathematical equations
@@ -17,7 +17,7 @@ Built with a minimal layout, light and dark themes, and subtle red-orange accent
 
 ## Development
 
-Requires **Node.js 24** and **Bun** (package manager and script runner).
+Requires **Bun 1.4+** (native runtime, package manager, and test runner). Node is not required.
 
 ```bash
 bun install
@@ -26,10 +26,12 @@ bun run dev
 
 | Command | Description |
 | --- | --- |
-| `bun run dev` | Start the development server |
+| `bun run dev` | Start the development server (runs with Bun runtime) |
 | `bun run check` | Check Astro and TypeScript |
 | `bun run build` | Build the site into `dist/` |
 | `bun run preview` | Preview the production build |
+| `bun run test` | Run Vitest unit tests |
+| `bun run test:core` | Run core formula and data suite via Bun test runner |
 
 ## Project Structure
 

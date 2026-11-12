@@ -1,9 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { stripTypeScriptTypes } from 'node:module';
-const source = await readFile(new URL('../src/lib/engineering/mdxData.ts', import.meta.url), 'utf8');
-const { alignScatterSeries, alignLineSeries, csvCell, compareCells, safePageSize, heatmapError } = await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString('base64')}`);
+
+let mdxData;
+if (process.versions.bun) {
+  mdxData = await import('../src/lib/engineering/mdxData.ts');
+} else {
+  const { readFile } = await import('node:fs/promises');
+  const { stripTypeScriptTypes } = await import('node:module');
+  const source = await readFile(new URL('../src/lib/engineering/mdxData.ts', import.meta.url), 'utf8');
+  mdxData = await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString('base64')}`);
+}
+const { alignScatterSeries, alignLineSeries, csvCell, compareCells, safePageSize, heatmapError } = mdxData;
 test('scatter preserves independent categories and repeated X observations', () => {
   const series = [{id:'a',label:'A',x:[2,1,1],y:[20,10,12]},{id:'b',label:'B',x:[3],y:[30]}];
   const result = alignScatterSeries(series);

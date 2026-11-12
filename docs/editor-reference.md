@@ -51,7 +51,7 @@ Follow these core operating principles:
 | Component | Technology | Detail |
 | :--- | :--- | :--- |
 | **Framework** | Astro 7 (SSG) | Static HTML generation with React 19 client islands |
-| **Tooling & Runtime** | Bun 1.4.4 + Node 24 | Bun handles package management and script dispatching; Biome handles formatting |
+| **Tooling & Runtime** | Bun 1.4.4 | Bun handles native runtime execution (`--bun`), package management, test running, and script dispatching; Biome handles formatting |
 | **Fonts & Navigation** | Astro Fonts + Prefetch | Self-hosted woff2 with automated metric fallbacks to prevent CLS; hover link prefetching |
 | **Hosting** | GitHub Pages | Deployed via GitHub Actions to `https://glitchslayed.github.io/Site/` |
 | **Base Path** | `/Site/` | Handled automatically via `url()` helper in Astro templates |
