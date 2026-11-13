@@ -65,8 +65,8 @@
 .eng-demo-controls {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 16px 18px;
+  border-radius: 8px;
+  padding: 14px 16px;
   margin-bottom: 24px;
   display: flex;
   flex-direction: column;
@@ -346,8 +346,8 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
 
 .prose .eng-equation-title,
@@ -369,15 +369,22 @@
 .eng-equation-body {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 .eng-equation-body--result-only {
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr !important;
+}
+
+.eng-equation-body--result-only .eng-equation-result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
 }
 
 @media (min-width: 768px) {
-  .eng-equation-body {
+  .eng-equation-body:not(.eng-equation-body--result-only) {
     grid-template-columns: 1fr 340px;
   }
 }
@@ -483,7 +490,7 @@
   gap: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px 16px;
   background: var(--surface);
 }
 
@@ -491,7 +498,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -738,9 +745,10 @@ html[data-theme='light'] .eng-modebar-popover {
 .eng-plot-viewport {
   position: relative;
   min-height: 240px;
-  background: var(--background);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
+  overflow: hidden;
   cursor: default;
 }
 
@@ -830,10 +838,10 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   justify-content: center;
   gap: 16px;
   padding: 8px 14px;
-  margin-top: 8px;
+  margin: 0;
   border-top: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 6px;
+  background: var(--surface-2);
+  border-radius: 0 0 5px 5px;
 }
 
 .eng-plot-viewport .u-legend th {
@@ -1074,12 +1082,56 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
 /* Comparison table (unchanged styles below) */
 
 .eng-comparison-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   margin: 18px 0;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
+  overflow: hidden;
+}
+
+.eng-comparison-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.prose .eng-comparison-title,
+.eng-comparison-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--foreground);
+  letter-spacing: -0.2px;
+  border-bottom: none !important;
+}
+
+.eng-comparison-export-btn {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--background);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eng-comparison-export-btn:hover {
+  background: var(--hover);
+  color: var(--foreground);
+  border-color: var(--accent);
+}
+
+.eng-comparison-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .prose .eng-comparison-table,
@@ -1089,21 +1141,9 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   border: none !important;
   border-top: none !important;
   border-bottom: none !important;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   font-size: 13px;
   background: transparent;
-}
-
-.eng-comparison-caption {
-  caption-side: top;
-  text-align: left;
-  font-weight: 600;
-  padding: 12px 16px;
-  color: var(--foreground);
-  font-size: 14px;
-  background: var(--hover);
-  border-bottom: 1px solid var(--border);
 }
 
 .prose .eng-comparison-table th,
@@ -1297,35 +1337,42 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
 
 .eng-demo-viz-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 860px) {
+  .eng-demo-viz-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
 .eng-demo-viz-tabs {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 0;
-  padding: 6px;
+  gap: 4px;
+  padding: 4px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   align-items: stretch;
+  flex: 1 1 auto;
 }
 
 .eng-demo-scenario-toggle {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .eng-demo-scenario-btn {
   font: inherit;
   font-size: 12px;
   font-weight: 500;
-  padding: 7px 14px;
+  height: 38px;
+  padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -1334,8 +1381,16 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   white-space: nowrap;
+  width: 100%;
+}
+
+@media (min-width: 860px) {
+  .eng-demo-scenario-btn {
+    width: auto;
+  }
 }
 
 .eng-demo-scenario-btn:hover {
@@ -1356,11 +1411,11 @@ html[data-theme='light'] .eng-plot-viewport .u-select {
 }
 
 .eng-demo-viz-tab {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   font: inherit;
   font-size: 12px;
   font-weight: 500;
-  padding: 7px 14px;
+  padding: 6px 10px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -1721,7 +1776,7 @@ html[data-theme="light"] .eng-inspector-indicator {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 18px;
+  padding: 14px 16px;
   margin: 20px 0;
 }
 

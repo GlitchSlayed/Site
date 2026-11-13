@@ -38,6 +38,7 @@ const commitHash = getCommitHash();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#F8F7F3" id="meta-theme-color" />
+    <meta name="color-scheme" content="light" id="meta-color-scheme" />
     <title>{title}</title>
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
@@ -78,6 +79,10 @@ const commitHash = getCommitHash();
         const metaTheme = document.getElementById('meta-theme-color');
         if (metaTheme) {
           metaTheme.setAttribute('content', preferred === 'dark' ? '#141413' : '#F8F7F3');
+        }
+        const metaColor = document.querySelector('meta[name="color-scheme"]');
+        if (metaColor) {
+          metaColor.content = preferred === 'dark' ? 'dark' : 'light';
         }
       } catch {
         document.documentElement.dataset.theme = 'light';
@@ -172,6 +177,10 @@ function syncLabel() {
   const metaTheme = document.getElementById('meta-theme-color');
   if (metaTheme) {
     metaTheme.setAttribute('content', isDark ? '#141413' : '#F8F7F3');
+  }
+  const metaColor = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
+  if (metaColor) {
+    metaColor.content = isDark ? 'dark' : 'light';
   }
   if (button) {
     button.innerHTML = isDark

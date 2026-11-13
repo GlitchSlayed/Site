@@ -5,7 +5,7 @@ import { url } from '../config';
 const basePath = url();
 ---
 
-<dialog id="search-dialog" class="search-modal" aria-label="Search site">
+<dialog id="search-dialog" class="search-modal" aria-label="Search site" closedby="any">
   <div class="search-dialog-inner">
     <div class="search-header">
       <SearchIcon />
@@ -446,6 +446,7 @@ const basePath = url();
       activeIndex = (activeIndex - 1 + items.length) % items.length;
       updateActiveItem(items);
     } else if (e.key === 'Enter') {
+      if (e.isComposing || ('keyCode' in e && e.keyCode === 229)) return;
       if (activeIndex >= 0 && items[activeIndex]) {
         e.preventDefault();
         items[activeIndex].click();
@@ -453,18 +454,21 @@ const basePath = url();
     }
   });
 
-  // Light dismiss on backdrop click
-  dialog?.addEventListener('click', (e) => {
-    const rect = dialog.getBoundingClientRect();
-    const isInDialog =
-      rect.top <= e.clientY &&
-      e.clientY <= rect.top + rect.height &&
-      rect.left <= e.clientX &&
-      e.clientX <= rect.left + rect.width;
-    if (!isInDialog) {
-      closeSearch();
-    }
-  });
+  // Light dismiss on backdrop click (fallback for browsers without closedby)
+  if (!('closedBy' in HTMLDialogElement.prototype)) {
+    dialog?.addEventListener('click', (e) => {
+      if (e.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      const isInDialog =
+        rect.top <= e.clientY &&
+        e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX &&
+        e.clientX <= rect.left + rect.width;
+      if (!isInDialog) {
+        closeSearch();
+      }
+    });
+  }
 
   // Handle native cancel event (Esc)
   dialog?.addEventListener('cancel', (e) => {

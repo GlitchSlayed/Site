@@ -93,9 +93,10 @@ export function EquationExplorer({
   const outputDef = model?.outputs?.[resultOutputId];
   const result = outputs[resultOutputId];
   const resolvedUnit = propUnit ?? result?.unit ?? outputDef?.unit;
+  const rawValue = typeof result?.value === 'number' ? result.value : 0;
 
   const formatted = formatResult({
-    value: result?.value,
+    value: rawValue,
     unit: resolvedUnit,
     displayUnit,
     label: result?.label ?? outputDef?.label,
@@ -125,8 +126,10 @@ export function EquationExplorer({
           <h4>Result</h4>
           <div className="eng-result-value">
             <span className="eng-result-number">{formatted.value}</span>
-            {((formatted.symbol && formatted.symbol !== '-') || (formatted.unit && formatted.unit !== '-')) && (
-              <span className="eng-result-unit">{formatted.symbol || formatted.unit}</span>
+            {((formatted.symbol && formatted.symbol !== '-') ||
+              (formatted.unit && formatted.unit !== '-') ||
+              (resolvedUnit && resolvedUnit !== '-')) && (
+              <span className="eng-result-unit">{formatted.symbol || formatted.unit || resolvedUnit}</span>
             )}
           </div>
           {result?.label && <p className="eng-result-label">{result.label}</p>}

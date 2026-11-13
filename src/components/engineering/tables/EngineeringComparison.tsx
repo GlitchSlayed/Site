@@ -87,63 +87,75 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
   return (
     <section className={`eng-comparison ${className || ''}`} aria-label="Engineering comparison">
       <div className="eng-comparison-wrapper">
-        <table className="eng-comparison-table">
-          <caption className="eng-comparison-caption">{config.title || 'Comparison'}</caption>
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th className="eng-unit-header">Unit</th>
-              {config.configurations.map((cfg) => (
-                <th
-                  key={cfg.id}
-                  className={`eng-config-header ${cfg.id === referenceId ? 'eng-reference' : ''}`}
-                  onClick={() => handleSort(cfg.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSort(cfg.id)}
-                >
-                  <span>{cfg.label}</span>
-                  {cfg.id === referenceId && (
-                    <span className="eng-reference-badge">Ref</span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedRows.map((row, rowIdx) => {
-              const isAlt = rowIdx % 2 === 1;
-              const highlightDiff = row.highlight && referenceIndex >= 0;
-              return (
-                <tr
-                  key={row.id}
-                  className={`eng-comparison-row ${isAlt ? 'eng-row-alt' : ''}`}
-                >
-                  <td className="eng-property-cell">{renderMathText(row.label)}</td>
-                  <td className="eng-unit-cell">{row.unit || '-'}</td>
-                  {config.configurations.map((cfg, ci) => {
-                    const isReference = cfg.id === referenceId;
-                    const cell = formatCell(row.values[ci], row.unit);
-                    const annotation = getAnnotation(row, ci);
-                    return (
-                      <td
-                        key={cfg.id}
-                        className={`eng-value-cell ${isReference ? 'eng-reference-cell' : ''} ${
-                          highlightDiff ? 'eng-highlight' : ''
-                        }`}
-                      >
-                        <span className="eng-value-main">{cell}</span>
-                        {annotation && (
-                          <span className="eng-percent-annotation"> {annotation}</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="eng-comparison-header">
+          <h4 className="eng-comparison-title">{config.title || 'Comparison'}</h4>
+          <button
+            type="button"
+            className="eng-comparison-export-btn"
+            onClick={handleExportCsv}
+            aria-label="Export comparison as CSV"
+          >
+            Export CSV
+          </button>
+        </div>
+        <div className="eng-comparison-table-scroll">
+          <table className="eng-comparison-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th className="eng-unit-header">Unit</th>
+                {config.configurations.map((cfg) => (
+                  <th
+                    key={cfg.id}
+                    className={`eng-config-header ${cfg.id === referenceId ? 'eng-reference' : ''}`}
+                    onClick={() => handleSort(cfg.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSort(cfg.id)}
+                  >
+                    <span>{cfg.label}</span>
+                    {cfg.id === referenceId && (
+                      <span className="eng-reference-badge">Ref</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.map((row, rowIdx) => {
+                const isAlt = rowIdx % 2 === 1;
+                const highlightDiff = row.highlight && referenceIndex >= 0;
+                return (
+                  <tr
+                    key={row.id}
+                    className={`eng-comparison-row ${isAlt ? 'eng-row-alt' : ''}`}
+                  >
+                    <td className="eng-property-cell">{renderMathText(row.label)}</td>
+                    <td className="eng-unit-cell">{row.unit || '-'}</td>
+                    {config.configurations.map((cfg, ci) => {
+                      const isReference = cfg.id === referenceId;
+                      const cell = formatCell(row.values[ci], row.unit);
+                      const annotation = getAnnotation(row, ci);
+                      return (
+                        <td
+                          key={cfg.id}
+                          className={`eng-value-cell ${isReference ? 'eng-reference-cell' : ''} ${
+                            highlightDiff ? 'eng-highlight' : ''
+                          }`}
+                        >
+                          <span className="eng-value-main">{cell}</span>
+                          {annotation && (
+                            <span className="eng-percent-annotation"> {annotation}</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {config.notes && config.notes.length > 0 && (
@@ -164,12 +176,6 @@ export function EngineeringComparison({ config, className }: EngineeringComparis
           ))}
         </div>
       )}
-
-      <div className="eng-comparison-actions">
-        <button type="button" onClick={handleExportCsv} aria-label="Export comparison as CSV">
-          Export CSV
-        </button>
-      </div>
     </section>
   );
 

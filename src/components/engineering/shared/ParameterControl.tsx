@@ -60,6 +60,9 @@ export function ParameterControl({ param, scopeId, disabled = false }: Parameter
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      if (event.nativeEvent.isComposing || (event as any).keyCode === 229) {
+        return;
+      }
       inputRef.current?.blur();
     }
   };

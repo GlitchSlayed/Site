@@ -541,6 +541,7 @@ export function EngineeringPlot({
     const opts: any = {
       width,
       height,
+      padding: [14, 20, 14, 14],
       plugins: [],
       series: buildSeries(),
       axes: buildAxes(),
@@ -683,10 +684,15 @@ export function EngineeringPlot({
             const { left, top, width, height } = bbox;
             const theme = themeRef.current;
 
-            // Fill plot area background
+            // Fill plot area background and frame crisp grid bounds
             ctx.save();
             ctx.fillStyle = theme === 'dark' ? '#1c1b18' : '#ffffff';
             ctx.fillRect(left, top, width, height);
+            if (showGrid) {
+              ctx.strokeStyle = themeGrid(theme);
+              ctx.lineWidth = 1;
+              ctx.strokeRect(left, top, width, height);
+            }
             ctx.restore();
 
             const shaded = configRef.current.shadedRegions;
