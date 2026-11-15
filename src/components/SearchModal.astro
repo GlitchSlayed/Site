@@ -476,6 +476,20 @@ const basePath = url();
     closeSearch();
   });
 
+  // Ensure focus returns to invoker element on dialog close
+  dialog?.addEventListener('close', () => {
+    if (input) input.value = '';
+    currentQuery = '';
+    activeIndex = -1;
+    if (resultsContainer) {
+      resultsContainer.innerHTML = '<div class="search-initial">Type to start searching…</div>';
+    }
+    const trigger = invokerElement || document.getElementById('search-trigger');
+    if (trigger && typeof trigger.focus === 'function') {
+      trigger.focus();
+    }
+  });
+
   closeKbd?.addEventListener('click', closeSearch);
 
   // Input debouncing

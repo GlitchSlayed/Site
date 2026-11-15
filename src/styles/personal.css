@@ -686,6 +686,7 @@ button:disabled {
   max-width: 80ch;
   margin: 1.5rem auto;
   color: var(--muted);
+  text-wrap: pretty;
 }
 
 .story-byline {

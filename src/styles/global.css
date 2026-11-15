@@ -7,6 +7,8 @@
 :root {
   /* Default: Warm Light Mode (Archival Book Paper / Ivory Stock) */
   color-scheme: light;
+  accent-color: var(--accent);
+  scrollbar-color: var(--muted) transparent;
   --background: #F8F6F0;
   --surface: #FFFFFF;
   --surface-2: #F1EFE8;
@@ -63,6 +65,17 @@ html[data-theme='dark'] {
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 86px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {
@@ -132,12 +145,19 @@ input:focus-visible {
   padding: 8px 14px;
   font-family: var(--mono);
   font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
   z-index: 100;
   border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: top 0.15s ease-out;
 }
 
-.skip:focus {
+.skip:focus,
+.skip:focus-visible {
   top: 12px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ==========================================================================
@@ -299,14 +319,20 @@ nav {
    Typography Hierarchy & Section Rules
    ========================================================================== */
 
-h1, h2, h3, h4, p {
+h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
+  text-wrap: balance;
 }
 
 h1, h2, h3 {
   font-family: var(--serif-display);
   color: var(--foreground);
   letter-spacing: -0.02em;
+}
+
+p {
+  margin-top: 0;
+  text-wrap: pretty;
 }
 
 .accent, .accent-word {
@@ -1358,6 +1384,7 @@ h1, h2, h3 {
 .prose p {
   color: var(--foreground);
   margin-bottom: 1.5em;
+  text-wrap: pretty;
 }
 
 .prose li {
@@ -1373,6 +1400,7 @@ h1, h2, h3 {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
   color: var(--foreground);
+  text-wrap: balance;
 }
 
 .prose h3:not(:is(.eng-demo, .eng-plot, .eng-equation-explorer, .eng-equation, .eng-comparison, .eng-viewer, .eng-inspector, .eng-param-playground, .eng-data-table-wrapper, .eng-metric-card, .mdx-note, .mdx-equation, .mdx-measurement) *) {
@@ -1382,6 +1410,7 @@ h1, h2, h3 {
   letter-spacing: -0.2px;
   margin: 32px 0 12px;
   color: var(--foreground);
+  text-wrap: balance;
 }
 
 .prose blockquote {
@@ -1394,6 +1423,7 @@ h1, h2, h3 {
   color: var(--muted);
   background: var(--surface-2);
   border-radius: 0 3px 3px 0;
+  text-wrap: pretty;
 }
 
 .prose pre {

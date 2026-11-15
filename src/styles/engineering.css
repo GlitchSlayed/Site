@@ -60,6 +60,7 @@
   margin: 0 0 16px 0 !important;
   max-width: 760px;
   line-height: 1.7;
+  text-wrap: pretty;
 }
 
 .eng-demo-controls {
