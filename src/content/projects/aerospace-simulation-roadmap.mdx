@@ -3,8 +3,8 @@ title: "Before the Metal Is Cut"
 description: "Learning to trust an aerospace simulation: an executed aluminum-bracket study, an airfoil investigation, and a rocket-nozzle capstone, with open calculations and reproducible code."
 date: "2026-11-16"
 tags: [Aerospace, Simulation]
-status: In Development
-statusDescription: "Python baseline executed; independent solver reproduction and stress convergence checks in progress."
+status: Prototype
+statusDescription: "CalculiX FEA and modal vibration reproduced; interactive 3D CAD explorer live; stress convergence refinement ongoing."
 art: wing
 featured: false
 draft: false
@@ -13,9 +13,9 @@ engineering:
   question: "How much does a single-lug mounting bracket move under downward vs. lateral pin loads, and can root fillet refinement achieve stress convergence within 2%?"
   approach: "3D linear elasticity solver with quadratic tetrahedra (C3D10), companion FreeCAD/Gmsh/CalculiX validation, and mesh convergence study."
   constraint: "Idealized fixed cylindrical bolt holes without base contact, friction, or bolt preload; faceted boundary representation."
-  evidence: "Executed Python computational baseline with verified displacement stability; fillet stress remains unresolved at 3.5%-10% change across refinement."
-  nextCheck: "Complete independent CalculiX reproduction with curved quadratic boundaries and resolve root fillet convergence gate."
-  methods: ["Quadratic Tetrahedral FEA (C3D10)", "Conjugate Gradient Solver", "Mesh Convergence Study", "Linear Superposition"]
+  evidence: "CalculiX and Python solvers corroborate 0.396 mm lateral compliance and 62.6% fillet stress relief from R2 to R10; modal Mode 1 matches beam theory to within 0.39%."
+  nextCheck: "Investigate curved quadratic boundary smoothing to close the 2% fillet stress convergence gate; extend to transonic airfoil CFD."
+  methods: ["Quadratic Tetrahedral FEA (C3D10)", "Conjugate Gradient Solver", "FreeCAD/Gmsh/CalculiX", "Eigenvalue Vibration (Modes 1-6)", "Mesh Convergence Study", "Linear Superposition"]
 ---
 
 import { BracketStressExplorer } from '../../components/mdx';
