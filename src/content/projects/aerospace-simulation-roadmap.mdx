@@ -200,6 +200,12 @@ The first computational baseline now exists. The outstanding work is specific: r
 
 An independent CAD and solver verification study was executed using FreeCAD for parametric B-rep modeling, Gmsh for quadratic tetrahedral discretization (C3D10 elements), and CalculiX (`ccx` 2.23) for finite element solutions.
 
+In practical terms, this was a complete second-opinion check to verify that the custom Python solver was not producing flukes:
+
+- **FreeCAD (Parametric B-rep CAD):** The bracket solid geometry was rebuilt from scratch using true mathematical curves and surfaces (boundary representation) rather than faceted polygons. Defining it parametrically means changing the fillet radius from 2 mm to 5 mm or 10 mm automatically rebuilds the entire solid geometry.
+- **Gmsh (Quadratic Tetrahedral Meshing):** A computer cannot calculate stress on an infinitely smooth solid all at once; it has to divide the volume into thousands of small building blocks (elements). Gmsh sliced the bracket into four-sided pyramids (tetrahedra). Using **quadratic elements (C3D10)** means each pyramid has points at its 4 corners plus 6 extra points along its edges (10 points total). Those extra mid-side points allow the element edges to curve smoothly under bending loads, avoiding the artificial stiffness that ruins simple 4-node linear meshes.
+- **CalculiX (`ccx` 2.23 FEA Solver):** An open-source finite element solver built around the same input syntax and equations as Abaqus (a primary commercial solver used in aerospace). It took the thousands of quadratic pyramids, clamped the bolt holes, applied the 2,000 N downward and 500 N sideways loads, and solved the resulting matrix equations to confirm deflection and peak root fillet stress.
+
 Key comparisons and findings from the independent CalculiX verification:
 - **Baseline In-Plane Load (LC1, 2,000 N Downward):** The CalculiX quadratic solid solver produced a peak root fillet von Mises stress of 49.98 MPa with a four-mesh convergence study (displacements converged to within 1.07% between Mesh 3 and Mesh 4). At ultimate load (LC3, 3,000 N), the peak fillet stress reached 74.97 MPa.
 - **Lateral Web Bending (LC2, 500 N Sideways):** CalculiX confirmed the out-of-plane compliance vulnerability: the peak fillet stress reached 91.25 MPa and tip deflection was 0.3958 mm, corroborating that lateral loads dominate root stress and compliance.
