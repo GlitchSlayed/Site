@@ -221,15 +221,15 @@ That connects directly to my [Three Airfoils in Hofstra's Wind Tunnel](https://g
 
 The longer-term capstone is a converging-diverging rocket nozzle. It starts with quasi-one-dimensional compressible-flow calculations: choking, throat area, area–Mach relation, and pressure ratio. An axisymmetric CFD model can then test what changes when the ideal assumptions are relaxed. Shocks and separation are extensions to earn, not features to turn on before the ideal baseline makes sense.
 
-| Stage | Intended pace | Evidence needed to move on |
-| --- | --- | --- |
-| Structural foundations | Weeks 1–2 | Consistent units, a beam reference, and a repeatable numerical check |
-| Bracket study | Weeks 3–5 | Defined loads, independent reproduction, stable quantities of interest, and documented limitations |
-| Structural extensions | Weeks 6–7 | Interpreted mode shapes; clearly scoped buckling or fatigue work where justified |
-| CFD foundations | Weeks 8–9 | Tutorial cases with meaningful boundary conditions and convergence evidence |
-| NACA 0012 investigation | Weeks 10–11 | Matched flow conditions and a traceable experimental comparison |
-| Documentation | Week 12 | Two reproducible studies whose claims match their evidence |
-| Rocket nozzle | Longer term | Analytical baseline followed by a documented compressible-flow comparison |
+| Stage | Pace | Status | Milestone evidence & criteria | Deliverable / Current finding |
+| --- | --- | --- | --- | --- |
+| **Structural foundations** | Weeks 1-2 | **Completed** | Consistent units, analytical beam reference, and repeatable numerical checks | 200 mm cantilever matches Euler-Bernoulli theory to 1.3%; rigid body, constant strain, and residual force balance checks verified. |
+| **Bracket study** | Weeks 3-5 | **Completed** | Defined loads, independent reproduction, stable quantities of interest, and documented limitations | FreeCAD/Gmsh/CalculiX independent reproduction; displacement converged to 1.07%; fillet radius sensitivity mapped; interactive 3D WebGL explorer live. |
+| **Structural extensions** | Weeks 6-7 | **In Progress** | Interpreted mode shapes; clearly scoped buckling or fatigue work where justified | Eigenvalue solve extracted Modes 1-6; Mode 1 web bending (995.27 Hz) matches analytical theory to 0.39%; curved boundary quadratic stress convergence active. |
+| **CFD foundations** | Weeks 8-9 | **Planned** | Tutorial cases with meaningful boundary conditions and convergence evidence | Cavity recirculation and cylinder vortex shedding tutorials with grid convergence. |
+| **NACA 0012 investigation** | Weeks 10-11 | **Planned** | Matched flow conditions and traceable experimental comparison | Lift, drag, and pressure coefficient correlation against published wind tunnel datasets and Hofstra experimental data. |
+| **Documentation** | Week 12 | **In Progress** | Reproducible studies whose claims match their evidence | Executed Jupyter notebooks, open Python solver scripts, exact STEP CAD models, and web monograph. |
+| **Rocket nozzle** | Longer term | **Planned** | Analytical baseline followed by documented compressible-flow comparison | Quasi-1D isentropic throat-area calculations followed by axisymmetric nozzle CFD. |
 
 ## The standard I want to keep
 
