@@ -18,6 +18,8 @@ engineering:
   methods: ["Quadratic Tetrahedral FEA (C3D10)", "Conjugate Gradient Solver", "Mesh Convergence Study", "Linear Superposition"]
 ---
 
+import { BracketStressExplorer } from '../../components/mdx';
+
 A 500 N load produces more movement than a 2,000 N load on the same bracket. About **4.4 times more**, in the first model. The difference is the direction: one load travels down the upright web; the other bends it sideways.
 
 That is the kind of thing I want to understand before trusting a simulation. A material can be strong, a part can look substantial, and the load can sound small, yet the geometry can still make it too flexible for the job.
@@ -118,6 +120,12 @@ The 3,000 N case is obtained by linear scaling of the 2,000 N solution. It is a 
 
 The current work can support comparisons within these assumptions. It cannot yet support a fatigue life, a bolted-joint safety factor, or a statement that the part is ready to fly.
 
+## Interactive 3D CAD & FEA Stress Explorer
+
+Explore the mounting bracket geometry and finite element results directly in your browser. Orbit, zoom, and pan around the model, toggle between fillet radii ($R=2$, $R=5$, and $R=10\text{ mm}$), switch active load cases, inspect the von Mises equivalent stress and displacement distributions, and amplify mesh deformation to visualize physical load paths.
+
+<BracketStressExplorer client:visible />
+
 ## Open the investigation
 
 The notebook contains the geometry definition, hand calculations, governing equations, solver explanation, verification checks, actual result tables, convergence plots, and the radius study. It was developed and executed with coding assistance; local reproduction and an independent solver check remain part of the learning work.
@@ -154,7 +162,7 @@ Key comparisons and findings from the independent CalculiX verification:
 - **Lateral Web Bending (LC2, 500 N Sideways):** CalculiX confirmed the out-of-plane compliance vulnerability: the peak fillet stress reached 91.25 MPa and tip deflection was 0.3958 mm, corroborating that lateral loads dominate root stress and compliance.
 - **Fillet Stress Sensitivity:** Increasing the fillet radius from 2 mm to 5 mm and 10 mm decreased peak fillet stress from 81.53 MPa to 49.98 MPa and 30.47 MPa (a 62.6% stress reduction).
 - **Modal Vibration Extension (Modes 1–6):** A companion linear perturbation eigenvalue solve extracted the first six natural frequencies. Mode 1 (lateral weak-axis web bending) was found at 995.27 Hz, matching the Euler–Bernoulli cantilever analytical frequency (999.17 Hz) to within 0.39%.
-- **Verification Status:** While global compliance and modal frequencies demonstrate excellent convergence and theory alignment, local fillet stress across faceted vs. curved quadratic meshes continues to exhibit mesh-gradient sensitivity. The original <2% stress convergence gate remains an active investigation before releasing this geometry for manufacturing.
+- **Verification Status:** While global compliance and modal frequencies demonstrate excellent convergence and theory alignment, local fillet stress across faceted vs. curved quadratic meshes continues to exhibit mesh-gradient sensitivity. The original &lt;2% stress convergence gate remains an active investigation before releasing this geometry for manufacturing.
 
 ## From one load path to an airflow field
 

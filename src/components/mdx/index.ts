@@ -15,3 +15,5 @@ export * from './Tooltip';
 export * from './EngineeringNote';
 export * from './EquationBlock';
 export * from './Measurement';
+export { BracketStressExplorer } from '../engineering/viewers/BracketStressExplorer';
+export type { BracketStressExplorerProps } from '../engineering/viewers/BracketStressExplorer';

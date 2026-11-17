@@ -1546,6 +1546,275 @@ html[data-theme="light"] .eng-viewer-toolbar button {
   }
 }
 
+/* Aerospace Bracket 3D CAD & FEA Explorer */
+.bracket-explorer {
+  display: flex;
+  flex-direction: column;
+  margin: 2rem 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.bracket-explorer-canvas-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+  background: var(--surface);
+}
+
+.bracket-explorer-top-bar {
+  flex-wrap: wrap;
+}
+
+.bracket-explorer-colorbar-card {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(15, 20, 25, 0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+  color: #fff;
+  min-width: 140px;
+}
+
+html[data-theme="light"] .bracket-explorer-colorbar-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #171717;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bracket-explorer-colorbar-title {
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bracket-explorer-colorbar-gradient {
+  height: 9px;
+  border-radius: 3px;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.bracket-explorer-colorbar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: var(--mono);
+  opacity: 0.85;
+}
+
+.bracket-explorer-panel {
+  padding: 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bracket-explorer-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.bracket-explorer-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bracket-explorer-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.bracket-explorer-toggle-group {
+  display: flex;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 3px;
+  border-radius: 6px;
+}
+
+html[data-theme="dark"] .bracket-explorer-toggle-group {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.bracket-explorer-btn {
+  flex: 1;
+  padding: 6px 6px;
+  font-size: 11px;
+  font-family: var(--mono);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.bracket-explorer-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="dark"] .bracket-explorer-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bracket-explorer-btn.active {
+  background: var(--background);
+  border-color: var(--border);
+  font-weight: 600;
+  color: var(--accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.bracket-explorer-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bracket-explorer-slider-value {
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.bracket-explorer-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.bracket-explorer-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+html[data-theme="dark"] .bracket-explorer-hud {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bracket-explorer-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bracket-metric-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.bracket-metric-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--foreground);
+}
+
+.bracket-metric-highlight {
+  color: #176b79;
+}
+
+html[data-theme="dark"] .bracket-metric-highlight {
+  color: #38bdf8;
+}
+
+.bracket-metric-sub {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.bracket-explorer-caption {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.bracket-explorer-downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.bracket-downloads-title {
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bracket-downloads-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bracket-download-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  color: var(--accent);
+  text-decoration: none;
+  background: var(--background);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.bracket-download-pill:hover {
+  background: rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+}
+
+html[data-theme="dark"] .bracket-download-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bracket-download-pill.active {
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
 /* Engineering point inspector card */
 .eng-inspector {
   margin-top: 16px;
