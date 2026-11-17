@@ -126,6 +126,49 @@ Explore the mounting bracket geometry and finite element results directly in you
 
 <BracketStressExplorer client:visible />
 
+## Engineering terminology: reading the physical model
+
+For anyone reviewing these figures without a finite-element background, several terms appear repeatedly throughout the data cards, contour plots, and verification tables:
+
+### The "Root" and the "Fillet Blend"
+In structural mechanics, the **root** is the re-entrant junction where two perpendicular features meet: in this part, where the vertical 8 mm web joins the horizontal 6 mm base plate. If two planar faces meet at a sharp 90-degree internal corner, elasticity theory predicts an infinite theoretical stress concentration (a geometric singularity).
+
+A **fillet** is a concave circular blend radius machined into that corner. By sweeping a cutting tool with a declared corner radius (here $R=2$, $R=5$, or $R=10\text{ mm}$), the load path turns gradually into the base rather than crowding through an abrupt notch. A larger fillet spreads the reaction force across more material and substantially lowers the local peak notch stress.
+
+### von Mises Equivalent Stress ($\sigma_{\text{vm}}$)
+In a real 3D solid, stress at any point cannot be captured by a single number. Force travels in three dimensions at once, creating three normal stresses ($\sigma_{xx}, \sigma_{yy}, \sigma_{zz}$) that pull or compress material, plus three shear stresses ($\tau_{xy}, \tau_{yz}, \tau_{zx}$) that slide adjacent planes past one another.
+
+The **von Mises equivalent stress** combines all six tensor components into one scalar value:
+
+$$
+\sigma_{\text{vm}} = \sqrt{\frac{1}{2}\left[(\sigma_{xx}-\sigma_{yy})^2 + (\sigma_{yy}-\sigma_{zz})^2 + (\sigma_{zz}-\sigma_{xx})^2 + 6(\tau_{xy}^2 + \tau_{yz}^2 + \tau_{zx}^2)\right]}
+$$
+
+Physically, it represents the distortion energy (shear strain energy) trying to deform the material shape without changing its volume. For ductile metals like 7075 aluminum, yielding occurs primarily through shear slip along atomic crystal planes rather than hydrostatic pressure. The von Mises value allows us to compare complex multi-axial 3D stresses directly against a single standard material property: the uniaxial tensile yield strength ($\sigma_y = 503\text{ MPa}$ for 7075-T651). When $\sigma_{\text{vm}} < \sigma_y$, the material is predicted to remain in the elastic region.
+
+### Weak-Axis vs. Strong-Axis Bending
+The upright web is 40 mm wide but only 8 mm thick. When a load pushes downward on the pin (LC1), the web resists in compression along its 40 mm cross-section depth.
+
+When a lateral side load pushes parallel to the pin axis (LC2), the web acts like a cantilever bending about its **weak axis** (the 8 mm thickness). Bending stiffness depends directly on the area moment of inertia:
+
+$$
+I_{\text{weak}} = \frac{1}{12} b t^3 = \frac{1}{12} (40\text{ mm})(8\text{ mm})^3 = 1{,}707\text{ mm}^4
+$$
+
+Because stiffness scales with the **cube** of the dimension in the bending direction, the 8 mm thickness offers very little resistance to out-of-plane bending. That is why a modest 500 N lateral load creates $0.396\text{ mm}$ of tip deflection (over 11 times more deflection than the 2,000 N downward load) and drives peak root stresses up to $91.3\text{ MPa}$.
+
+### Quadratic Tetrahedra (C3D10) vs. Linear Elements
+A finite element mesh breaks solid CAD geometry into small shapes. For complex aerospace brackets with curved holes and fillets, tetrahedral elements (four-sided pyramids) are used.
+
+A basic linear tetrahedron (C3D4) has only four corner nodes and assumes displacement varies linearly between them. This causes an artificial numerical problem known as **shear locking**, making the computer model artificially stiff and severely under-predicting bending deflection and local fillet stress.
+
+The solver in this study uses **quadratic tetrahedra (C3D10)**. Each element adds six mid-side nodes along its edges (10 nodes total), allowing element faces to curve and strain to vary linearly across each element. This captures steep stress gradients around the root fillet far more realistically.
+
+### Cosine Bearing Distribution
+Applying an external force to a single point node on a circular hole creates an artificial numerical spike (a point load singularity). In a real mechanical joint, a ground steel pin rests against the cylindrical bore surface, spreading its contact force across the lower 180 degrees.
+
+A **cosine bearing distribution** models this physical contact by setting normal surface pressure to $p(\theta) = p_0 \cos\theta$ at the bottom of the bore ($\theta = 0$) and tapering smoothly to zero at the horizontal parting line ($\theta = \pm 90^\circ$). This distributes the 2,000 N force realistically into the surrounding web without relying on a full nonlinear contact solver.
+
 ## Open the investigation
 
 The notebook contains the geometry definition, hand calculations, governing equations, solver explanation, verification checks, actual result tables, convergence plots, and the radius study. It was developed and executed with coding assistance; local reproduction and an independent solver check remain part of the learning work.
