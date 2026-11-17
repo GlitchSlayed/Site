@@ -36,5 +36,6 @@ export const collections = {
   visualImageAlt:z.string().optional(),
   visualLabel:z.string().optional(),
   visualAnimate:z.boolean().default(false),
+  statusDescription:z.string().optional(),
  })})
 };

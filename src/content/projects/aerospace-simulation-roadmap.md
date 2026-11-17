@@ -1,59 +1,194 @@
 ---
-title: "Learning Aerospace Simulation"
-description: "A 12-week self-study program in structural FEA, CFD, and propulsion simulation, built around a bracket FEA study, a NACA 0012 airfoil study, and a rocket nozzle capstone."
+title: "Before the Metal Is Cut"
+description: "Learning to trust an aerospace simulation: an executed aluminum-bracket study, an airfoil investigation, and a rocket-nozzle capstone, with open calculations and reproducible code."
 date: "2026-11-16"
 tags: [Aerospace, Simulation]
 status: In Development
+statusDescription: "Python baseline executed; independent solver reproduction and stress convergence checks in progress."
 art: wing
 featured: false
 draft: false
 sample: false
+engineering:
+  question: "How much does a single-lug mounting bracket move under downward vs. lateral pin loads, and can root fillet refinement achieve stress convergence within 2%?"
+  approach: "3D linear elasticity solver with quadratic tetrahedra (C3D10), companion FreeCAD/Gmsh/CalculiX validation, and mesh convergence study."
+  constraint: "Idealized fixed cylindrical bolt holes without base contact, friction, or bolt preload; faceted boundary representation."
+  evidence: "Executed Python computational baseline with verified displacement stability; fillet stress remains unresolved at 3.5%-10% change across refinement."
+  nextCheck: "Complete independent CalculiX reproduction with curved quadratic boundaries and resolve root fillet convergence gate."
+  methods: ["Quadratic Tetrahedral FEA (C3D10)", "Conjugate Gradient Solver", "Mesh Convergence Study", "Linear Superposition"]
 ---
 
-My co-op at Arkwin taught me how aerospace hardware gets built. Fixtures, tooling, drawings, watching parts I helped set up go through machining and test. What it did not teach me is the other half of the job: predicting how a part behaves before any metal is cut. That is what simulation is for, and it is the gap I want to close.
+A 500 N load produces more movement than a 2,000 N load on the same bracket. About **4.4 times more**, in the first model. The difference is the direction: one load travels down the upright web; the other bends it sideways.
 
-So I put together a 12-week self-study program, about 5 to 7 hours a week, covering computational structural mechanics, CFD, and propulsion simulation. The point is not just learning which buttons to press in a solver. It is learning enough theory to check the solver's work, because an unchecked simulation result is just a colorful picture.
+That is the kind of thing I want to understand before trusting a simulation. A material can be strong, a part can look substantial, and the load can sound small, yet the geometry can still make it too flexible for the job.
 
-Everything runs on open-source tools. FreeCAD for geometry, CalculiX for structural FEA, Gmsh for meshing, OpenFOAM and later SU2 for CFD, and ParaView for visualization. Fedora is the primary environment, Windows covers CAD and anything Hofstra provides access to.
+My co-op at Arkwin taught me how aerospace hardware gets built. Fixtures, tooling, drawings, watching parts I helped set up go through machining and test. What I want to learn next is how to make a defensible prediction about that hardware before any metal is cut—and how to recognize when the prediction is wrong.
 
-## Current status
+This is my working notebook for that process: structural mechanics first, then external aerodynamics, then compressible nozzle flow. Each project starts with a physical question, gets a simpler calculation that I can inspect, and only then moves into a numerical model.
 
-Just starting. The roadmap is written, the first project is specced in detail, and a hand calculation reference for the opening exercise is done. No software is installed yet and no simulations have been run. I will update this page as each step actually happens, and I will only report results I have actually produced.
+## Start with a question, not a contour plot
 
-## The roadmap
+The first question is practical: **how much does a small actuator mounting bracket move under load, and how much does a larger root fillet help?**
 
-| Phase | Weeks | What happens | Deliverable |
+The hypothetical part is a single aluminum lug on a four-hole base. A mating fork captures the lug and supports a pin through its bore. It is the sort of load path I want to learn to reason through, without pretending this is a part from an employer or an aircraft drawing.
+
+It is also complicated enough to make a useful first investigation. The web bends, the base flexes, the pin load has to spread into the material around a hole, and the root geometry changes how stress moves into the base. There are several ways to get a plausible-looking answer from the wrong model.
+
+![Nominal single-lug bracket with its downward and sideways loading directions, plus a dimensioned front elevation.](/Site/notebooks/aerospace-bracket/figures/bracket_geometry.png)
+
+*The 5 mm fillet baseline. Dimensions and load directions are defined before the mesh is built; the pin, mating fork, and retaining collar are outside the current solid model.*
+
+| Feature | Nominal specification |
+| --- | --- |
+| Base | 100 × 60 × 6 mm |
+| Upright web | 40 mm wide, 8 mm thick, 60 mm above the base |
+| Pin bore | 12 mm diameter; center 42 mm above the base top |
+| Mounting pattern | Four 6.6 mm bores on a 76 × 40 mm pattern |
+| Root fillets | 5 mm baseline; 2 and 10 mm alternatives |
+| Material concept | One piece machined from 7075-T651 plate |
+| Main load | 2,000 N downward; 3,000 N factored case |
+| Side load | 500 N parallel to the pin axis, transferred through a retaining collar |
+
+Calling this a single lug matters: the original outline called it “clevis-style,” but the fork is the two-ear component, not this bracket. Defining the collar matters too. A force along the pin axis cannot be represented by ordinary radial pressure on the bore.
+
+## The smaller load exposes the stiffness problem
+
+The first calculations are intentionally simple. The downward load gives a nominal projected bearing stress of 20.8 MPa at the bore and a gross web compression of 6.25 MPa. For the side load, a straight-web cantilever estimate gives about 49.2 MPa nominal bending stress and 0.102 mm deflection.
+
+The cantilever estimate depends on the web's second moment of area, which scales with the **cube of its thickness**. That is the useful idea behind the numbers. Changing the load direction changes which dimension supplies the bending stiffness. Choosing a stronger alloy does not, by itself, make the bracket appreciably stiffer.
+
+The solid model adds what the straight-web calculation leaves out: the hole, fillets, base flexibility, and the actual distributed load footprints. For the 5 mm radius on the finest recorded mesh, it gives:
+
+| Separate load case | Load-weighted displacement | Sampled central-fillet von Mises stress |
+| --- | --- | --- |
+| 2,000 N downward | 0.0346 mm | 15.1 MPa |
+| 500 N sideways | 0.1536 mm | 40.4 MPa |
+
+“Load-weighted” means displacement measured consistently with the distributed force, rather than whichever node happens to move most. The notebook also reports maximum displacement. The fillet stress is sampled in a declared central region away from the sharp ends of the blend; it is not a claim about the maximum stress everywhere on the part.
+
+These are preliminary numerical results. In particular, the selected stress has **not yet passed the mesh-stability requirement**. The table is useful evidence about the load path, not a completed strength substantiation.
+
+## A fillet has to earn its material
+
+A larger radius adds material and changes the effective restraint at the web root. I want to quantify both effects rather than assume that the largest blend is automatically the best design.
+
+For the 500 N side load, with the remaining nominal dimensions unchanged:
+
+| Root radius | Exact nominal mass | Load-weighted displacement | Sampled fillet stress |
 | --- | --- | --- | --- |
-| Foundations | 1-2 | Install the toolchain. Model a cantilever beam, calculate its tip deflection by hand, then check the solver against the hand calculation. | Calculation notebook |
-| Project 1: bracket FEA | 3-5 | Static structural analysis of an aerospace mounting bracket, with a mesh independence study and hand calculation checks. | FEA technical report |
-| Advanced structural | 6-7 | Modal analysis on the bracket. Buckling, fatigue, and factor of safety. | Extension to the Project 1 report |
-| CFD foundations | 8-9 | OpenFOAM tutorial cases: lid-driven cavity and flow around a cylinder. Mesh resolution effects. | CFD fundamentals report |
-| Project 2: airfoil CFD | 10-11 | NACA 0012 in SU2 at multiple angles of attack, validated against published experimental data. | Airfoil performance report |
-| Integration | 12 | Clean up both projects, document assumptions and limitations, write the summaries. | Two documented projects |
-| Project 3: rocket nozzle | After | Converging-diverging nozzle: analytical design, geometry, compressible CFD, validation against ideal theory. | Capstone, longer term |
+| 2 mm | 150.5 g | 0.1745 mm | 56.6 MPa |
+| 5 mm | 151.5 g | 0.1536 mm | 40.4 MPa |
+| 10 mm | 155.1 g | 0.1200 mm | 35.2 MPa |
 
-## Project 1: the bracket
+Going from 5 to 10 mm adds about **3.6 g** and reduces the modeled side displacement by about **22%** on the finest recorded meshes. That makes the larger radius worth investigating. It does not settle the design: its own convergence, tool access, bolt-head clearance, and support assumptions still matter.
 
-The first real project is a clevis-style mounting bracket, the kind of part that holds an actuator or a line replaceable unit in place. Base plate 100 by 60 by 6 mm, bolted down at four corners. A vertical web rises from the base with a 12 mm lug hole near the top, where a pin carries the load. The material is aluminum 7075-T6.
+![Mass, side-load displacement, and sampled root stress plotted against fillet radius for the three calculated variants.](/Site/notebooks/aerospace-bracket/figures/fillet_tradeoff.png)
 
-The main load case is 2000 N straight down at the lug hole, treated as limit load, with a second run at 3000 N for the ultimate case. A second load case puts 500 N out of plane at the lug, which bends the web sideways.
+*The displacement and stress come from executed Python FEA. Mass comes from the exact nominal geometry. The stress values remain subject to the refinement limitations discussed below.*
 
-What makes it a study instead of a single solver run:
+To give the exercise a real decision to work toward, I chose a mass target below 160 g and a side-displacement target below 0.15 mm. Those are study targets, not specifications from a real actuator. The baseline is just above the displacement target; the 10 mm variant is a candidate to carry into the next model.
 
-- Hand calculations first. Lug bearing, net section tension, shear tear-out, and web bending, worked before the solver runs so I know what answer to expect.
-- A mesh convergence study. At least four mesh densities, tracking stress at the web fillet and displacement at the lug until both settle within 2 percent.
-- A fillet radius study. Running the fillet at 2, 5, and 10 mm to watch the stress concentration change with geometry.
-- Honest boundary conditions. The bolt holes are fixed, the base face is not, and the load goes on as a bearing distribution, not a point force. The report will name what the model leaves out: no bolt preload, no contact, no friction, linear material.
+## What would make me trust the answer?
 
-Weeks 6 and 7 reuse the same model for modal analysis, the first six natural frequencies and mode shapes, checked against a cantilever beam estimate of the web.
+The accompanying notebook uses a small, inspectable Python finite-element implementation with quadratic tetrahedral displacement fields. NumPy and SciPy handle the numerical work. The nominal geometry is also available as STEP files generated with CadQuery. CalculiX remains the planned independent solver comparison; none of the results here are being presented as CalculiX output.
 
-## How this connects to the wind tunnel work
+Before using the bracket result, the solver was checked against a 200 mm cantilever. It predicts 2.224 mm tip displacement against an Euler–Bernoulli estimate of 2.254 mm, a difference of about 1.3%. It also passes constant-strain, rigid-motion, and prescribed-affine-displacement checks. Each bracket run records force balance, moment balance, residuals, and strain energy.
 
-Project 2 runs the NACA 0012 in SU2 and validates it against published wind tunnel data. My [Three Airfoils in Hofstra's Wind Tunnel](https://glitchslayed.github.io/Site/projects/hofstra-wind-tunnel-airfoil-testing/) project is the experimental version of the same question. One day the two should meet: the same airfoil, one set of numbers from a solver, one set from a tunnel, and an honest account of where they agree and where they do not.
+Those checks answer different questions. A small algebraic residual says the assembled equations were solved. A beam comparison helps check the implementation. Neither establishes that the bracket's supports represent real bolts, or that its local stress is sufficiently resolved.
 
-## Working rules
+The baseline was therefore run at four requested bulk mesh spacings: 6, 4.5, 3, and 2 mm, with additional refinement around features. The finest baseline contains **64,632 tetrahedra and 300,102 displacement degrees of freedom**.
 
-- Hand calculations before solver results, every time.
-- No result gets reported without a mesh convergence check or a comparison against theory or data.
-- Every week produces something tangible, even if it is small.
-- If the solver and the hand calculation disagree, the first suspects are units, boundary conditions, and how the load was applied.
+![Generalized displacement and sampled central-fillet stress as the number of tetrahedral elements increases.](/Site/notebooks/aerospace-bracket/figures/mesh_convergence.png)
+
+*Displacement stabilizes sooner than the selected fillet stress. These meshes refine the faceted geometry as well as the displacement field.*
+
+The original rule was less than 2% change in both displacement and fillet stress between successive refinements. The final displacement changes are below that threshold. The stress changes are about **10.0% for the downward case and 3.5% for the side case**, so the combined gate does not pass.
+
+The mesh even changes the initial design decision. The coarsest baseline predicts 0.1491 mm sideways movement, just inside the chosen 0.15 mm target. The finest predicts 0.1536 mm, just outside it. Stopping at the first plausible result would have made this bracket look stiff enough for a target it no longer meets after refinement.
+
+That is an important result in its own right. The next step is to separate mesh resolution, the flat-face approximation to a curved fillet, and stress sampling before declaring the stress converged. Changing the criterion after seeing the answer would make the exercise much less useful.
+
+## Where this model stops
+
+The four bolt-bore surfaces are fixed, and the underside of the base is free. This is a deliberately idealized support. It contains no bolt preload, no contact with a mating plate, and no friction. A real joint can redistribute force and change both stiffness and local stress.
+
+The downward load is a cosine bearing distribution on the lower half of the hole. The side load is a smooth annular pressure on the web face, representing a retaining collar. Neither is a solved pin-and-hole contact problem. A reverse actuator load would need a different bearing region and separate ligament checks.
+
+The 3,000 N case is obtained by linear scaling of the 2,000 N solution. It is a factored elastic load case, not a prediction of failure load. Similarly, the material strengths used for screening are typical manufacturer data for 7075-T651, not thickness- and orientation-specific design allowables.
+
+The current work can support comparisons within these assumptions. It cannot yet support a fatigue life, a bolted-joint safety factor, or a statement that the part is ready to fly.
+
+## Open the investigation
+
+The notebook contains the geometry definition, hand calculations, governing equations, solver explanation, verification checks, actual result tables, convergence plots, and the radius study. It was developed and executed with coding assistance; local reproduction and an independent solver check remain part of the learning work.
+
+- [Read the complete scientific notebook](/Site/notebooks/aerospace-bracket/Bracket_Study.html)
+- [Download the executed Jupyter notebook](/Site/notebooks/aerospace-bracket/Bracket_Study.ipynb)
+- [Download the notebook as plain Python](/Site/notebooks/aerospace-bracket/Bracket_Study.py)
+- Download exact nominal STEP CAD: [R2 blend](/Site/notebooks/aerospace-bracket/geometry/bracket_r2.step) · [R5 baseline](/Site/notebooks/aerospace-bracket/geometry/bracket_r5.step) · [R10 blend](/Site/notebooks/aerospace-bracket/geometry/bracket_r10.step)
+
+<div class="notebook-embed-wrapper" style="margin: 2rem 0; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; background: #fff;">
+  <div style="padding: 10px 16px; background: #f0f3ef; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-family: var(--mono); color: #233b43;">
+    <span><strong>INTERACTIVE NOTEBOOK VIEWER</strong> // Bracket_Study.html</span>
+    <a href="/Site/notebooks/aerospace-bracket/Bracket_Study.html" target="_blank" rel="noopener noreferrer" style="font-weight: 600; color: #176b79;">Open Standalone Reader ↗</a>
+  </div>
+  <iframe
+    src="/Site/notebooks/aerospace-bracket/Bracket_Study.html"
+    title="Aerospace Mounting Bracket Scientific Notebook Reader"
+    width="100%"
+    height="750"
+    loading="lazy"
+    sandbox="allow-same-origin allow-downloads"
+    style="border: none; display: block; width: 100%;"
+  ></iframe>
+</div>
+
+The first computational baseline now exists. The outstanding work is specific: reproduce it in the local toolchain, establish stress convergence, and investigate the joint assumptions. No physical test or experimental validation has been completed.
+
+### Progress Note: Independent CAD & CalculiX Reproduction (November 16, 2026)
+
+An independent CAD and solver verification study was executed using FreeCAD for parametric B-rep modeling, Gmsh for quadratic tetrahedral discretization (C3D10 elements), and CalculiX (`ccx` 2.23) for finite element solutions.
+
+Key comparisons and findings from the independent CalculiX verification:
+- **Baseline In-Plane Load (LC1, 2,000 N Downward):** The CalculiX quadratic solid solver produced a peak root fillet von Mises stress of 49.98 MPa with a four-mesh convergence study (displacements converged to within 1.07% between Mesh 3 and Mesh 4). At ultimate load (LC3, 3,000 N), the peak fillet stress reached 74.97 MPa.
+- **Lateral Web Bending (LC2, 500 N Sideways):** CalculiX confirmed the out-of-plane compliance vulnerability: the peak fillet stress reached 91.25 MPa and tip deflection was 0.3958 mm, corroborating that lateral loads dominate root stress and compliance.
+- **Fillet Stress Sensitivity:** Increasing the fillet radius from 2 mm to 5 mm and 10 mm decreased peak fillet stress from 81.53 MPa to 49.98 MPa and 30.47 MPa (a 62.6% stress reduction).
+- **Modal Vibration Extension (Modes 1–6):** A companion linear perturbation eigenvalue solve extracted the first six natural frequencies. Mode 1 (lateral weak-axis web bending) was found at 995.27 Hz, matching the Euler–Bernoulli cantilever analytical frequency (999.17 Hz) to within 0.39%.
+- **Verification Status:** While global compliance and modal frequencies demonstrate excellent convergence and theory alignment, local fillet stress across faceted vs. curved quadratic meshes continues to exhibit mesh-gradient sensitivity. The original <2% stress convergence gate remains an active investigation before releasing this geometry for manufacturing.
+
+## From one load path to an airflow field
+
+The broader program is still about twelve weeks at five to seven hours a week, but the weeks are a pacing guide. A failed check is a reason to spend longer on a model, not a reason to label it finished.
+
+The structural work starts with the bracket because its load path can be sketched and estimated. Modal analysis then asks a different question of the same geometry: which parts move together, at what frequencies, and how much does the attached hardware matter? The first six mode shapes will need interpretation, not just a table of eigenvalues. Buckling and fatigue are extensions with their own assumptions; neither follows automatically from a static stress plot.
+
+For CFD, the initial cases will isolate ideas before introducing an airfoil. A cavity case makes boundary conditions and recirculation visible. Flow around a cylinder adds separation and, at an appropriate Reynolds number, time dependence. Residual convergence, force histories, and spatial or temporal refinement will have to agree with the physical problem being solved.
+
+The NACA 0012 study then becomes more than an angle-of-attack sweep. Reynolds number, Mach number, turbulence or transition assumptions, wall resolution, domain extent, and experimental conditions all affect what is being compared. The target is a documented comparison of lift, drag, and pressure distribution against an identified published dataset—not a vaguely similar curve taken from somewhere online.
+
+That connects directly to my [Three Airfoils in Hofstra's Wind Tunnel](https://glitchslayed.github.io/Site/projects/hofstra-wind-tunnel-airfoil-testing/) project. Eventually I want the numerical and experimental sides to meet at matching conditions, with an explanation of the disagreement as well as the agreement. Tunnel blockage, model geometry, surface condition, and measurement uncertainty would all belong in that explanation.
+
+The longer-term capstone is a converging-diverging rocket nozzle. It starts with quasi-one-dimensional compressible-flow calculations: choking, throat area, area–Mach relation, and pressure ratio. An axisymmetric CFD model can then test what changes when the ideal assumptions are relaxed. Shocks and separation are extensions to earn, not features to turn on before the ideal baseline makes sense.
+
+| Stage | Intended pace | Evidence needed to move on |
+| --- | --- | --- |
+| Structural foundations | Weeks 1–2 | Consistent units, a beam reference, and a repeatable numerical check |
+| Bracket study | Weeks 3–5 | Defined loads, independent reproduction, stable quantities of interest, and documented limitations |
+| Structural extensions | Weeks 6–7 | Interpreted mode shapes; clearly scoped buckling or fatigue work where justified |
+| CFD foundations | Weeks 8–9 | Tutorial cases with meaningful boundary conditions and convergence evidence |
+| NACA 0012 investigation | Weeks 10–11 | Matched flow conditions and a traceable experimental comparison |
+| Documentation | Week 12 | Two reproducible studies whose claims match their evidence |
+| Rocket nozzle | Longer term | Analytical baseline followed by a documented compressible-flow comparison |
+
+## The standard I want to keep
+
+A useful simulation should leave behind more than an image. Someone else should be able to find the dimensions, loads, assumptions, code, and checks—and understand which conclusion those things actually support.
+
+For this bracket, the first conclusion is already more interesting than “aluminum is strong”: load direction and geometry control the response, and getting a stable displacement is easier than establishing a trustworthy local stress. The work now is to make that prediction more defensible, one assumption at a time.
+
+## Technical references
+
+- [Kaiser Aluminum: 7075 sheet, coil, and plate](https://online.kaiseraluminum.com/depot/PublicProductInformation/Document/1017/Kaiser_Aluminum_7075_Sheet_Coil_and_Plate.pdf) — typical T651 material properties used for the initial screen.
+- [DefElement: quadratic Lagrange tetrahedron](https://defelement.org/elements/examples/tetrahedron-lagrange-equispaced-2.html) — interpolation reference for the Python model.
+- [SciPy: conjugate-gradient solver](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html) — sparse solver documentation.
+- [NASA NPARC verification and validation tutorial](https://www.grc.nasa.gov/www/wind/valid/tutorial/tutorial.html) — the distinction between checking a numerical solution and comparing a model with reality.

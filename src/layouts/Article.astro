@@ -115,7 +115,7 @@ const statusNotes: Record<string, string> = {
 
     {data.engineering && <EngineeringBrief brief={data.engineering} />}
     {data.drawing && <details class="project-drawing-detail"><summary>Open the project drawing <span>Illustrative schematic</span></summary><TechnicalPlate kind={data.drawing} /></details>}
-    <aside class="project-state-context"><strong>{data.status}</strong><p>{statusNotes[data.status] || 'See the notes below for the current scope.'}</p><span class="small-label">{readingMinutes(entry.body)} min read · Published {dateLabel(data.date)}</span></aside>
+    <aside class="project-state-context"><strong>{data.status}</strong><p>{data.statusDescription || (entry.id === 'aerospace-simulation-roadmap' ? 'Python baseline executed; independent solver reproduction and stress convergence checks in progress.' : (statusNotes[data.status] || 'See the notes below for the current scope.'))}</p><span class="small-label">{readingMinutes(entry.body)} min read · Published {dateLabel(data.date)}</span></aside>
 
     <div class="article-grid">
       <article class="prose monograph-prose" id="monograph-article-body" data-pagefind-body>
