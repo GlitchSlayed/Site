@@ -26,7 +26,7 @@ export const collections = {
   ...common,
   status: ProjectStatus,
   art:z.enum(['wing','orbit','code']),
-  drawing:z.enum(['airfoils','bwb','uki','gofr','rocket','wing','orbit','code','bracket']).optional(),
+  drawing:z.string().optional(),
   engineering:z.object({
    question:z.string(), approach:z.string(), constraint:z.string(), evidence:z.string(), nextCheck:z.string(), methods:z.array(z.string()),
   }).optional(),

@@ -28,7 +28,9 @@ html[data-theme='dark'] {
   background-size:10px 10px
 }
 
-.technical-plate-field>svg {
+.technical-plate-field>svg,
+.technical-plate-field>img,
+.technical-plate-img {
   position:relative;
   z-index:1;
   display:block;

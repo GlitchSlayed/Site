@@ -164,11 +164,29 @@ ${text(548,356,'DIFFERENT ROOT.','small')}
 <path class="line" d="M343.58 403.28 L340.84 412.90"/>
 ${text(180.63,390.50,'100 mm','small')}
 ${text(54,450,'One bracket. Two load paths.','caption')}`;}
+export function isDrawingKind(value: string): value is DrawingKind {
+  return value in drawingInfo;
+}
+
+function wing() {
+  return `
+${text(54, 65, 'AERODYNAMICS / WING PLANFORM + SECTION', 'small')}
+${path('M150 140V360M650 140V360', 'datum')}
+${path('M150 160L450 200L650 230L650 270L450 280L150 320Z', 'body')}
+${path('M150 160L450 200L450 280L150 320Z', 'accent-fill')}
+${path('M150 160H650M150 320H650', 'faint')}
+${path('M150 345H650M150 338v14M650 338v14', 'line')}
+${text(360, 370, 'SEMI-SPAN / (b/2)', 'small')}
+${path('M450 180v120M450 180h30M450 300h30', 'faint')}
+${text(490, 245, 'MEAN CHORD', 'small')}
+${text(54, 450, 'Planform, sweep, and aerodynamic reference area.', 'caption')}`;
+}
+
 export function drawingSvg(kind:DrawingKind,instance='plate', palette?: {paper:string;ink:string;accent:string;faint:string}) {
  const id='drawing-'+instance.replace(/[^a-zA-Z0-9_-]/g,'');
  const hero=kind==='rocket',width=hero?640:800,height=hero?720:480;
  const p=palette||{paper:'var(--plate-paper, #f2efe6)',ink:'var(--plate-ink, #383b36)',accent:'var(--plate-accent, #a4462b)',faint:'var(--plate-faint, #b6b4a8)'};
- const content=kind==='airfoils'?airfoils():kind==='bwb'||kind==='wing'?bwb():kind==='uki'?uki():kind==='gofr'?gofr():kind==='rocket'?rocket():kind==='orbit'?orbit():kind==='bracket'?bracket(id):code();
+ const content=kind==='airfoils'?airfoils():kind==='bwb'?bwb():kind==='wing'?wing():kind==='uki'?uki():kind==='gofr'?gofr():kind==='rocket'?rocket():kind==='orbit'?orbit():kind==='bracket'?bracket(id):code();
  return `<svg xmlns="http://www.w3.org/2000/svg" id="${id}" viewBox="0 0 ${width} ${height}" fill="none" aria-hidden="true" focusable="false"><style>
  #${id} .line,#${id} .body{stroke:${p.ink};stroke-width:1.5;stroke-linejoin:round}#${id} .body{fill:${p.paper};fill-opacity:.72}
  #${id} .side{stroke:${p.ink};stroke-width:1.5;stroke-linejoin:round;fill:${p.paper};fill-opacity:.85}

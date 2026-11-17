@@ -1,15 +1,88 @@
 ---
-import { drawingInfo, drawingSvg, type DrawingKind } from '../../lib/drawings';
-interface Props { kind?: DrawingKind; hero?: boolean; caption?: boolean; }
-const {kind='wing',hero=false,caption=true}=Astro.props;
-const info=drawingInfo[kind];
+import fs from 'node:fs';
+import path from 'node:path';
+import { drawingInfo, drawingSvg, isDrawingKind, type DrawingKind } from '../../lib/drawings';
+
+export interface Props {
+  kind?: DrawingKind | string;
+  src?: string;
+  hero?: boolean;
+  caption?: boolean;
+  label?: string;
+  captionText?: string;
+}
+
+const {
+  kind = 'wing',
+  src,
+  hero = false,
+  caption = true,
+  label: customLabel,
+  captionText: customCaption,
+} = Astro.props;
+
+const target = src || kind;
+const isPreset = typeof target === 'string' && isDrawingKind(target);
+const info = isPreset ? drawingInfo[target as DrawingKind] : undefined;
+
+const displayLabel = customLabel || info?.label || '';
+const displayCaption = customCaption || info?.caption || '';
+
+let svgHtml: string | null = null;
+let imageSrc: string | null = null;
+
+if (isPreset) {
+  svgHtml = drawingSvg(target as DrawingKind, crypto.randomUUID());
+} else if (typeof target === 'string') {
+  const isSvg = target.endsWith('.svg');
+  const isImage = /\.(png|webp|jpe?g|gif|avif)$/i.test(target);
+
+  if (isSvg) {
+    const stripped = target.replace(/^\/?(Site\/)?/, '');
+    const candidatePaths = [
+      path.join(process.cwd(), 'public', stripped),
+      path.join(process.cwd(), target.replace(/^\//, '')),
+      path.join(process.cwd(), target),
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        try {
+          let content = fs.readFileSync(p, 'utf-8');
+          content = content.replace(/<\?xml[^>]*\?>/gi, '').trim();
+          svgHtml = content;
+          break;
+        } catch {
+          // ignore error
+        }
+      }
+    }
+    if (!svgHtml) {
+      imageSrc = target.startsWith('http') || target.startsWith('/') ? target : `/${target}`;
+    }
+  } else if (isImage) {
+    imageSrc = target.startsWith('http') || target.startsWith('/') ? target : `/${target}`;
+  } else {
+    svgHtml = drawingSvg('wing', crypto.randomUUID());
+  }
+} else {
+  svgHtml = drawingSvg('wing', crypto.randomUUID());
+}
 ---
-<figure class:list={['technical-plate',{'technical-plate-hero':hero}]}>
- <div class="technical-plate-field" data-technical-surface={hero || undefined} data-motion={hero?'true':'false'}>
-  {hero && <canvas class="technical-surface" aria-hidden="true"></canvas>}
-  <Fragment set:html={drawingSvg(kind,crypto.randomUUID())} />
- </div>
- {caption&&<figcaption><span>{info.label}</span><span>{info.caption}</span></figcaption>}
+<figure class:list={['technical-plate', { 'technical-plate-hero': hero }]}>
+  <div class="technical-plate-field" data-technical-surface={hero || undefined} data-motion={hero ? 'true' : 'false'}>
+    {hero && <canvas class="technical-surface" aria-hidden="true"></canvas>}
+    {svgHtml ? (
+      <Fragment set:html={svgHtml} />
+    ) : imageSrc ? (
+      <img src={imageSrc} class="technical-plate-img" alt={displayLabel || 'Technical illustration'} loading="lazy" decoding="async" />
+    ) : null}
+  </div>
+  {caption && (displayLabel || displayCaption) && (
+    <figcaption>
+      {displayLabel && <span>{displayLabel}</span>}
+      {displayCaption && <span>{displayCaption}</span>}
+    </figcaption>
+  )}
 </figure>
 <script>
 import { initTechnicalSurfaces } from '../../lib/technicalSurface';

@@ -1,6 +1,6 @@
 # Glitchy's Technical Blog: Master Editor Reference & Writing Guide
 
-> Engineering visual update: [engineering-design-refinement.md](engineering-design-refinement.md) defines the current drawing and engineering-brief fields, default cover behavior, register, source shelves, and texture effects. It supersedes earlier decorative-shader defaults.
+> Engineering visual update: [engineering-design-refinement.md](engineering-design-refinement.md) and [project-cards-and-drawings.md](project-cards-and-drawings.md) define the current drawing and engineering-brief fields, direct SVG/image card paths, default cover behavior, register, source shelves, and texture effects. It supersedes earlier decorative-shader defaults.
 
 > Layout update (2026-11-05): See [personal-redesign.md](personal-redesign.md) for the current homepage, project catalogue, writing archive, about page, and section-based newspaper reader. Earlier layout descriptions below are historical; author grounding, schemas, and component guidance still apply.
 

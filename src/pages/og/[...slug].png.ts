@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import { getCollection } from 'astro:content';
 
 import { socialCardSvg, type SocialCard as Card } from '../../lib/socialCard';
+import { isDrawingKind } from '../../lib/drawings';
 
 export async function getStaticPaths() {
   const writing = await getCollection('writing', ({ data }) => !data.draft);
@@ -17,10 +18,15 @@ export async function getStaticPaths() {
       slug: `writing/${entry.id}`,
       card: { title: entry.data.title, section: 'ARTICLE', drawing: entry.data.tags.some(tag => /linux|fedora|rust|software|gnome/i.test(tag)) ? 'code' as const : 'wing' as const },
     })),
-    ...projects.map((entry) => ({
-      slug: `projects/${entry.id}`,
-      card: { title: entry.data.title, section: 'PROJECT', drawing: entry.data.drawing || entry.data.art },
-    })),
+    ...projects.map((entry) => {
+      const drawing = (entry.data.drawing && isDrawingKind(entry.data.drawing))
+        ? entry.data.drawing
+        : entry.data.art;
+      return {
+        slug: `projects/${entry.id}`,
+        card: { title: entry.data.title, section: 'PROJECT', drawing },
+      };
+    }),
   ];
 
   return cards.map(({ slug, card }) => ({ params: { slug }, props: card }));
