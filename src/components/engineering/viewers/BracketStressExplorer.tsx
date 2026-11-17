@@ -7,23 +7,14 @@ export type FilletRadiusId = 'r2' | 'r5' | 'r10';
 export type ViewMode = 'stress' | 'displacement' | 'cad';
 
 export interface BracketStressExplorerProps {
-  /** Initial load case ('lc1' | 'lc2' | 'lc3'). Defaults to 'lc1'. */
   initialLoadCase?: LoadCaseId;
-  /** Initial fillet radius ('r2' | 'r5' | 'r10'). Defaults to 'r5'. */
   initialFilletRadius?: FilletRadiusId;
-  /** Initial display mode ('stress' | 'displacement' | 'cad'). Defaults to 'stress'. */
   initialMode?: ViewMode;
-  /** Initial deformation amplification factor (0 to 200). Defaults to 50. */
   initialDeformationScale?: number;
-  /** Colormap choice ('turbo' | 'viridis'). Defaults to 'turbo'. */
   initialColormap?: ColormapName;
-  /** Canvas height in px. Defaults to 520. */
   height?: number;
-  /** Optional container CSS class name. */
   className?: string;
-  /** Whether to show the engineering telemetry HUD. Defaults to true. */
   showTelemetry?: boolean;
-  /** Whether to show the direct CAD STEP file download links. Defaults to true. */
   showCadDownload?: boolean;
 }
 
@@ -40,10 +31,8 @@ export interface TelemetryData {
   maxDispScale: number;
 }
 
-// 7075-T651 Aluminum material constants
-const YIELD_STRENGTH_MPA = 503.0; // Typical 7075-T651 yield allowable
+const YIELD_STRENGTH_MPA = 503.0; // 7075-T651 yield allowable
 
-// Benchmark FEA results from multi-mesh convergence and CalculiX validation studies
 export const FEA_BENCHMARKS: Record<
   LoadCaseId,
   {
@@ -62,7 +51,7 @@ export const FEA_BENCHMARKS: Record<
 > = {
   lc1: {
     label: 'LC1: 2,000 N Downward',
-    description: 'In-plane downward bearing load on web pin bore. Fillet notch is primary stress riser.',
+    description: 'In-plane downward bearing load on web pin bore. Fillet notch is the primary stress concentration.',
     filletData: {
       r2: { radiusMm: 2, massGrams: 150.5, peakStressMpa: 81.53, maxDisplacementMm: 0.0348 },
       r5: { radiusMm: 5, massGrams: 151.5, peakStressMpa: 49.98, maxDisplacementMm: 0.0346 },
@@ -100,7 +89,7 @@ export function getTelemetry(lc: LoadCaseId, radius: FilletRadiusId): TelemetryD
   return {
     loadCaseLabel: caseInfo.label,
     loadDescription: caseInfo.description,
-    radiusLabel: `R${radiusInfo.radiusMm} (${radiusInfo.radiusMm} mm)`,
+    radiusLabel: `R${radiusInfo.radiusMm}`,
     radiusMm: radiusInfo.radiusMm,
     massGrams: radiusInfo.massGrams,
     peakStressMpa: peakStress,
@@ -111,7 +100,6 @@ export function getTelemetry(lc: LoadCaseId, radius: FilletRadiusId): TelemetryD
   };
 }
 
-/** Dispose Three.js hierarchy cleanly */
 function disposeObject(root: Object3D) {
   const geometries = new Set<BufferGeometry>();
   const materials = new Set<Material>();
@@ -132,7 +120,7 @@ export function BracketStressExplorer({
   initialMode = 'stress',
   initialDeformationScale = 50,
   initialColormap = 'turbo',
-  height = 540,
+  height = 520,
   className = '',
   showTelemetry = true,
   showCadDownload = true,
@@ -152,7 +140,6 @@ export function BracketStressExplorer({
 
   const telemetry = getTelemetry(loadCase, radius);
 
-  // Engine references to update without tearing down the WebGL context
   const updateSceneRef = useRef<((lc: LoadCaseId, rad: FilletRadiusId, mode: ViewMode, scale: number, cmap: ColormapName, wire: boolean) => void) | null>(null);
 
   useEffect(() => {
@@ -202,8 +189,8 @@ export function BracketStressExplorer({
         if (disposed || !host) return;
 
         scene = new three.Scene();
-        camera = new three.PerspectiveCamera(45, 1, 1, 2000);
-        camera.position.set(130, 110, 150);
+        camera = new three.PerspectiveCamera(40, host.clientWidth / host.clientHeight, 1, 2000);
+        camera.position.set(110, 85, 115);
 
         renderer = new three.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -211,47 +198,49 @@ export function BracketStressExplorer({
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.target.set(0, 0, 30);
+        controls.dampingFactor = 0.08;
+        controls.target.set(0, 32, 0);
+        controls.maxPolarAngle = Math.PI / 2 + 0.05;
 
         // Lighting
-        const ambientLight = new three.AmbientLight(0xffffff, 0.75);
+        const ambientLight = new three.AmbientLight(0xffffff, 0.85);
         scene.add(ambientLight);
 
-        const keyLight = new three.DirectionalLight(0xffffff, 1.2);
-        keyLight.position.set(120, 150, 180);
+        const keyLight = new three.DirectionalLight(0xffffff, 1.15);
+        keyLight.position.set(100, 160, 120);
         scene.add(keyLight);
 
-        const fillLight = new three.DirectionalLight(0xd4e4f7, 0.6);
-        fillLight.position.set(-100, -80, -60);
+        const fillLight = new three.DirectionalLight(0xdce6f2, 0.5);
+        fillLight.position.set(-120, -50, -80);
         scene.add(fillLight);
 
-        // Coordinate helper and ground reference grid
-        const gridHelper = new three.GridHelper(160, 16, 0x5a6872, 0x333e48);
-        gridHelper.position.y = -0.1;
-        gridHelper.rotation.x = 0; // standard x-z grid
-        // Re-orient grid on z=0 plane: bracket rests on z=0..6
-        gridHelper.rotation.x = Math.PI / 2;
-        scene.add(gridHelper);
+        // Ground floor grid at Y = 0
+        const floorGrid = new three.GridHelper(180, 18, 0x6e7b8b, 0x2e3842);
+        floorGrid.position.y = 0;
+        scene.add(floorGrid);
 
-        const axesHelper = new three.AxesHelper(25);
-        axesHelper.position.set(-65, -45, 0);
+        // Coordinate axes indicator at base corner
+        const axesHelper = new three.AxesHelper(22);
+        axesHelper.position.set(-54, 0.2, -34);
         scene.add(axesHelper);
 
         bracketGroup = new three.Group();
         scene.add(bracketGroup);
 
-        // Theme reactive background
         const updateTheme = () => {
           if (!scene) return;
           const isDark = document.documentElement.dataset.theme !== 'light';
-          scene.background = new three.Color(isDark ? 0x14181c : 0xf4f6f8);
+          scene.background = new three.Color(isDark ? 0x15181d : 0xf5f7fa);
+          floorGrid.material = new three.LineBasicMaterial({
+            color: isDark ? 0x3e4854 : 0xcbd2d9,
+            transparent: true,
+            opacity: isDark ? 0.6 : 0.7,
+          });
         };
         updateTheme();
         themeObserver = new MutationObserver(updateTheme);
         themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-        // Responsive resize
         const updateSize = () => {
           if (!host || !camera || !renderer) return;
           const width = host.clientWidth;
@@ -265,7 +254,6 @@ export function BracketStressExplorer({
         resizeObserver = new ResizeObserver(updateSize);
         resizeObserver.observe(host);
 
-        // Procedural bracket geometry generator
         function buildBracketMesh(
           lc: LoadCaseId,
           rad: FilletRadiusId,
@@ -281,7 +269,7 @@ export function BracketStressExplorer({
           const rMm = FEA_BENCHMARKS[lc].filletData[rad].radiusMm;
           const tele = getTelemetry(lc, rad);
 
-          // 1. Base Plate Shape: 100 x 60 mm with 4 bolt holes (dia 6.6 mm)
+          // 1. Base Plate Shape in 2D (X: -50..50, Z: -30..30)
           const baseShape = new three.Shape();
           baseShape.moveTo(-50, -30);
           baseShape.lineTo(50, -30);
@@ -289,32 +277,29 @@ export function BracketStressExplorer({
           baseShape.lineTo(-50, 30);
           baseShape.closePath();
 
-          // Bolt hole cutout centers: (±38, ±20), radius 3.3 mm
+          // 4 Bolt bores (dia 6.6 mm) at (±38, ±20)
           const boltHoles = [
             [-38, -20],
             [38, -20],
             [38, 20],
             [-38, 20],
           ];
-          boltHoles.forEach(([hx, hy]) => {
+          boltHoles.forEach(([bx, bz]) => {
             const holePath = new three.Path();
-            holePath.absarc(hx, hy, 3.3, 0, Math.PI * 2, true);
+            holePath.absarc(bx, bz, 3.3, 0, Math.PI * 2, true);
             baseShape.holes.push(holePath);
           });
 
-          // Extrude base plate along Z: depth 6 mm
+          // Extrude along Y (thickness 6 mm)
           const baseGeom = new three.ExtrudeGeometry(baseShape, {
             depth: 6,
             bevelEnabled: false,
             curveSegments: 24,
           });
+          baseGeom.rotateX(-Math.PI / 2);
 
-          // 2. Upright Web Shape in (X, Z) plane:
-          // Web is X in [-4, 4], Z in [6, 66] (height 60 mm).
-          // Pin bore: dia 12 mm (radius 6 mm) at (0, 42).
-          // Extruded along Y from -20 to 20 (depth 40 mm).
+          // 2. Upright Web in (X, Y) plane
           const webShape = new three.Shape();
-          // Web profile with rounded top crown (radius 20 mm centered at Z=42)
           webShape.moveTo(-4, 6);
           webShape.lineTo(4, 6);
           webShape.lineTo(4, 66);
@@ -326,34 +311,28 @@ export function BracketStressExplorer({
             bevelEnabled: false,
             curveSegments: 24,
           });
-          // Rotate web so its extrusion depth lies along Y:
-          // Initially extrudes along Z. We rotate and translate into place:
-          webGeom.rotateX(Math.PI / 2);
-          webGeom.translate(0, 20, 0);
+          webGeom.translate(0, 0, -20);
 
-          // Web pin bore cylinder subtraction / visual geometry:
-          // We carve the visual pin bore through web (dia 12 mm, Z=42, Y in -20..20)
+          // 3. Pin Bore (Axis along Z, centered at X=0, Y=42)
           const pinCylGeom = new three.CylinderGeometry(6, 6, 40.2, 32, 1, true);
           pinCylGeom.rotateX(Math.PI / 2);
-          pinCylGeom.translate(0, 0, 42);
+          pinCylGeom.translate(0, 42, 0);
 
-          // 3. Parametric Fillet transition strips connecting Web (X=±4) to Base (Z=6)
-          // Along Y from -20 to 20
+          // 4. Parametric Root Fillets blending web face (X=±4) to base top (Y=6)
           function createFilletGeom(sign: number) {
             const filletShape = new three.Shape();
             const webX = sign * 4;
             const baseX = sign * (4 + rMm);
-            const topZ = 6 + rMm;
-            const botZ = 6;
+            const topY = 6 + rMm;
+            const botY = 6;
 
-            filletShape.moveTo(webX, botZ);
-            filletShape.lineTo(baseX, botZ);
-            // Arc blending to web face
+            filletShape.moveTo(webX, botY);
+            filletShape.lineTo(baseX, botY);
             const arcCenterX = baseX;
-            const arcCenterZ = topZ;
-            const startAngle = sign > 0 ? Math.PI : 0;
-            const endAngle = sign > 0 ? (3 * Math.PI) / 2 : (3 * Math.PI) / 2;
-            filletShape.absarc(arcCenterX, arcCenterZ, rMm, startAngle, endAngle, sign < 0);
+            const arcCenterY = topY;
+            const startAngle = sign > 0 ? (3 * Math.PI) / 2 : (3 * Math.PI) / 2;
+            const endAngle = sign > 0 ? Math.PI : 0;
+            filletShape.absarc(arcCenterX, arcCenterY, rMm, startAngle, endAngle, sign > 0);
             filletShape.closePath();
 
             const fGeom = new three.ExtrudeGeometry(filletShape, {
@@ -361,16 +340,13 @@ export function BracketStressExplorer({
               bevelEnabled: false,
               curveSegments: 16,
             });
-            fGeom.rotateX(Math.PI / 2);
-            fGeom.translate(0, 20, 0);
+            fGeom.translate(0, 0, -20);
             return fGeom;
           }
 
           const filletPos = createFilletGeom(1);
           const filletNeg = createFilletGeom(-1);
 
-          // Merge sub-geometries into a unified bracket mesh
-          // We can assemble them into an object hierarchy or composite BufferGeometry
           const parts = [
             { geom: baseGeom },
             { geom: webGeom },
@@ -388,61 +364,51 @@ export function BracketStressExplorer({
               const y = posAttr.getY(i);
               const z = posAttr.getZ(i);
 
-              // Calculate physics displacement field:
               let ux = 0;
               let uy = 0;
               let uz = 0;
               let stress = 0;
 
-              // Distance to fixed bolt holes
               const minBoltDist = Math.min(
-                ...boltHoles.map(([bx, by]) => Math.hypot(x - bx, y - by))
+                ...boltHoles.map(([bx, bz]) => Math.hypot(x - bx, z - bz))
               );
-              const isFixed = z <= 6 && minBoltDist <= 6.5;
+              const isFixed = y <= 6 && minBoltDist <= 6.5;
 
               if (!isFixed) {
                 if (lc === 'lc1' || lc === 'lc3') {
-                  // In-plane downward load
                   const factor = lc === 'lc3' ? 1.5 : 1.0;
                   const tipDisp = tele.maxDisplacementMm;
-                  if (z > 6) {
-                    uz = -tipDisp * ((z - 6) / 60) * factor;
-                    // Poisson lateral bulge
-                    ux = (x > 0 ? 1 : -1) * 0.002 * ((z - 6) / 60) * factor;
+                  if (y > 6) {
+                    uy = -tipDisp * ((y - 6) / 60) * factor;
+                    ux = (x > 0 ? 1 : -1) * 0.002 * ((y - 6) / 60) * factor;
                   }
-                  // Notch stress field
-                  const notchDist = Math.hypot(Math.abs(x) - 4, z - 6);
-                  const boreDist = Math.hypot(x, z - 42);
+                  const notchDist = Math.hypot(Math.abs(x) - 4, y - 6);
+                  const boreDist = Math.hypot(x, y - 42);
                   const peak = tele.peakStressMpa;
                   const nom = 6.25 * factor;
                   const bearing = 26.5 * factor;
                   stress = nom + (peak - nom) * Math.exp(-notchDist / (1.6 * rMm)) + bearing * Math.exp(-boreDist / 9);
                 } else {
-                  // LC2: Lateral weak-axis bending (500 N in +Y)
                   const tipDisp = tele.maxDisplacementMm;
-                  if (z > 6) {
-                    // Cubic cantilever profile
-                    const hRel = (z - 6) / 60;
-                    uy = tipDisp * (1.5 * Math.pow(hRel, 2) - 0.5 * Math.pow(hRel, 3));
+                  if (y > 6) {
+                    const hRel = (y - 6) / 60;
+                    uz = tipDisp * (1.5 * Math.pow(hRel, 2) - 0.5 * Math.pow(hRel, 3));
                   }
-                  // Peak stress at outer root edge (|y| -> 20, z -> 6, |x| -> 4)
-                  const rootEdgeDist = Math.hypot(Math.abs(y) - 20, Math.abs(x) - 4, z - 6);
+                  const rootEdgeDist = Math.hypot(Math.abs(z) - 20, Math.abs(x) - 4, y - 6);
                   const peak = tele.peakStressMpa;
                   const nom = 12.0;
                   stress = nom + (peak - nom) * Math.exp(-rootEdgeDist / (1.8 * rMm));
                 }
               }
 
-              // Apply deformation magnification
               if (scale > 0 && !isFixed) {
                 posAttr.setXYZ(i, x + ux * scale, y + uy * scale, z + uz * scale);
               }
 
-              // Apply color mapping
               if (mode === 'cad') {
-                colors[i * 3] = 0.72;
-                colors[i * 3 + 1] = 0.76;
-                colors[i * 3 + 2] = 0.80;
+                colors[i * 3] = 0.75;
+                colors[i * 3 + 1] = 0.78;
+                colors[i * 3 + 2] = 0.82;
               } else if (mode === 'displacement') {
                 const totalDisp = Math.hypot(ux, uy, uz);
                 const t = Math.min(Math.max(totalDisp / tele.maxDispScale, 0), 1);
@@ -451,7 +417,6 @@ export function BracketStressExplorer({
                 colors[i * 3 + 1] = rgb.g / 255;
                 colors[i * 3 + 2] = rgb.b / 255;
               } else {
-                // Stress mode
                 const t = Math.min(Math.max(stress / tele.maxStressScale, 0), 1);
                 const rgb = getColormapRGB(t, cmap);
                 colors[i * 3] = rgb.r / 255;
@@ -466,8 +431,8 @@ export function BracketStressExplorer({
 
             const mat = mode === 'cad'
               ? new three.MeshStandardMaterial({
-                  color: 0x9fb0bd,
-                  metalness: 0.85,
+                  color: 0xa4b1bc,
+                  metalness: 0.82,
                   roughness: 0.3,
                   wireframe: wire,
                 })
@@ -482,24 +447,45 @@ export function BracketStressExplorer({
             bracketGroup?.add(mesh);
           });
 
-          // Pin bore visual ring / highlight
-          const boreRingMat = new three.MeshBasicMaterial({
-            color: mode === 'cad' ? 0x233b43 : 0xffffff,
-            wireframe: true,
+          // Bore interior smooth surface
+          const boreMat = new three.MeshStandardMaterial({
+            color: mode === 'cad' ? 0x2b3844 : 0x1d242c,
+            roughness: 0.65,
+            metalness: 0.25,
+            side: three.BackSide,
           });
-          const boreMesh = new three.Mesh(pinCylGeom, boreRingMat);
+          const boreMesh = new three.Mesh(pinCylGeom, boreMat);
           bracketGroup.add(boreMesh);
+
+          // Razor-sharp circular rim accents at front and back web faces
+          const ringPoints: import('three').Vector3[] = [];
+          for (let a = 0; a <= 360; a += 10) {
+            const radAngle = (a * Math.PI) / 180;
+            ringPoints.push(new three.Vector3(Math.cos(radAngle) * 6, 42 + Math.sin(radAngle) * 6, 0));
+          }
+          const ringGeom = new three.BufferGeometry().setFromPoints(ringPoints);
+          const ringMat = new three.LineBasicMaterial({
+            color: mode === 'cad' ? 0x1d2d38 : 0xffffff,
+            transparent: true,
+            opacity: 0.85,
+          });
+
+          const frontRing = new three.Line(ringGeom, ringMat);
+          frontRing.position.z = 20.02;
+          bracketGroup.add(frontRing);
+
+          const backRing = new three.Line(ringGeom, ringMat);
+          backRing.position.z = -20.02;
+          bracketGroup.add(backRing);
         }
 
         updateSceneRef.current = buildBracketMesh;
-
-        // Initial build
         buildBracketMesh(loadCase, radius, viewMode, deformationScale, colormap, showWireframe);
 
         resetCameraRef.current = () => {
           if (!camera || !controls) return;
-          camera.position.set(130, 110, 150);
-          controls.target.set(0, 0, 30);
+          camera.position.set(110, 85, 115);
+          controls.target.set(0, 32, 0);
           controls.update();
         };
 
@@ -535,7 +521,7 @@ export function BracketStressExplorer({
         await sectionRef.current?.requestFullscreen();
       }
     } catch {
-      // Fullscreen not supported or permitted
+      // Fullscreen not permitted
     }
   }
 
@@ -545,7 +531,7 @@ export function BracketStressExplorer({
       className={`bracket-explorer eng-viewer ${className}`}
       aria-label="Aerospace Mounting Bracket 3D CAD & FEA Explorer"
     >
-      {/* 3D Canvas Host */}
+      {/* 3D Canvas Viewport */}
       <div className="bracket-explorer-canvas-wrap" style={{ height }}>
         <div ref={canvasHostRef} className="eng-viewer-canvas" />
 
@@ -624,95 +610,97 @@ export function BracketStressExplorer({
 
       {/* Control Console */}
       <div className="bracket-explorer-panel">
-        <div className="bracket-explorer-controls-grid">
-          {/* Fillet Radius Selector */}
-          <div className="bracket-explorer-group">
-            <label className="bracket-explorer-label" id={`${compId}-radius-label`}>
-              Fillet Radius Blend:
-            </label>
-            <div className="bracket-explorer-toggle-group" role="group" aria-labelledby={`${compId}-radius-label`}>
-              {(['r2', 'r5', 'r10'] as FilletRadiusId[]).map(rId => (
-                <button
-                  key={rId}
-                  type="button"
-                  className={`bracket-explorer-btn ${radius === rId ? 'active' : ''}`}
-                  onClick={() => setRadius(rId)}
-                  aria-pressed={radius === rId}
-                >
-                  {rId.toUpperCase()} {rId === 'r5' ? '(Baseline)' : ''}
-                </button>
-              ))}
+        <div className="bracket-explorer-controls-stack">
+          {/* Controls Row 1: Load Case and Fillet Blend */}
+          <div className="bracket-explorer-controls-row">
+            <div className="bracket-explorer-group">
+              <span className="bracket-explorer-label" id={`${compId}-lc-label`}>
+                FEA Load Case:
+              </span>
+              <div className="bracket-explorer-toggle-group" role="group" aria-labelledby={`${compId}-lc-label`}>
+                {(['lc1', 'lc2', 'lc3'] as LoadCaseId[]).map(lcId => (
+                  <button
+                    key={lcId}
+                    type="button"
+                    className={`bracket-explorer-btn ${loadCase === lcId ? 'active' : ''}`}
+                    onClick={() => setLoadCase(lcId)}
+                    aria-pressed={loadCase === lcId}
+                  >
+                    {lcId === 'lc1'
+                      ? 'LC1 (Down)'
+                      : lcId === 'lc2'
+                      ? 'LC2 (Side)'
+                      : 'LC3 (3 kN)'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bracket-explorer-group">
+              <span className="bracket-explorer-label" id={`${compId}-radius-label`}>
+                Fillet Radius Blend:
+              </span>
+              <div className="bracket-explorer-toggle-group" role="group" aria-labelledby={`${compId}-radius-label`}>
+                {(['r2', 'r5', 'r10'] as FilletRadiusId[]).map(rId => (
+                  <button
+                    key={rId}
+                    type="button"
+                    className={`bracket-explorer-btn ${radius === rId ? 'active' : ''}`}
+                    onClick={() => setRadius(rId)}
+                    aria-pressed={radius === rId}
+                  >
+                    {rId.toUpperCase()} {rId === 'r5' ? '(Base)' : ''}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Load Case Selector */}
-          <div className="bracket-explorer-group">
-            <label className="bracket-explorer-label" id={`${compId}-lc-label`}>
-              FEA Load Case:
-            </label>
-            <div className="bracket-explorer-toggle-group" role="group" aria-labelledby={`${compId}-lc-label`}>
-              {(['lc1', 'lc2', 'lc3'] as LoadCaseId[]).map(lcId => (
-                <button
-                  key={lcId}
-                  type="button"
-                  className={`bracket-explorer-btn ${loadCase === lcId ? 'active' : ''}`}
-                  onClick={() => setLoadCase(lcId)}
-                  aria-pressed={loadCase === lcId}
-                >
-                  {lcId === 'lc1'
-                    ? 'LC1 (2 kN Down)'
-                    : lcId === 'lc2'
-                    ? 'LC2 (500 N Side)'
-                    : 'LC3 (3 kN Factored)'}
-                </button>
-              ))}
+          {/* Controls Row 2: Display Mode and Deformation Slider */}
+          <div className="bracket-explorer-controls-row">
+            <div className="bracket-explorer-group">
+              <span className="bracket-explorer-label" id={`${compId}-mode-label`}>
+                Display Mode:
+              </span>
+              <div className="bracket-explorer-toggle-group" role="group" aria-labelledby={`${compId}-mode-label`}>
+                {(
+                  [
+                    { id: 'stress', label: 'Stress' },
+                    { id: 'displacement', label: 'Displacement' },
+                    { id: 'cad', label: 'CAD' },
+                  ] as { id: ViewMode; label: string }[]
+                ).map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`bracket-explorer-btn ${viewMode === m.id ? 'active' : ''}`}
+                    onClick={() => setViewMode(m.id)}
+                    aria-pressed={viewMode === m.id}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* View Mode Selector */}
-          <div className="bracket-explorer-group">
-            <label className="bracket-explorer-label" id={`${compId}-mode-label`}>
-              Display Mode:
-            </label>
-            <div className="bracket-explorer-toggle-group" role="group" aria-labelledby={`${compId}-mode-label`}>
-              {(
-                [
-                  { id: 'stress', label: 'Stress Contour' },
-                  { id: 'displacement', label: 'Displacement' },
-                  { id: 'cad', label: 'Nominal CAD' },
-                ] as { id: ViewMode; label: string }[]
-              ).map(m => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`bracket-explorer-btn ${viewMode === m.id ? 'active' : ''}`}
-                  onClick={() => setViewMode(m.id)}
-                  aria-pressed={viewMode === m.id}
-                >
-                  {m.label}
-                </button>
-              ))}
+            <div className="bracket-explorer-group bracket-explorer-slider-group">
+              <div className="bracket-explorer-slider-header">
+                <label htmlFor={`${compId}-deform-slider`} className="bracket-explorer-label">
+                  Deformation Scale:
+                </label>
+                <span className="bracket-explorer-slider-value">{deformationScale}×</span>
+              </div>
+              <input
+                id={`${compId}-deform-slider`}
+                type="range"
+                min={0}
+                max={200}
+                step={5}
+                value={deformationScale}
+                onChange={e => setDeformationScale(Number(e.target.value))}
+                className="bracket-explorer-slider"
+              />
             </div>
-          </div>
-
-          {/* Deformation Magnification Slider */}
-          <div className="bracket-explorer-group">
-            <div className="bracket-explorer-slider-header">
-              <label htmlFor={`${compId}-deform-slider`} className="bracket-explorer-label">
-                Deformation Magnification:
-              </label>
-              <span className="bracket-explorer-slider-value">{deformationScale}×</span>
-            </div>
-            <input
-              id={`${compId}-deform-slider`}
-              type="range"
-              min={0}
-              max={200}
-              step={5}
-              value={deformationScale}
-              onChange={e => setDeformationScale(Number(e.target.value))}
-              className="bracket-explorer-slider"
-            />
           </div>
         </div>
 

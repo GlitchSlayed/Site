@@ -177,4 +177,4 @@ Because the results were so clean, we updated `package.json` to route all Astro 
 }
 ```
 
-This ensures that developers and CI jobs get the full benefit of Bun's runtime without needing to remember extra flags. Following this, we removed `actions/setup-node` from our GitHub Actions workflows entirely—making the entire CI/CD pipeline 100% Bun native and shaving setup overhead off every run.
+This ensures that developers and CI jobs get the full benefit of Bun's runtime without needing to remember extra flags. Following this, we removed `actions/setup-node` from our GitHub Actions workflows entirely, making the entire CI/CD pipeline 100% Bun native and shaving setup overhead off every run.

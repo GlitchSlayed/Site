@@ -24,7 +24,7 @@ A 500 N load produces more movement than a 2,000 N load on the same bracket. Abo
 
 That is the kind of thing I want to understand before trusting a simulation. A material can be strong, a part can look substantial, and the load can sound small, yet the geometry can still make it too flexible for the job.
 
-My co-op at Arkwin taught me how aerospace hardware gets built. Fixtures, tooling, drawings, watching parts I helped set up go through machining and test. What I want to learn next is how to make a defensible prediction about that hardware before any metal is cut—and how to recognize when the prediction is wrong.
+My co-op at Arkwin taught me how aerospace hardware gets built. Fixtures, tooling, drawings, watching parts I helped set up go through machining and test. What I want to learn next is how to make a defensible prediction about that hardware before any metal is cut, and how to recognize when the prediction is wrong.
 
 This is my working notebook for that process: structural mechanics first, then external aerodynamics, then compressible nozzle flow. Each project starts with a physical question, gets a simpler calculation that I can inspect, and only then moves into a numerical model.
 
@@ -172,7 +172,7 @@ The structural work starts with the bracket because its load path can be sketche
 
 For CFD, the initial cases will isolate ideas before introducing an airfoil. A cavity case makes boundary conditions and recirculation visible. Flow around a cylinder adds separation and, at an appropriate Reynolds number, time dependence. Residual convergence, force histories, and spatial or temporal refinement will have to agree with the physical problem being solved.
 
-The NACA 0012 study then becomes more than an angle-of-attack sweep. Reynolds number, Mach number, turbulence or transition assumptions, wall resolution, domain extent, and experimental conditions all affect what is being compared. The target is a documented comparison of lift, drag, and pressure distribution against an identified published dataset—not a vaguely similar curve taken from somewhere online.
+The NACA 0012 study then becomes more than an angle-of-attack sweep. Reynolds number, Mach number, turbulence or transition assumptions, wall resolution, domain extent, and experimental conditions all affect what is being compared. The target is a documented comparison of lift, drag, and pressure distribution against an identified published dataset, rather than a vaguely similar curve taken from somewhere online.
 
 That connects directly to my [Three Airfoils in Hofstra's Wind Tunnel](https://glitchslayed.github.io/Site/projects/hofstra-wind-tunnel-airfoil-testing/) project. Eventually I want the numerical and experimental sides to meet at matching conditions, with an explanation of the disagreement as well as the agreement. Tunnel blockage, model geometry, surface condition, and measurement uncertainty would all belong in that explanation.
 
@@ -190,13 +190,13 @@ The longer-term capstone is a converging-diverging rocket nozzle. It starts with
 
 ## The standard I want to keep
 
-A useful simulation should leave behind more than an image. Someone else should be able to find the dimensions, loads, assumptions, code, and checks—and understand which conclusion those things actually support.
+A useful simulation should leave behind more than an image. Someone else should be able to find the dimensions, loads, assumptions, code, and checks, and understand which conclusion those things actually support.
 
 For this bracket, the first conclusion is already more interesting than “aluminum is strong”: load direction and geometry control the response, and getting a stable displacement is easier than establishing a trustworthy local stress. The work now is to make that prediction more defensible, one assumption at a time.
 
 ## Technical references
 
-- [Kaiser Aluminum: 7075 sheet, coil, and plate](https://online.kaiseraluminum.com/depot/PublicProductInformation/Document/1017/Kaiser_Aluminum_7075_Sheet_Coil_and_Plate.pdf) — typical T651 material properties used for the initial screen.
-- [DefElement: quadratic Lagrange tetrahedron](https://defelement.org/elements/examples/tetrahedron-lagrange-equispaced-2.html) — interpolation reference for the Python model.
-- [SciPy: conjugate-gradient solver](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html) — sparse solver documentation.
-- [NASA NPARC verification and validation tutorial](https://www.grc.nasa.gov/www/wind/valid/tutorial/tutorial.html) — the distinction between checking a numerical solution and comparing a model with reality.
+- [Kaiser Aluminum: 7075 sheet, coil, and plate](https://online.kaiseraluminum.com/depot/PublicProductInformation/Document/1017/Kaiser_Aluminum_7075_Sheet_Coil_and_Plate.pdf): typical T651 material properties used for the initial screen.
+- [DefElement: quadratic Lagrange tetrahedron](https://defelement.org/elements/examples/tetrahedron-lagrange-equispaced-2.html): interpolation reference for the Python model.
+- [SciPy: conjugate-gradient solver](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html): sparse solver documentation.
+- [NASA NPARC verification and validation tutorial](https://www.grc.nasa.gov/www/wind/valid/tutorial/tutorial.html): the distinction between checking a numerical solution and comparing a model with reality.

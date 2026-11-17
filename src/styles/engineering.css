@@ -1622,19 +1622,32 @@ html[data-theme="light"] .bracket-explorer-colorbar-card {
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
-.bracket-explorer-controls-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+.bracket-explorer-controls-stack {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
+.bracket-explorer-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
 .bracket-explorer-group {
+  flex: 1 1 240px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.bracket-explorer-slider-group {
+  justify-content: flex-end;
 }
 
 .bracket-explorer-label {
@@ -1648,10 +1661,12 @@ html[data-theme="light"] .bracket-explorer-colorbar-card {
 
 .bracket-explorer-toggle-group {
   display: flex;
+  width: 100%;
   gap: 3px;
   background: rgba(0, 0, 0, 0.06);
   padding: 3px;
   border-radius: 6px;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .bracket-explorer-toggle-group {
@@ -1659,8 +1674,9 @@ html[data-theme="dark"] .bracket-explorer-toggle-group {
 }
 
 .bracket-explorer-btn {
-  flex: 1;
-  padding: 6px 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 4px;
   font-size: 11px;
   font-family: var(--mono);
   border: 1px solid transparent;
@@ -1671,6 +1687,8 @@ html[data-theme="dark"] .bracket-explorer-toggle-group {
   text-align: center;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bracket-explorer-btn:hover {
