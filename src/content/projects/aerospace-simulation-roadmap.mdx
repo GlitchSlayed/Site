@@ -92,7 +92,7 @@ To give the exercise a real decision to work toward, I chose a mass target below
 
 ## What would make me trust the answer?
 
-The accompanying notebook uses a small, inspectable Python finite-element implementation with quadratic tetrahedral displacement fields. NumPy and SciPy handle the numerical work. The nominal geometry is also available as STEP files generated with CadQuery. CalculiX remains the planned independent solver comparison; none of the results here are being presented as CalculiX output.
+The accompanying notebook uses an inspectable Python finite-element implementation with quadratic tetrahedral displacement fields, using NumPy and SciPy for the numerical work. The nominal geometry is also available as STEP files generated with CadQuery. To check the Python implementation against an established industry benchmark, I also set up an independent verification pipeline in FreeCAD, Gmsh, and CalculiX (`ccx`), which is detailed further below. None of the initial notebook results were taken on faith from a single tool.
 
 Before using the bracket result, the solver was checked against a 200 mm cantilever. It predicts 2.224 mm tip displacement against an Euler–Bernoulli estimate of 2.254 mm, a difference of about 1.3%. It also passes constant-strain, rigid-motion, and prescribed-affine-displacement checks. Each bracket run records force balance, moment balance, residuals, and strain energy.
 
@@ -112,13 +112,13 @@ That is an important result in its own right. The next step is to separate mesh 
 
 ## Where this model stops
 
-The four bolt-bore surfaces are fixed, and the underside of the base is free. This is a deliberately idealized support. It contains no bolt preload, no contact with a mating plate, and no friction. A real joint can redistribute force and change both stiffness and local stress.
+In this initial baseline, I fixed the four bolt-bore surfaces and kept the underside of the base free. This is a deliberately idealized support. It contains no bolt preload, no contact with a mating plate, and no friction. A real joint can redistribute force and change both stiffness and local stress.
 
-The downward load is a cosine bearing distribution on the lower half of the hole. The side load is a smooth annular pressure on the web face, representing a retaining collar. Neither is a solved pin-and-hole contact problem. A reverse actuator load would need a different bearing region and separate ligament checks.
+For the downward load, I applied a cosine bearing distribution on the lower half of the hole. For the side load, I used a smooth annular pressure on the web face, representing a retaining collar. Neither is a solved pin-and-hole contact problem. A reverse actuator load would need a different bearing region and separate ligament checks.
 
 The 3,000 N case is obtained by linear scaling of the 2,000 N solution. It is a factored elastic load case, not a prediction of failure load. Similarly, the material strengths used for screening are typical manufacturer data for 7075-T651, not thickness- and orientation-specific design allowables.
 
-The current work can support comparisons within these assumptions. It cannot yet support a fatigue life, a bolted-joint safety factor, or a statement that the part is ready to fly.
+The current work supports comparisons within these stated assumptions. It cannot yet support a fatigue life, a bolted-joint safety factor, or a statement that the part is ready to fly.
 
 ## Interactive 3D CAD & FEA Stress Explorer
 
@@ -128,7 +128,7 @@ Explore the mounting bracket geometry and finite element results directly in you
 
 ## Engineering terminology: reading the physical model
 
-For anyone reviewing these figures without a finite-element background, several terms appear repeatedly throughout the data cards, contour plots, and verification tables:
+When I started digging into the numerical results and post-processing, a few engineering concepts kept showing up across the telemetry, plots, and solver setups. Here is how I understand them on this physical part:
 
 ### The "Root" and the "Fillet Blend"
 In structural mechanics, the **root** is the re-entrant junction where two perpendicular features meet: in this part, where the vertical 8 mm web joins the horizontal 6 mm base plate. If two planar faces meet at a sharp 90-degree internal corner, elasticity theory predicts an infinite theoretical stress concentration (a geometric singularity).
@@ -171,7 +171,7 @@ A **cosine bearing distribution** models this physical contact by setting normal
 
 ## Open the investigation
 
-The notebook contains the geometry definition, hand calculations, governing equations, solver explanation, verification checks, actual result tables, convergence plots, and the radius study. It was developed and executed with coding assistance; local reproduction and an independent solver check remain part of the learning work.
+I documented the entire workflow in the companion notebook: geometry definition, hand calculations, governing equations, solver checks, result tables, convergence plots, and the radius study. It gives me a repeatable baseline where every line of math and numerical integration can be inspected directly:
 
 - [Read the complete scientific notebook](/Site/notebooks/aerospace-bracket/Bracket_Study.html)
 - [Download the executed Jupyter notebook](/Site/notebooks/aerospace-bracket/Bracket_Study.ipynb)
@@ -194,48 +194,43 @@ The notebook contains the geometry definition, hand calculations, governing equa
   ></iframe>
 </div>
 
-The first computational baseline now exists. The outstanding work is specific: reproduce it in the local toolchain, establish stress convergence, and investigate the joint assumptions. No physical test or experimental validation has been completed.
+### Independent CAD & CalculiX Reproduction
 
-### Progress Note: Independent CAD & CalculiX Reproduction (November 16, 2026)
+To make sure my Python solver was not producing convenient answers or algorithmic artifacts, I ran a complete second-opinion study using FreeCAD for parametric B-rep modeling, Gmsh for quadratic tetrahedral discretization (C3D10 elements), and CalculiX (`ccx` 2.23) for finite element solutions.
 
-An independent CAD and solver verification study was executed using FreeCAD for parametric B-rep modeling, Gmsh for quadratic tetrahedral discretization (C3D10 elements), and CalculiX (`ccx` 2.23) for finite element solutions.
+In practical terms, this was my check to ensure the numbers held up when run through an established solver used in industry:
 
-In practical terms, this was a complete second-opinion check to verify that the custom Python solver was not producing flukes:
+- **FreeCAD (Parametric B-rep CAD):** I rebuilt the bracket solid geometry from scratch using true mathematical curves and surfaces (boundary representation) rather than faceted polygons. Defining it parametrically means changing the fillet radius from 2 mm to 5 mm or 10 mm automatically rebuilds the clean CAD geometry.
+- **Gmsh (Quadratic Tetrahedral Meshing):** A solver cannot calculate stress on an infinitely smooth solid all at once; it has to divide the volume into thousands of small building blocks (elements). Gmsh sliced the bracket into four-sided pyramids (tetrahedra). I used **quadratic elements (C3D10)**, meaning each pyramid has points at its 4 corners plus 6 extra points along its edges (10 points total). Those extra mid-side points allow the element edges to curve smoothly under bending loads, avoiding the artificial stiffness that ruins simple 4-node linear meshes.
+- **CalculiX (`ccx` 2.23 FEA Solver):** An open-source finite element solver built around the same input syntax and equations as Abaqus (a primary commercial solver used in aerospace). I used it to clamp the bolt holes, apply the 2,000 N downward and 500 N sideways loads, and solve the resulting matrix equations to confirm deflection and peak root fillet stress independently.
 
-- **FreeCAD (Parametric B-rep CAD):** The bracket solid geometry was rebuilt from scratch using true mathematical curves and surfaces (boundary representation) rather than faceted polygons. Defining it parametrically means changing the fillet radius from 2 mm to 5 mm or 10 mm automatically rebuilds the entire solid geometry.
-- **Gmsh (Quadratic Tetrahedral Meshing):** A computer cannot calculate stress on an infinitely smooth solid all at once; it has to divide the volume into thousands of small building blocks (elements). Gmsh sliced the bracket into four-sided pyramids (tetrahedra). Using **quadratic elements (C3D10)** means each pyramid has points at its 4 corners plus 6 extra points along its edges (10 points total). Those extra mid-side points allow the element edges to curve smoothly under bending loads, avoiding the artificial stiffness that ruins simple 4-node linear meshes.
-- **CalculiX (`ccx` 2.23 FEA Solver):** An open-source finite element solver built around the same input syntax and equations as Abaqus (a primary commercial solver used in aerospace). It took the thousands of quadratic pyramids, clamped the bolt holes, applied the 2,000 N downward and 500 N sideways loads, and solved the resulting matrix equations to confirm deflection and peak root fillet stress.
-
-Key comparisons and findings from the independent CalculiX verification:
+Key comparisons and findings from my independent CalculiX verification:
 - **Baseline In-Plane Load (LC1, 2,000 N Downward):** The CalculiX quadratic solid solver produced a peak root fillet von Mises stress of 49.98 MPa with a four-mesh convergence study (displacements converged to within 1.07% between Mesh 3 and Mesh 4). At ultimate load (LC3, 3,000 N), the peak fillet stress reached 74.97 MPa.
 - **Lateral Web Bending (LC2, 500 N Sideways):** CalculiX confirmed the out-of-plane compliance vulnerability: the peak fillet stress reached 91.25 MPa and tip deflection was 0.3958 mm, corroborating that lateral loads dominate root stress and compliance.
 - **Fillet Stress Sensitivity:** Increasing the fillet radius from 2 mm to 5 mm and 10 mm decreased peak fillet stress from 81.53 MPa to 49.98 MPa and 30.47 MPa (a 62.6% stress reduction).
 - **Modal Vibration Extension (Modes 1–6):** A companion linear perturbation eigenvalue solve extracted the first six natural frequencies. Mode 1 (lateral weak-axis web bending) was found at 995.27 Hz, matching the Euler–Bernoulli cantilever analytical frequency (999.17 Hz) to within 0.39%.
 - **Verification Status:** While global compliance and modal frequencies demonstrate excellent convergence and theory alignment, local fillet stress across faceted vs. curved quadratic meshes continues to exhibit mesh-gradient sensitivity. The original &lt;2% stress convergence gate remains an active investigation before releasing this geometry for manufacturing.
 
-## From one load path to an airflow field
+## What I want to tackle next
 
-The broader program is still about twelve weeks at five to seven hours a week, but the weeks are a pacing guide. A failed check is a reason to spend longer on a model, not a reason to label it finished.
+This structural work started with the mounting bracket because its load path can be sketched and estimated by hand. Now that the static displacement baseline and modal frequencies are verified against independent solvers, there are clear next steps: first in structural mechanics, then moving into aerodynamics and compressible flow.
 
-The structural work starts with the bracket because its load path can be sketched and estimated. Modal analysis then asks a different question of the same geometry: which parts move together, at what frequencies, and how much does the attached hardware matter? The first six mode shapes will need interpretation, not just a table of eigenvalues. Buckling and fatigue are extensions with their own assumptions; neither follows automatically from a static stress plot.
+Next in structures is closing the local stress convergence gap: testing whether curved quadratic boundaries in Gmsh eliminate the stress-gradient sensitivity that flat-faceted elements produce around the root fillet. Interpreting the mode shapes beyond Mode 1 is also on deck, specifically examining how bolt preload and mounting plate stiffness shift the higher resonant frequencies.
 
-For CFD, the initial cases will isolate ideas before introducing an airfoil. A cavity case makes boundary conditions and recirculation visible. Flow around a cylinder adds separation and, at an appropriate Reynolds number, time dependence. Residual convergence, force histories, and spatial or temporal refinement will have to agree with the physical problem being solved.
+From there, I want to bridge into CFD. Before running an airfoil, the initial cases will isolate fundamental flow physics: a lid-driven cavity to verify recirculation and boundary conditions, followed by flow around a cylinder to study separation and time-dependent vortex shedding.
 
-The NACA 0012 study then becomes more than an angle-of-attack sweep. Reynolds number, Mach number, turbulence or transition assumptions, wall resolution, domain extent, and experimental conditions all affect what is being compared. The target is a documented comparison of lift, drag, and pressure distribution against an identified published dataset, rather than a vaguely similar curve taken from somewhere online.
+That sets up the NACA 0012 study: taking published experimental wind tunnel pressure distributions, setting up matching Reynolds and Mach numbers with resolved wall boundary layers ($y^+ \le 1$), and understanding where simulation and experiment agree and where they diverge. That connects directly to my [Three Airfoils in Hofstra's Wind Tunnel](https://glitchslayed.github.io/Site/projects/hofstra-wind-tunnel-airfoil-testing/) testing.
 
-That connects directly to my [Three Airfoils in Hofstra's Wind Tunnel](https://glitchslayed.github.io/Site/projects/hofstra-wind-tunnel-airfoil-testing/) project. Eventually I want the numerical and experimental sides to meet at matching conditions, with an explanation of the disagreement as well as the agreement. Tunnel blockage, model geometry, surface condition, and measurement uncertainty would all belong in that explanation.
+Further down the road, the capstone is a converging-diverging rocket nozzle: starting with quasi-one-dimensional compressible gas dynamics (throat choking, area-Mach relations, and expansion ratios), followed by axisymmetric CFD to see how shock diamonds and boundary layer separation behave when ideal assumptions are relaxed.
 
-The longer-term capstone is a converging-diverging rocket nozzle. It starts with quasi-one-dimensional compressible-flow calculations: choking, throat area, area–Mach relation, and pressure ratio. An axisymmetric CFD model can then test what changes when the ideal assumptions are relaxed. Shocks and separation are extensions to earn, not features to turn on before the ideal baseline makes sense.
-
-| Stage | Pace | Status | Milestone evidence & criteria | Deliverable / Current finding |
+| Investigation | Scope | Status | Verification criteria | Current deliverable & next check |
 | --- | --- | --- | --- | --- |
-| **Structural foundations** | Weeks 1-2 | **Completed** | Consistent units, analytical beam reference, and repeatable numerical checks | 200 mm cantilever matches Euler-Bernoulli theory to 1.3%; rigid body, constant strain, and residual force balance checks verified. |
-| **Bracket study** | Weeks 3-5 | **Completed** | Defined loads, independent reproduction, stable quantities of interest, and documented limitations | FreeCAD/Gmsh/CalculiX independent reproduction; displacement converged to 1.07%; fillet radius sensitivity mapped; interactive 3D WebGL explorer live. |
-| **Structural extensions** | Weeks 6-7 | **In Progress** | Interpreted mode shapes; clearly scoped buckling or fatigue work where justified | Eigenvalue solve extracted Modes 1-6; Mode 1 web bending (995.27 Hz) matches analytical theory to 0.39%; curved boundary quadratic stress convergence active. |
-| **CFD foundations** | Weeks 8-9 | **Planned** | Tutorial cases with meaningful boundary conditions and convergence evidence | Cavity recirculation and cylinder vortex shedding tutorials with grid convergence. |
-| **NACA 0012 investigation** | Weeks 10-11 | **Planned** | Matched flow conditions and traceable experimental comparison | Lift, drag, and pressure coefficient correlation against published wind tunnel datasets and Hofstra experimental data. |
-| **Documentation** | Week 12 | **In Progress** | Reproducible studies whose claims match their evidence | Executed Jupyter notebooks, open Python solver scripts, exact STEP CAD models, and web monograph. |
-| **Rocket nozzle** | Longer term | **Planned** | Analytical baseline followed by documented compressible-flow comparison | Quasi-1D isentropic throat-area calculations followed by axisymmetric nozzle CFD. |
+| **Foundational mechanics** | Baseline checks | **Completed** | Unit consistency, analytical beam reference, and repeatable numerical checks | 200 mm cantilever matches Euler-Bernoulli theory to 1.3%; rigid body, constant strain, and residual force balance checks verified. |
+| **Bracket solid study** | Static elasticity | **Completed** | Defined loads, multi-solver reproduction, and documented limitations | FreeCAD/Gmsh/CalculiX reproduction complete; displacement converged to 1.07%; fillet radius trade study and interactive 3D WebGL explorer live. |
+| **Vibration & stress boundary** | Dynamic extensions | **In Progress** | Interpreted mode shapes and resolved local fillet convergence | Eigenvalue solve extracted Modes 1-6; Mode 1 web bending (995.27 Hz) matches analytical theory to 0.39%; curved boundary quadratic stress convergence active. |
+| **CFD flow foundations** | Fluid mechanics | **Next Up** | Canonical cases with meaningful boundary conditions and convergence | Cavity recirculation and cylinder vortex shedding tutorials with grid convergence. |
+| **NACA 0012 airfoil** | External aerodynamics | **Planned** | Matched flow conditions and traceable experimental comparison | Lift, drag, and pressure coefficient correlation against published wind tunnel datasets and Hofstra experimental data. |
+| **Rocket nozzle** | Compressible flow | **Future Capstone** | Analytical gas dynamics followed by axisymmetric CFD | Quasi-1D isentropic throat-area calculations followed by nozzle expansion CFD. |
 
 ## The standard I want to keep
 
