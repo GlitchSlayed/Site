@@ -42,6 +42,7 @@ Astro cannot serialize functions across an island boundary. Pass strings to `Fun
 | DataTable | Search, keyboard sorting, pagination, CSV | visible |
 | NotebookCell | Displayed source with authored output, copy/collapse | visible |
 | Tooltip | Inline definition with focus/hover description | shared site controller |
+| EngineeringModelViewer | Universal 3D CAD/CAE solid and mesh viewer | visible/load |
 | EngineeringNote | Assumption, limitation, observation or decision | none |
 | EquationBlock | Formula, explanation, variable definitions | none |
 | Measurement | Value, units, reported uncertainty and conditions | none |
@@ -128,6 +129,32 @@ CSV exports the complete filtered/sorted result, not just the current page, usin
 `NotebookCell` displays supplied `code`, language ('python'), inputNumber (1), title, initialCollapsed (false), children, className. It does **not** execute source or generate its output. Copy failure produces visible feedback. Collapse has an expanded state and stable controlled region; print includes the code.
 
 `Tooltip` requires content and children; optional subtitle, shortcut, position ('top'/'bottom'/'left'/'right'), as ('span'/'abbr'/'div'), className. It supplies a persistent accessible description. Use it for short definitions, not essential assumptions or interactive content. Use EngineeringNote for information that must stay visible.
+
+## 3D CAD and CAE Model Viewer
+
+`EngineeringModelViewer` (alias `CadModelViewer`) renders native CAD solids, manufacturing meshes, and CAE results in-browser without server rendering.
+
+Supported formats:
+- B-Rep solids: `.step`, `.stp`, `.iges`, `.igs`, `.brep` (tessellated via OpenCASCADE WASM)
+- Polygons: `.stl`, `.obj`, `.ply`, `.3mf`, `.dae`, `.fbx`, `.glb`, `.gltf`
+- Scientific & FEA: `.vtk`, CalculiX `.inp`/`.frd`, and `.fea.json`
+
+Props: `src` (string), `models` (`{id, label, src, format?}[]`), `initialModelId`, `showAxes` (true), `showGrid` (true), `showEdges` (true), `showDimensions` (true), `allowSectionCut` (true), `allowFileDrop` (true), `height` (480), `className`.
+
+```mdx
+import { EngineeringModelViewer } from '../../components/mdx';
+
+<EngineeringModelViewer
+  client:visible
+  src="/Site/notebooks/aerospace-bracket/geometry/bracket_r5.step"
+  showAxes
+  showGrid
+  showEdges
+  showDimensions
+  allowSectionCut
+  height={480}
+/>
+```
 
 ## New static engineering blocks
 

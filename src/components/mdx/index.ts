@@ -17,3 +17,5 @@ export * from './EquationBlock';
 export * from './Measurement';
 export { BracketStressExplorer } from '../engineering/viewers/BracketStressExplorer';
 export type { BracketStressExplorerProps } from '../engineering/viewers/BracketStressExplorer';
+export { EngineeringModelViewer, CadModelViewer } from '../engineering/viewers/EngineeringModelViewer';
+export type { EngineeringModelViewerProps, CadModelItem } from '../engineering/viewers/EngineeringModelViewer';

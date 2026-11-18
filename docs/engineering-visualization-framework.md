@@ -41,7 +41,7 @@ model.compute(inputs)  →  outputs   (pure, testable, no DOM)
 | `ModelEngineeringPlot` | `components/engineering/plots/ModelEngineeringPlot.tsx` | uPlot | Model-driven plot from a registry definition |
 | `EquationExplorer` | `components/engineering/equations/EquationExplorer.tsx` | katex | Equation + controls + live result + optional plot |
 | `EngineeringComparison` | `components/engineering/tables/EngineeringComparison.tsx` | none | Side-by-side configuration comparison table |
-| `EngineeringModelViewer` | `components/engineering/viewers/EngineeringModelViewer.tsx` | three | GLB/glTF 3D model viewer with overlays |
+| `EngineeringModelViewer` | `components/engineering/viewers/EngineeringModelViewer.tsx` | three, occt-import-js | Universal 3D CAD/CAE viewer supporting STEP, IGES, BREP, STL, OBJ, PLY, 3MF, GLTF/GLB, VTK, CalculiX INP/FRD, and FEA JSON |
 | `ParameterSet` | `components/engineering/shared/ParameterSet.tsx` | none | Renders a control for every model parameter |
 | `ParameterControl` | `components/engineering/shared/ParameterControl.tsx` | none | Synchronized slider + numeric input for one parameter |
 | `PresetSelector` | `components/engineering/shared/PresetSelector.tsx` | none | Named configuration / reset selector |
@@ -205,25 +205,57 @@ registerPlotDefinition({
 
 The definition sweeps `sweepParam` across `xRange`, calls `model.compute()` for each point, and plots the chosen `outputId`.
 
-## 8. How to add a 3D model
+## 8. How to add a 3D CAD or CAE model
 
-Place a `.glb` or `.gltf` file in `public/` (it will be served at the configured base path). Use `EngineeringModelViewer`:
+Place your model asset in `public/` (for example, `/Site/notebooks/.../bracket.step` or `/models/aircraft.glb`). Use `EngineeringModelViewer` (or its alias `CadModelViewer`):
 
 ```tsx
 <EngineeringModelViewer
-  src="/models/aircraft.glb"
+  src="/Site/notebooks/aerospace-bracket/geometry/bracket_r5.step"
   showAxes
   showGrid
-  showWireframe={false}
+  showEdges
+  showDimensions
+  allowSectionCut
+  allowFileDrop
   fitToView
   client:load
-  height={450}
+  height={480}
 />
 ```
 
-- Three.js and GLTFLoader/OrbitControls are imported lazily inside the component.
-- GPU resources are disposed on unmount.
-- Respects `prefers-reduced-motion` (no auto-animation) and the site light/dark theme.
+Or provide a playlist of models:
+
+```tsx
+<EngineeringModelViewer
+  models={[
+    { id: 'r2', label: 'R2 mm Fillet', src: '/Site/notebooks/.../bracket_r2.step' },
+    { id: 'r5', label: 'R5 mm Fillet', src: '/Site/notebooks/.../bracket_r5.step' },
+    { id: 'r10', label: 'R10 mm Fillet', src: '/Site/notebooks/.../bracket_r10.step' },
+  ]}
+  initialModelId="r5"
+  showAxes
+  showGrid
+  showEdges
+  client:load
+  height={480}
+/>
+```
+
+Supported formats:
+- **B-Rep CAD**: `.step`, `.stp`, `.iges`, `.igs`, `.brep` (tessellated via OpenCASCADE WASM `occt-import-js`)
+- **Mesh & 3D Print**: `.stl`, `.obj`, `.ply`, `.3mf`, `.dae`, `.fbx`, `.glb`, `.gltf`
+- **CAE / FEA**: `.vtk`, CalculiX `.inp` and `.frd`, and FEA surface JSON (`.fea.json`)
+
+Key features:
+- Standard CAD view buttons (`Iso`, `Front`, `Side`, `Top`) and Perspective / Orthographic projection toggle.
+- Display modes (`CAD + Edges`, `Shaded`, `Wireframe`, `X-Ray`).
+- Cross-section slicing plane along X, Y, or Z with live slider and invert normal.
+- Dynamic 3D bounding box dimensions readout and coordinate hover probe.
+- Drag-and-drop local file inspection overlay.
+- Dynamic import of loaders and WebAssembly: zero bundle weight on ordinary pages.
+- GPU resources (geometries, materials, textures, render targets) are disposed on unmount.
+- Respects `prefers-reduced-motion` and the site light/dark theme.
 
 ## 9. Linking multiple visualizations to shared parameters
 
